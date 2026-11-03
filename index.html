@@ -373,21 +373,36 @@ function drawGarden(ctx, garden, W, H, plantProg, swayT, gradeAlpha){
 }
 
 /* ========= 録音と解析 ========= */
-const APP_URL = 'https://hanauta.ksvox.net/';
+const APP_URL = 'https://hanauta-garden.ksvox.net/';
 let AC = null, stream = null, analyser = null, recTimer = null, recStart = 0, frames = [];
 function autoPitch(buf, sr){
   let rms = 0; for (let i=0;i<buf.length;i++) rms += buf[i]*buf[i];
-  rms = Math.sqrt(rms / buf.length); if (rms < 0.012) return { f: 0, rms };
-  const size = buf.length; let best = -1, bestCorr = 0;
-  const minP = Math.floor(sr / 500), maxP = Math.floor(sr / 70);
-  let lastCorr = 1;
+  rms = Math.sqrt(rms / buf.length); if (rms < 0.008) return { f: 0, rms };
+  const size = buf.length;
+  let e0 = 0; for (let i=0;i<size;i++) e0 += buf[i]*buf[i];
+  if (e0 <= 0) return { f: 0, rms };
+  const minP = Math.floor(sr / 1000), maxP = Math.min(Math.floor(sr / 70), size - 2);
+  const corrs = new Float32Array(maxP + 1);
+  let maxCorr = 0, argmax = -1;
   for (let p = minP; p <= maxP; p++){
     let corr = 0; for (let i=0;i<size-p;i++) corr += buf[i]*buf[i+p];
-    corr /= (size - p);
-    if (corr > 0.9 && corr > lastCorr && corr > bestCorr){ bestCorr = corr; best = p; }
-    lastCorr = corr;
+    corrs[p] = corr / e0;                       // 正規化（0〜1）← 修正点
+    if (corrs[p] > maxCorr){ maxCorr = corrs[p]; argmax = p; }
   }
-  return { f: best > 0 ? sr / best : 0, rms };
+  if (maxCorr < 0.45) return { f: 0, rms };
+  let best = -1;                                 // オクターブ誤認防止：最大値の85%を超える最初の局所ピーク
+  for (let p = minP + 1; p < maxP; p++){
+    if (corrs[p] >= maxCorr * 0.85 && corrs[p] >= corrs[p-1] && corrs[p] >= corrs[p+1]){ best = p; break; }
+  }
+  if (best < 0) best = argmax;
+  if (best < 0) return { f: 0, rms };
+  // 放物線補間で精度を上げる
+  let shift = 0;
+  if (best > minP && best < maxP){
+    const a = corrs[best-1], b = corrs[best], c = corrs[best+1], d = a - 2*b + c;
+    if (d !== 0) shift = 0.5 * (a - c) / d;
+  }
+  return { f: sr / (best + shift), rms };
 }
 function analyzeFrames(fr){
   const voiced = fr.filter(x => x.f > 0);
