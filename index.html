@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ハナウタ・ガーデン | 鼻歌で咲く、世界にひとつの花</title>
+<meta name="description" content="30秒の鼻歌から、あなただけの花が咲く。声のメロディ・音の長さ・音数が、茎の形・花の種類・葉の数を決める不思議な庭。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+<style>
+  :root{ --ink:#2d2a26; --paper:#faf6ef; --accent:#c2456e; --accent2:#3f7a4e; --card:#fffdf8; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; background:var(--paper); color:var(--ink); }
+  .wrap{ max-width:520px; margin:0 auto; padding:0 14px 40px; }
+  .screen{ display:none; } .screen.on{ display:block; animation:fade .35s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  h1{ font-size:30px; text-align:center; margin:22px 0 2px; letter-spacing:.06em; }
+  .sub{ text-align:center; color:#7a7264; font-size:13px; margin:0 0 14px; }
+  .hero{ width:100%; border-radius:18px; box-shadow:0 10px 30px rgba(60,40,20,.22); display:block; }
+  .howto{ background:var(--card); border-radius:14px; padding:12px 16px; margin:14px 0; font-size:14px; line-height:1.9; box-shadow:0 2px 10px rgba(60,40,20,.08); }
+  .btn{ display:block; width:100%; border:none; border-radius:999px; padding:16px; font-size:18px; font-weight:700; cursor:pointer; margin:10px 0; font-family:inherit; }
+  .btn-main{ background:linear-gradient(135deg,#d9577f,#c2456e); color:#fff; box-shadow:0 6px 18px rgba(194,69,110,.35); }
+  .btn-sub{ background:#efe7d8; color:var(--ink); }
+  .btn-share{ background:linear-gradient(135deg,#4b8a5e,#3f7a4e); color:#fff; box-shadow:0 6px 18px rgba(63,122,78,.3); }
+  .btn:disabled{ opacity:.45; }
+  .bgs{ display:flex; gap:10px; margin:12px 0; }
+  .bgopt{ flex:1; border:3px solid transparent; border-radius:14px; overflow:hidden; cursor:pointer; padding:0; background:none; }
+  .bgopt img{ width:100%; height:110px; object-fit:cover; display:block; }
+  .bgopt.sel{ border-color:var(--accent); }
+  .bgopt span{ display:block; font-size:12px; padding:5px 0; background:var(--card); }
+  .stage-wrap{ position:sticky; top:0; z-index:5; background:var(--paper); padding-top:8px; }
+  canvas#stage{ width:100%; border-radius:16px; box-shadow:0 10px 30px rgba(60,40,20,.25); display:block; background:#20351f; }
+  .timer{ text-align:center; font-size:15px; margin:10px 0 2px; color:#7a7264; }
+  .timer b{ font-size:22px; color:var(--ink); }
+  .card{ background:var(--card); border-radius:16px; padding:16px 18px; margin:14px 0; box-shadow:0 2px 12px rgba(60,40,20,.1); }
+  .fname{ font-size:21px; font-weight:800; text-align:center; margin:2px 0; }
+  .fno{ text-align:center; color:#a08b62; font-size:12px; letter-spacing:.12em; margin-bottom:8px; }
+  .fintro{ font-size:13.5px; line-height:1.85; }
+  .hits{ font-size:13px; line-height:1.9; background:#f3efe3; border-radius:10px; padding:10px 14px; margin-top:10px; }
+  .hits b{ color:var(--accent); }
+  .note{ font-size:12px; color:#8a8172; line-height:1.7; text-align:center; margin:8px 0; }
+  .wiltbar{ height:8px; background:#e8e0cd; border-radius:99px; overflow:hidden; margin:8px 0 2px; }
+  .wiltbar i{ display:block; height:100%; background:linear-gradient(90deg,#d98a4b,#c2456e); width:100%; }
+  .brand{ text-align:center; font-size:11px; color:#a79c86; margin-top:18px; }
+  .brand a{ color:#a79c86; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- トップ -->
+  <section id="scr-home" class="screen on">
+    <h1>ハナウタ・ガーデン</h1>
+    <p class="sub">鼻歌で咲く、世界にひとつの花</p>
+    <img class="hero" src="hero.jpg" alt="ハナウタ・ガーデンの花">
+    <div class="howto">
+      🎵 スマホを口の前15cmに持って、30秒鼻歌をうたう<br>
+      🌱 メロディが茎になり、音の長さが葉になり、花が咲く<br>
+      🌸 咲いた花は図鑑カードにして持ち帰れる
+    </div>
+    <button class="btn btn-main" id="btn-to-setup">花を咲かせる</button>
+    <p class="brand">K's VOX オリジナルアプリ</p>
+  </section>
+
+  <!-- 場所えらび -->
+  <section id="scr-setup" class="screen">
+    <h1 style="font-size:22px;">① 場所をえらぶ</h1>
+    <div class="bgs" id="bgs"></div>
+    <h1 style="font-size:22px;">② うたいはじめる</h1>
+    <div class="howto">
+      スマホを口の前15cmくらいに持ってください。<br>
+      好きな歌でも、即興でもOK。30秒たつと自動で終わります。
+    </div>
+    <button class="btn btn-main" id="btn-start">🌱 花を育てる（30秒）</button>
+    <button class="btn btn-sub" id="btn-back-home">もどる</button>
+  </section>
+
+  <!-- 録音〜結果 -->
+  <section id="scr-play" class="screen">
+    <div class="stage-wrap"><canvas id="stage" width="900" height="1125"></canvas></div>
+    <p class="timer" id="timer"></p>
+    <button class="btn btn-main" id="btn-finish" style="display:none;">うたい終わる</button>
+
+    <div id="result" style="display:none;">
+      <div class="card">
+        <p class="fname" id="f-name"></p>
+        <p class="fno" id="f-no"></p>
+        <p class="fintro" id="f-intro"></p>
+      </div>
+      <div id="wiltbox">
+        <p class="timer" style="margin-bottom:0;">この花は <b id="wilt-sec">10</b> 秒で散ってしまいます</p>
+        <div class="wiltbar"><i id="wilt-fill"></i></div>
+      </div>
+      <button class="btn btn-share" id="btn-save">💾 満開のまま保存する</button>
+      <button class="btn btn-share" id="btn-share" style="background:linear-gradient(135deg,#5b7fa6,#42648c); box-shadow:0 6px 18px rgba(66,100,140,.3);">📤 シェアする</button>
+      <p class="note">保存・シェアされる画像は、ボタンを受け付けた瞬間に「満開の姿」で描き直したものです。<br>画面の花が散りはじめても、画像はいつも満開です。</p>
+      <button class="btn btn-sub" id="btn-again" style="display:none;">🌱 もう一度育てる</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+'use strict';
+/* ========= ユーティリティ ========= */
+const $ = id => document.getElementById(id);
+function hashStr(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h>>>0); }
+function rng(seed){ let a = seed>>>0; return ()=>{ a|=0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a>>>15, 1|a); t = t + Math.imul(t ^ t>>>7, 61|t) ^ t; return ((t ^ t>>>14)>>>0)/4294967296; }; }
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+
+/* ========= 素材カタログ ========= */
+const A = 'assets/';
+const FLOWERS = {
+  dahlia:     { label:'ダリア', petal:'petal-dahlia-pink.webp', bud:'bud-dahlia.webp', half:'half-dahlia.webp',
+                variants:{ redpink:{ top:'flower-dahlia-redpink.webp', top2:'flower-dahlia-redpink-2.webp', angle:['flower-dahlia-redpink-angle.webp','flower-dahlia-redpink-angle-g.webp'], front:'flower-dahlia-redpink-front-stem.webp' },
+                           purple:{ top:'flower-dahlia-purple.webp', angle:['flower-dahlia-purple-angle.webp'] } } },
+  rose:       { label:'バラ', petal:'petal-rose-red.webp', bud:'bud-rose.webp', half:'half-rose.webp',
+                variants:{ red:{ top:'flower-rose-red.webp', angle:['flower-rose-red-angle.webp'] },
+                           yellow:{ top:'flower-rose-yellow.webp', angle:['flower-rose-yellow-angle.webp'] } } },
+  lily:       { label:'ユリ', petal:'petal-lily-white.webp', bud:'bud-lily.webp', half:'half-lily.webp',
+                variants:{ whitepink:{ top:'flower-lily-whitepink.webp', angle:['flower-lily-whitepink-angle.webp'] },
+                           orange:{ top:'flower-lily-orange.webp', angle:['flower-lily-orange-angle.webp'], side:'flower-lily-orange-side.webp' } } },
+  gerbera:    { label:'ガーベラ', petal:'petal-gerbera-orange.webp', bud:'bud-gerbera.webp', half:null,
+                variants:{ red:{ top:'flower-gerbera-red.webp', angle:['flower-gerbera-red-angle.webp','flower-gerbera-red-angle-g.webp'], side:'flower-gerbera-red-side.webp' },
+                           white:{ top:'flower-gerbera-white.webp', angle:['flower-gerbera-white-angle.webp'] } } },
+  sunflower:  { label:'ヒマワリ', petal:'petal-gerbera-orange.webp', bud:null, half:null,
+                variants:{ yellow:{ top:'flower-sunflower-yellow.webp', top2:'flower-sunflower-yellow-2.webp', angle:['flower-sunflower-yellow-angle.webp'], side:'flower-sunflower-yellow-side.webp' },
+                           orange:{ top:'flower-sunflower-orange.webp', angle:['flower-sunflower-orange-angle.webp'] } } },
+  anemone:    { label:'アネモネ', petal:'petal-dahlia-pink.webp', bud:null, half:null,
+                variants:{ purple:{ top:'flower-anemone-purple.webp', angle:['flower-anemone-purple-angle.webp'] },
+                           red:{ top:'flower-anemone-red.webp' } } },
+  ranunculus: { label:'ラナンキュラス', petal:'petal-rose-pink.webp', bud:null, half:'half-gerbera.webp',
+                variants:{ pink:{ top:'flower-ranunculus-pink.webp', angle:['flower-ranunculus-pink-angle.webp'] },
+                           orange:{ top:'flower-ranunculus-orange.webp' } } },
+  daisy:      { label:'デイジー', petal:'petal-lily-white.webp', bud:null, half:null, cluster:'cluster-daisy-natural.webp',
+                variants:{ white:{ top:'flower-daisy-white.webp' }, pink:{ top:'flower-daisy-pink.webp' } } },
+  smallblue:  { label:'ワスレナグサ', petal:'petal-lily-white.webp', bud:null, half:null, cluster:'cluster-smallblue-natural.webp',
+                variants:{ blue:{ top:'flower-small-blue.webp' } } },
+  smallpink:  { label:'ニチニチソウ', petal:'petal-rose-pink.webp', bud:null, half:null,
+                variants:{ pinkwhite:{ top:'flower-small-pinkwhite.webp' } } },
+  fantasy_rainbow:{ label:'虹の花', petal:'petal-dahlia-pink.webp', bud:null, half:null,
+                variants:{ main:{ top:'flower-fantasy-rainbow.webp', top2:'flower-fantasy-rainbow-2.webp' } } },
+  fantasy_crystal:{ label:'水晶の花', petal:'petal-fantasy-crystal.webp', bud:null, half:null,
+                variants:{ main:{ top:'flower-fantasy-crystal.webp', top2:'flower-fantasy-crystal-2.webp', angle:['flower-fantasy-crystal-angle2.webp'] } } },
+  fantasy_feather:{ label:'羽根の花', petal:'petal-rose-pink.webp', bud:null, half:null,
+                variants:{ main:{ top:'flower-fantasy-feather.webp', top2:'flower-fantasy-feather-2.webp' } } },
+  fantasy_galaxy:{ label:'星屑の花', petal:'petal-fantasy-crystal.webp', bud:null, half:null,
+                variants:{ main:{ top:'flower-fantasy-galaxy.webp', top2:'flower-fantasy-galaxy-2.webp', angle:['flower-fantasy-galaxy-angle.webp','flower-fantasy-galaxy-angle2.webp'] } } },
+  fantasy_lantern:{ label:'灯の花', petal:'petal-gerbera-orange.webp', bud:null, half:null,
+                variants:{ main:{ top:'flower-fantasy-lantern.webp', top2:'flower-fantasy-lantern-2.webp', angle:['flower-fantasy-lantern-angle2.webp'] } } },
+  fantasy_swirl:{ label:'渦の花', petal:'petal-rose-pink.webp', bud:null, half:null,
+                variants:{ main:{ top:'flower-fantasy-swirl.webp', top2:'flower-fantasy-swirl-2.webp' } } },
+};
+const LEAVES = { round:'leaf-round.webp', narrow:'leaf-narrow.webp', sprig:'leaf-sprig.webp' };
+const FOLIAGE = ['foliage-base.webp','foliage-base-round.webp','foliage-spill.webp'];
+const BGS = {
+  field: { file:'bg-field-2.jpg', label:'昼の花畑', ground:0.845, horizon:0.30 },
+  window:{ file:'bg-window-2.jpg', label:'昼の窓辺', ground:0.585, horizon:0.20 },
+  night: { file:'bg-night-2.jpg', label:'夜の庭', ground:0.83, horizon:0.30 },
+};
+/* 音高クラス→花の系統（鮮やかさは音域で決まる） */
+const VIVID_POOL = ['dahlia','gerbera','sunflower','anemone','fantasy_galaxy','fantasy_rainbow','fantasy_lantern'];
+const MID_POOL   = ['rose','ranunculus','dahlia','fantasy_feather','fantasy_crystal','fantasy_swirl','lily'];
+const PALE_POOL  = ['lily','daisy','rose','fantasy_crystal','smallpink','gerbera'];
+const VARIANT_BY_PC = { // 音高クラス(0=C)ごとの色バリアント候補
+  dahlia:['redpink','purple'], rose:['red','yellow'], lily:['whitepink','orange'], gerbera:['red','white'],
+  sunflower:['yellow','orange'], anemone:['purple','red'], ranunculus:['pink','orange'], daisy:['white','pink'],
+};
+
+/* ========= 名づけ ========= */
+const PC_PREFIX = ['ド','ド','レ','レ','ミ','ファ','ファ','ソ','ソ','ラ','ラ','シ'];
+const ADJ = ['朝露の','月影の','そよ風の','星屑の','真珠の','琥珀の','夢うつつの','静寂の','陽だまりの','小夜の','暁の','夕凪の','雪解けの','蛍火の','天の川の','微笑みの','祈りの','旅立ちの','約束の','秘密の','永遠の','儚き','輝きの','囁きの'];
+const GENUS = ['ルミナ','セレーネ','オルフェ','ミーレ','ヴェーラ','カノン','アリア','ノクターン','ハルモニア','フローラ','エトワール','リベル'];
+const FORM = ['咲き','の冠','の調べ','の雫','の吐息','の輪舞','の灯','の羽'];
+const COLOR_WORD = { redpink:'紅に染まる', purple:'深い紫の', red:'深紅の', yellow:'黄金色の', whitepink:'白に淡く紅をさした', orange:'燃えるような橙の', white:'雪のように白い', pink:'淡い桃色の', pinkwhite:'桃と白の混じる', blue:'空の青を映した', main:'' };
+const FANTASY_WORD = { fantasy_galaxy:'星屑をちりばめた', fantasy_crystal:'水晶のように透きとおった', fantasy_rainbow:'虹を映した', fantasy_feather:'羽根のように柔らかな', fantasy_lantern:'灯火のようにほのかに光る', fantasy_swirl:'渦を巻く二色の' };
+function nameFlower(analysis, plant){
+  const r = rng(hashStr(analysis.fingerprint + ':' + plant.family + ':' + plant.variantKey));
+  const pc = ((Math.round(plant.meanMidi) % 12) + 12) % 12;
+  const adj = ADJ[Math.floor(r()*ADJ.length)], gen = GENUS[Math.floor(r()*GENUS.length)], form = FORM[Math.floor(r()*FORM.length)];
+  const name = `${PC_PREFIX[pc]}の音に咲く ${adj}${gen}${form}`;
+  /* 紹介文：ルールは明かさない。「どんな歌だったか」と「どんな花になったか」を情緒的に重ね、ヒントだけを置く */
+  const song = [];
+  if (analysis.rangeSemis >= 10) song.push('高く低く、大きくうねるような歌でした');
+  else if (analysis.rangeSemis <= 4) song.push('一本の糸のような、静かな歌でした');
+  else song.push('なだらかな丘を歩くような歌でした');
+  if (analysis.longestPhraseSec >= 6) song.push('長い息のフレーズが、途切れることなく続きました');
+  else if (analysis.noteCount >= 45) song.push('小鳥のさえずりのように、細やかな音が連なりました');
+  if (analysis.meanRms >= 0.55) song.push('よく響く、張りのある声でした');
+  else if (analysis.meanRms <= 0.2) song.push('囁くような、やさしい声でした');
+  if (analysis.meanBrightness >= 0.55) song.push('明るく澄んだ音色が、光を呼んだようです');
+  else if (analysis.meanBrightness <= 0.25) song.push('深く温かい音色が、土の底まで届いたようです');
+  const colorW = FANTASY_WORD[plant.family] || COLOR_WORD[plant.variantKey] || '';
+  const sizeW = plant.headSize >= 300 ? '大きく堂々と' : plant.headSize >= 200 ? '凛として' : '慎ましくも愛らしく';
+  const flowerCore = FANTASY_WORD[plant.family] ? `${colorW}花` : `${colorW}${plant.familyLabel}に似た花`;
+  const flower = `その歌に応えて、${flowerCore}が、${sizeW}開きました`;
+  const closing = ['この花は、あなたの声の記録そのものです。','同じ歌をうたえば、また同じ花に会えるでしょう。','世界中を探しても、この一輪はここにしか咲きません。','歌が終わっても、この花の時間はここに残ります。'][Math.floor(r()*4)];
+  const intro = song.join('。') + '。' + flower + '。' + closing;
+  return { name, intro };
+}
+
+/* ========= 庭プラン生成（純粋データ：声→株の設計図） ========= */
+/* analysis: { phrases:[{start,end,notes:[{t,midi,dur}],meanMidi,meanRms}], noteCount, totalNotes,
+               rangeSemis, meanBrightness, fingerprint, longestPhraseSec, totalSec } */
+function chooseFamily(analysis, phrase, r){
+  const vivid = clamp((analysis.rangeSemis - 4) / 14, 0, 1); // 音域が広いほど鮮やか
+  let pool;
+  const roll = r();
+  if (phrase.durSec < 1.6) pool = ['smallblue','smallpink','daisy'];           // 短いフレーズは小花
+  else if (vivid > 0.55 && roll < 0.75) pool = VIVID_POOL;
+  else if (vivid < 0.3 && roll < 0.7) pool = PALE_POOL;
+  else pool = MID_POOL;
+  return pool[Math.floor(r()*pool.length)];
+}
+function buildGarden(analysis, bgKey, W, H){
+  const bg = BGS[bgKey];
+  const groundY = H * bg.ground;
+  const r = rng(hashStr(analysis.fingerprint + ':' + bgKey));
+  const phrases = analysis.phrases.slice(0, 6);
+  const n = Math.max(1, phrases.length);
+  const leafKind = analysis.meanBrightness > 0.5 ? 'round' : (analysis.meanBrightness < 0.32 ? 'narrow' : 'sprig');
+  const plants = phrases.map((ph, i) => {
+    const pr = rng(hashStr(analysis.fingerprint + ':p' + i));
+    const family = chooseFamily(analysis, ph, pr);
+    const fam = FLOWERS[family];
+    const varKeys = Object.keys(fam.variants);
+    const variantKey = (VARIANT_BY_PC[family] && VARIANT_BY_PC[family].length)
+      ? VARIANT_BY_PC[family][Math.abs(Math.round(ph.meanMidi)) % VARIANT_BY_PC[family].length]
+      : varKeys[Math.floor(pr()*varKeys.length)];
+    const v = fam.variants[variantKey] || fam.variants[varKeys[0]];
+    // 配置：フレーズの時刻順に左→右、奥行きは交互
+    const lane = (i % 2 === 0) ? 0 : 1;                    // 0=奥 1=手前
+    const baseX = W * (0.16 + 0.68 * (n === 1 ? 0.5 : i/(n-1))) + (pr()-0.5) * W * 0.05;
+    const baseY = groundY + lane * H * 0.035 + pr() * H * 0.012;
+    const depthScale = lane === 0 ? 0.78 : 1.0;
+    // 茎の輪郭：フレーズ内の音高推移
+    const pts = [];
+    const heightPx = H * (0.30 + clamp(ph.durSec/9, 0, 0.25)) * depthScale * (0.9 + pr()*0.2);
+    const notes = ph.notes.length ? ph.notes : [{ t: ph.start, midi: ph.meanMidi, dur: ph.durSec }];
+    const mMin = Math.min(...notes.map(x=>x.midi)), mMax = Math.max(...notes.map(x=>x.midi));
+    const seg = Math.max(4, Math.min(14, notes.length + 3));
+    for (let s = 0; s <= seg; s++){
+      const tt = s / seg;
+      const note = notes[Math.min(notes.length-1, Math.floor(tt * notes.length))];
+      const bend = ((note.midi - ph.meanMidi) / Math.max(4, (mMax - mMin))) * W * 0.045;
+      pts.push({ x: baseX + bend + Math.sin(tt * Math.PI) * (pr()-0.5) * 6, y: baseY - heightPx * tt, t: tt });
+    }
+    // 葉：音符の節目ごとに、長さ∝音符の長さ
+    const leaves = notes.map((note, ni) => ({
+      t: clamp((note.t - ph.start) / Math.max(0.1, ph.durSec), 0.05, 0.92),
+      side: ni % 2 === 0 ? 1 : -1,
+      scale: clamp(0.5 + note.dur / 1.6, 0.5, 1.9),
+      file: LEAVES[leafKind],
+    })).filter((_, idx) => idx < 16);
+    // 花の大きさ：フレーズの長さで決まる
+    const headSize = (ph.durSec < 1.6 ? W * 0.16 : ph.durSec < 4 ? W * 0.24 : ph.durSec < 7 ? W * 0.32 : W * 0.38) * depthScale;
+    // 画角の選択：主役（最大フレーズ）は斜め、花が端なら横向き候補
+    const isMain = ph.durSec === Math.max(...phrases.map(p=>p.durSec));
+    let view = 'top', file = v.top, flip = false;
+    const edge = (baseX < W*0.3 || baseX > W*0.7);
+    if (fam.cluster && ph.durSec < 1.6){ view = 'cluster'; file = fam.cluster; }
+    else if (isMain && v.front && i === Math.floor(n/2) && pr() < 0.35){ view = 'front'; file = v.front; }
+    else if (edge && v.side && pr() < 0.55){ view = 'side'; file = v.side; flip = baseX > W/2; }
+    else if (v.angle && v.angle.length){ view = 'angle'; file = v.angle[Math.floor(pr()*v.angle.length)]; flip = baseX > W/2 && pr() < 0.5; }
+    else if (v.top2 && pr() < 0.4){ file = v.top2; }
+    const foliageLayers = clamp(Math.round(analysis.noteCount / 14), 1, 3);
+    return {
+      i, family, familyLabel: fam.label, variantKey, view, file, flip,
+      bud: fam.bud, half: fam.half, petal: fam.petal,
+      baseX, baseY, pts, heightPx, headSize, leaves, meanMidi: ph.meanMidi,
+      stemW: clamp(3 + ph.meanRms * 26, 3, 13) * depthScale,
+      foliage: FOLIAGE[Math.floor(pr()*FOLIAGE.length)], foliageLayers, foliageW: headSize * (1.15 + foliageLayers * 0.22),
+      swayPhase: pr() * Math.PI * 2, seed: Math.floor(pr()*1e9),
+    };
+  });
+  // 奥の株から描く
+  plants.sort((a,b)=>a.baseY-b.baseY);
+  const main = plants.reduce((m,p)=> (p.headSize > (m?m.headSize:0) ? p : m), null);
+  return { plants, main, bgKey };
+}
+
+/* ========= 画像ロード ========= */
+const IMG = {};
+function loadImg(file){
+  if (!file) return Promise.resolve(null);
+  if (IMG[file]) return IMG[file];
+  IMG[file] = new Promise(res => { const im = new Image(); im.onload = ()=>res(im); im.onerror = ()=>res(null); im.src = A + file; });
+  return IMG[file];
+}
+async function preloadGarden(garden, bgKey){
+  const files = new Set([BGS[bgKey].file]);
+  garden.plants.forEach(p => { files.add(p.file); files.add(p.bud); files.add(p.half); files.add(p.petal); files.add(p.foliage); p.leaves.forEach(l=>files.add(l.file)); });
+  await Promise.all([...files].map(loadImg));
+  garden.bgImg = await loadImg(BGS[bgKey].file);
+  for (const p of garden.plants){
+    p.img = await loadImg(p.file); p.budImg = await loadImg(p.bud); p.halfImg = await loadImg(p.half);
+    p.petalImg = await loadImg(p.petal); p.foliageImg = await loadImg(p.foliage);
+    for (const l of p.leaves) l.img = await loadImg(l.file);
+  }
+}
+/* ========= 描画 ========= */
+function curvePoint(pts, t){
+  const f = t * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(f)), u = f - i;
+  return { x: lerp(pts[i].x, pts[i+1].x, u), y: lerp(pts[i].y, pts[i+1].y, u) };
+}
+function drawImageFit(ctx, img, cx, cy, size, rot, flip, alpha){
+  if (!img) return;
+  const s = size / Math.max(img.width, img.height);
+  const w = img.width * s, h = img.height * s;
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot || 0); ctx.scale(flip ? -1 : 1, 1);
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.drawImage(img, -w/2, -h/2, w, h); ctx.restore();
+}
+function drawPlant(ctx, p, prog, sway){
+  // 茂み（株元）
+  if (prog > 0.02 && p.foliageImg){
+    const fw = p.foliageW * clamp(prog * 1.6, 0, 1);
+    for (let li = 0; li < p.foliageLayers; li++)
+      drawImageFit(ctx, p.foliageImg, p.baseX + (li - (p.foliageLayers-1)/2) * fw * 0.22, p.baseY - li * 4, fw * (1 - li*0.16), 0, li % 2 === 1, 1);
+  }
+  // 茎（成長分だけ）
+  const upto = clamp(prog, 0, 1);
+  if (upto > 0.01){
+    ctx.save(); ctx.lineCap = 'round';
+    const steps = Math.max(2, Math.floor(upto * 40));
+    for (let s = 0; s < steps; s++){
+      const t0 = s / 40, t1 = (s + 1) / 40; if (t0 > upto) break;
+      const a = curvePoint(p.pts, t0), b = curvePoint(p.pts, Math.min(t1, upto));
+      const wdt = p.stemW * (1 - t0 * 0.45);
+      ctx.strokeStyle = '#2e5c24'; ctx.lineWidth = wdt;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.strokeStyle = 'rgba(120,170,90,0.55)'; ctx.lineWidth = Math.max(1, wdt * 0.35);
+      ctx.beginPath(); ctx.moveTo(a.x - wdt*0.2, a.y); ctx.lineTo(b.x - wdt*0.2, b.y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // 葉（音符の位置に、成長が届いたら開く）
+  for (const l of p.leaves){
+    const lp = clamp((prog - l.t) / 0.12, 0, 1); if (lp <= 0) continue;
+    const pos = curvePoint(p.pts, l.t);
+    const size = p.headSize * 0.34 * l.scale * lp;
+    const ang = l.side * (0.7 + 0.3 * Math.sin(l.t * 9 + p.seed));
+    ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(ang + (sway || 0) * 0.4);
+    ctx.scale(l.side, 1);
+    if (l.img) ctx.drawImage(l.img, 0, -size * (l.img.height / l.img.width) / 2, size, size * (l.img.height / l.img.width));
+    ctx.restore();
+  }
+  // 花（蕾→半開き→満開、またはスケールイン）
+  const tip = curvePoint(p.pts, 1);
+  const attachY = tip.y + (p.view === 'angle' || p.view === 'side' ? p.headSize * 0.18 : 0);
+  if (p.budImg && p.halfImg){
+    if (prog > 0.55 && prog <= 0.8) drawImageFit(ctx, p.budImg, tip.x, attachY - p.headSize*0.1, p.headSize * 0.4 * clamp((prog-0.55)/0.25,0,1), sway || 0, p.flip, 1);
+    else if (prog > 0.8 && prog <= 0.93){ const u = (prog-0.8)/0.13; drawImageFit(ctx, p.halfImg, tip.x, attachY - p.headSize*0.06, p.headSize * (0.45 + 0.3*u), sway || 0, p.flip, 1); }
+    else if (prog > 0.93){ const u = clamp((prog-0.93)/0.07, 0, 1); const pop = 1 + Math.sin(u * Math.PI) * 0.05; drawImageFit(ctx, p.img, tip.x, attachY, p.headSize * u * pop, sway || 0, p.flip, 1); }
+  } else if (prog > 0.8){
+    const u = clamp((prog-0.8)/0.2, 0, 1); const pop = 1 + Math.sin(u * Math.PI) * 0.05;
+    const cyy = p.view === 'cluster' ? p.baseY - p.headSize * 0.32 : attachY;
+    drawImageFit(ctx, p.img, tip.x, cyy, p.headSize * (p.view === 'cluster' ? 1.5 : 1) * u * pop, sway || 0, p.flip, 1);
+  }
+}
+function drawGarden(ctx, garden, W, H, plantProg, swayT, gradeAlpha){
+  ctx.clearRect(0, 0, W, H);
+  if (garden.bgImg) ctx.drawImage(garden.bgImg, 0, 0, W, H);
+  for (const p of garden.plants){
+    const sway = swayT == null ? 0 : Math.sin(swayT * 0.0011 + p.swayPhase) * 0.012;
+    drawPlant(ctx, p, plantProg[p.i] == null ? 1 : plantProg[p.i], sway * p.heightPx * 0.02);
+  }
+  if (gradeAlpha){ // 統一グレーディング
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(255,190,90,0.05)'); g.addColorStop(1, 'rgba(20,30,60,0.07)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+}
+
+/* ========= 録音と解析 ========= */
+const APP_URL = 'https://hanauta.ksvox.net/';
+let AC = null, stream = null, analyser = null, recTimer = null, recStart = 0, frames = [];
+function autoPitch(buf, sr){
+  let rms = 0; for (let i=0;i<buf.length;i++) rms += buf[i]*buf[i];
+  rms = Math.sqrt(rms / buf.length); if (rms < 0.012) return { f: 0, rms };
+  const size = buf.length; let best = -1, bestCorr = 0;
+  const minP = Math.floor(sr / 500), maxP = Math.floor(sr / 70);
+  let lastCorr = 1;
+  for (let p = minP; p <= maxP; p++){
+    let corr = 0; for (let i=0;i<size-p;i++) corr += buf[i]*buf[i+p];
+    corr /= (size - p);
+    if (corr > 0.9 && corr > lastCorr && corr > bestCorr){ bestCorr = corr; best = p; }
+    lastCorr = corr;
+  }
+  return { f: best > 0 ? sr / best : 0, rms };
+}
+function analyzeFrames(fr){
+  const voiced = fr.filter(x => x.f > 0);
+  if (voiced.length < 8) return null;
+  // セッション内正規化（端末差の吸収）
+  const rmsAll = fr.map(x=>x.rms).sort((a,b)=>a-b); const rmsRef = rmsAll[Math.floor(rmsAll.length*0.9)] || 0.2;
+  const phrases = []; let cur = null;
+  for (const x of fr){
+    if (x.f > 0){ if (!cur) cur = { frames: [] }; cur.frames.push(x); }
+    else if (cur){ if (cur.frames.length >= 4) phrases.push(cur); cur = null; }
+  }
+  if (cur && cur.frames.length >= 4) phrases.push(cur);
+  if (!phrases.length) return null;
+  const P = phrases.map(ph => {
+    const notes = []; let cn = null;
+    for (const x of ph.frames){
+      const midi = 69 + 12 * Math.log2(x.f / 440);
+      if (!cn || Math.abs(midi - cn.midi) > 0.9){ if (cn) notes.push(cn); cn = { t: x.t, midi, dur: 0.05, rms: x.rms }; }
+      else { cn.dur += 0.05; cn.midi = cn.midi * 0.7 + midi * 0.3; }
+    }
+    if (cn) notes.push(cn);
+    const good = notes.filter(n2 => n2.dur >= 0.09);
+    const use = good.length ? good : notes;
+    return {
+      start: ph.frames[0].t, end: ph.frames[ph.frames.length-1].t,
+      durSec: ph.frames[ph.frames.length-1].t - ph.frames[0].t + 0.05,
+      notes: use.map(n2 => ({ t: n2.t, midi: Math.round(n2.midi * 10) / 10, dur: n2.dur })),
+      meanMidi: use.reduce((s,n2)=>s+n2.midi,0) / use.length,
+      meanRms: clamp(ph.frames.reduce((s,x)=>s+x.rms,0) / ph.frames.length / Math.max(0.05, rmsRef), 0.05, 1),
+    };
+  });
+  const allNotes = P.flatMap(p => p.notes);
+  const midis = allNotes.map(n2 => n2.midi);
+  const fingerprint = allNotes.map(n2 => Math.round(n2.midi)).join(',') + '|' + allNotes.map(n2 => Math.round(n2.dur*10)).join(',');
+  return {
+    phrases: P, noteCount: allNotes.length,
+    rangeSemis: Math.max(...midis) - Math.min(...midis),
+    meanBrightness: clamp(fr.reduce((s,x)=>s+(x.cent||0),0) / fr.length / 4000, 0, 1),
+    meanRms: P.reduce((s,p)=>s+p.meanRms,0) / P.length,
+    longestPhraseSec: Math.max(...P.map(p=>p.durSec)),
+    longestNoteSec: Math.max(...allNotes.map(n2=>n2.dur)),
+    fingerprint, totalSec: fr[fr.length-1].t,
+  };
+}
+/* ========= オルゴール ========= */
+function pluck(freq, when, vol){
+  if (!AC) return;
+  const t = AC.currentTime + when;
+  const o = AC.createOscillator(), o2 = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.value = freq; o2.type = 'sine'; o2.frequency.value = freq * 3.01;
+  const g2 = AC.createGain(); g2.gain.value = 0.18;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol || 0.16, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(AC.destination);
+  o.start(t); o2.start(t); o.stop(t + 1.7); o2.stop(t + 1.7);
+}
+/* ========= 画面フロー ========= */
+const cv = $('stage'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+let selBg = 'field', garden = null, analysis = null, flowerInfo = null;
+let phase = 'idle', plantProg = {}, phaseT0 = 0, petals = [], wilt = null, rafId = null, saved = false;
+
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0, 0); }
+const bgsEl = $('bgs');
+Object.entries(BGS).forEach(([k, v]) => {
+  const b = document.createElement('button'); b.className = 'bgopt' + (k === selBg ? ' sel' : '');
+  b.innerHTML = `<img src="${A}${v.file}" alt=""><span>${v.label}</span>`;
+  b.onclick = () => { selBg = k; bgsEl.querySelectorAll('.bgopt').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); };
+  bgsEl.appendChild(b);
+});
+$('btn-to-setup').onclick = () => show('scr-setup');
+$('btn-back-home').onclick = () => show('scr-home');
+$('btn-again').onclick = () => { saved = false; wilt = null; petals = []; show('scr-setup'); };
+
+$('btn-start').onclick = async () => {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') await AC.resume();
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
+  } catch (e) { alert('マイクを使えませんでした。ブラウザのマイク許可を確認してください。'); return; }
+  show('scr-play'); $('result').style.display = 'none'; $('btn-finish').style.display = 'block';
+  const src = AC.createMediaStreamSource(stream);
+  analyser = AC.createAnalyser(); analyser.fftSize = 2048; src.connect(analyser);
+  frames = []; recStart = performance.now();
+  const buf = new Float32Array(analyser.fftSize), fbuf = new Float32Array(analyser.frequencyBinCount);
+  const tick = () => {
+    const t = (performance.now() - recStart) / 1000;
+    analyser.getFloatTimeDomainData(buf);
+    const { f, rms } = autoPitch(buf, AC.sampleRate);
+    analyser.getFloatFrequencyData(fbuf);
+    let num = 0, den = 0;
+    for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / analyser.fftSize) * m; den += m; }
+    frames.push({ t, f, rms, cent: den > 0 ? num / den : 0 });
+    $('timer').innerHTML = `うたっています… あと <b>${Math.max(0, 30 - Math.floor(t))}</b> 秒`;
+    drawRecording(t);
+    if (t >= 30) return finishRecording();
+    recTimer = setTimeout(tick, 50);
+  };
+  tick();
+};
+async function drawRecording(t){
+  const bgImg = await loadImg(BGS[selBg].file);
+  ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+  const voiced = frames.filter(x => x.f > 0).length;
+  const fol = await loadImg(FOLIAGE[0]);
+  if (fol && voiced > 4) drawImageFit(ctx, fol, W/2, H * BGS[selBg].ground + 6, 120 + Math.min(260, voiced * 2.2), 0, false, 0.95);
+}
+function finishRecording(){
+  clearTimeout(recTimer);
+  if (stream) stream.getTracks().forEach(tr => tr.stop());
+  $('btn-finish').style.display = 'none';
+  analysis = analyzeFrames(frames);
+  if (!analysis){ $('timer').textContent = '声がうまく拾えませんでした。もう少し近くで、はっきりうたってみてください。'; $('btn-again').style.display = 'block'; $('result').style.display = 'block'; return; }
+  startCeremony();
+}
+$('btn-finish').onclick = finishRecording;
+
+async function startCeremony(){
+  garden = buildGarden(analysis, selBg, W, H);
+  await preloadGarden(garden, selBg);
+  flowerInfo = nameFlower(analysis, garden.main);
+  plantProg = {}; garden.plants.forEach(p => plantProg[p.i] = 0);
+  phase = 'grow'; phaseT0 = performance.now(); saved = false;
+  garden.plants.forEach((p, idx) => setTimeout(() => pluck(440 * Math.pow(2, (p.meanMidi - 69) / 12), 0, 0.14), 600 + idx * 650));
+  $('timer').textContent = '花が育っています…';
+  runLoop();
+}
+function runLoop(){
+  cancelAnimationFrame(rafId);
+  const step = (now) => {
+    if (phase === 'grow'){
+      const el = (now - phaseT0) / 1000;
+      let done = true;
+      garden.plants.forEach((p, idx) => {
+        const local = clamp((el - idx * 0.65) / 2.4, 0, 1); plantProg[p.i] = local; if (local < 1) done = false;
+      });
+      drawGarden(ctx, garden, W, H, plantProg, now, false);
+      if (done){ phase = 'idle'; onBloom(); }
+    } else if (phase === 'idle' || phase === 'wilt'){
+      const w = phase === 'wilt' && wilt ? clamp(wilt.level, 0, 1) : 0;
+      ctx.save();
+      if (w > 0) ctx.filter = `saturate(${1 - 0.72 * w}) brightness(${1 - 0.22 * w})`;
+      drawGarden(ctx, garden, W, H, plantProg, now, w === 0);
+      ctx.restore();
+      updatePetals(now, w);
+    }
+    if (phase === 'grow' || phase === 'idle' || phase === 'wilt') rafId = requestAnimationFrame(step);
+  };
+  rafId = requestAnimationFrame(step);
+}
+function onBloom(){
+  $('timer').textContent = '';
+  $('f-name').textContent = flowerInfo.name;
+  $('f-no').textContent = 'Bloom No. ' + hashStr(analysis.fingerprint).toString(36).toUpperCase().padStart(7, '0');
+  $('f-intro').textContent = flowerInfo.intro;
+  $('result').style.display = 'block'; $('btn-again').style.display = 'none';
+  startWilt();
+  setTimeout(() => $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 350);
+}
+/* ========= 散る演出 ========= */
+function startWilt(){
+  wilt = { t0: performance.now(), level: 0, done: false };
+  phase = 'wilt';
+  const iv = setInterval(() => {
+    if (saved || !wilt){ clearInterval(iv); return; }
+    const el = (performance.now() - wilt.t0) / 1000;
+    wilt.level = clamp(el / 10, 0, 1);
+    $('wilt-sec').textContent = Math.max(0, Math.ceil(10 - el));
+    $('wilt-fill').style.width = (100 - wilt.level * 100) + '%';
+    if (el >= 10){
+      clearInterval(iv); wilt.done = true;
+      $('wiltbox').innerHTML = '<p class="timer">花は散りました。種が残っています 🌱</p>';
+      $('btn-again').style.display = 'block';
+      setTimeout(() => { if (!saved){ phase = 'idle'; } }, 2600);
+    }
+  }, 100);
+}
+function updatePetals(now, w){
+  if (w > 0.05 && Math.random() < w * 0.5 && petals.length < 90){
+    const p = garden.plants[Math.floor(Math.random() * garden.plants.length)];
+    const tip = curvePoint(p.pts, 1);
+    petals.push({ img: p.petalImg, x: tip.x + (Math.random() - 0.5) * p.headSize * 0.6, y: tip.y, vx: (Math.random() - 0.5) * 0.4, vy: 0.4 + Math.random() * 0.5, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.06, size: 16 + Math.random() * 22, ph: Math.random() * 6.28 });
+  }
+  petals = petals.filter(pt => pt.y < H + 40);
+  for (const pt of petals){
+    pt.ph += 0.05; pt.x += pt.vx + Math.sin(pt.ph) * 0.7; pt.y += pt.vy; pt.vy += 0.004; pt.rot += pt.vr;
+    if (pt.img) drawImageFit(ctx, pt.img, pt.x, pt.y, pt.size, pt.rot, false, 0.92);
+  }
+}
+/* ========= 保存・シェア（いつも満開で描き直す） ========= */
+function renderExport(){
+  const EW = 1080, EH = 1350;
+  const c = document.createElement('canvas'); c.width = EW; c.height = EH;
+  const e = c.getContext('2d');
+  e.fillStyle = '#fffdf8'; e.fillRect(0, 0, EW, EH);
+  const gh = 1010;
+  e.save(); e.beginPath(); e.rect(30, 30, EW - 60, gh); e.clip();
+  e.translate(30, 30); e.scale((EW - 60) / W, gh / H);
+  drawGarden(e, garden, W, H, {}, null, true);
+  e.restore();
+  e.fillStyle = '#2d2a26'; e.textAlign = 'center';
+  e.font = '700 44px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+  e.fillText(flowerInfo.name, EW / 2, gh + 108);
+  e.font = '24px sans-serif'; e.fillStyle = '#a08b62';
+  e.fillText('Bloom No. ' + hashStr(analysis.fingerprint).toString(36).toUpperCase().padStart(7, '0'), EW / 2, gh + 148);
+  e.font = '26px "Hiragino Sans",sans-serif'; e.fillStyle = '#4c463c';
+  const intro = flowerInfo.intro; let line = '', ly = gh + 196;
+  for (const ch of intro){ if (e.measureText(line + ch).width > EW - 140){ e.fillText(line, EW / 2, ly); ly += 38; line = ''; } line += ch; }
+  if (line) e.fillText(line, EW / 2, ly);
+  e.font = '22px sans-serif'; e.fillStyle = '#a79c86';
+  e.fillText('ハナウタ・ガーデン ' + APP_URL + '　©ボーカル道場K\'s VOX', EW / 2, EH - 26);
+  return c;
+}
+function stopWilt(){ saved = true; if (wilt) wilt.level = 0; phase = 'idle'; $('wiltbox').innerHTML = '<p class="timer">押し花にしました 🌸 満開のまま持ち帰れます</p>'; }
+$('btn-save').onclick = () => {
+  stopWilt();
+  renderExport().toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = 'hanauta-garden.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+};
+$('btn-share').onclick = async () => {
+  stopWilt();
+  const text = `鼻歌で咲かせた私だけの花「${flowerInfo.name}」🌸\nあなたの声でも咲かせてみて。\n${APP_URL}\n#ハナウタガーデン`;
+  const c = renderExport();
+  c.toBlob(async b => {
+    const file = new File([b], 'hanauta-garden.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){ try { await navigator.share({ files: [file], text }); } catch (e) {} }
+    else if (navigator.share){ try { await navigator.share({ text, url: APP_URL }); } catch (e) {} }
+    else window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+  }, 'image/png');
+};
+</script>
+</body>
+</html>
