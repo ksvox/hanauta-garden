@@ -49,6 +49,7 @@
 
   <!-- トップ -->
   <section id="scr-home" class="screen on">
+    <p class="brand">K's VOX オリジナルアプリ</p>
     <h1>ハナウタ・ガーデン</h1>
     <p class="sub">鼻歌で咲く、世界にひとつの花</p>
     <img class="hero" src="hero.jpg" alt="ハナウタ・ガーデンの花">
@@ -58,7 +59,6 @@
       🌸 咲いた花は図鑑カードにして持ち帰れる
     </div>
     <button class="btn btn-main" id="btn-to-setup">花を咲かせる</button>
-    <p class="brand">K's VOX オリジナルアプリ</p>
   </section>
 
   <!-- 場所えらび -->
@@ -86,16 +86,18 @@
         <p class="fno" id="f-no"></p>
         <p class="fintro" id="f-intro"></p>
       </div>
-      <div id="wiltbox">
-        <p class="timer" style="margin-bottom:0;">この花は <b id="wilt-sec">10</b> 秒で散ってしまいます</p>
-        <div class="wiltbar"><i id="wilt-fill"></i></div>
-      </div>
       <button class="btn btn-share" id="btn-save">💾 満開のまま保存する</button>
       <button class="btn btn-share" id="btn-share" style="background:linear-gradient(135deg,#5b7fa6,#42648c); box-shadow:0 6px 18px rgba(66,100,140,.3);">📤 シェアする</button>
+      <div id="wiltbox">
+        <p class="timer" style="margin-bottom:0;"><span id="wilt-label">この花は <b id="wilt-sec">10</b> 秒後に枯れてしまいます</span></p>
+        <div class="wiltbar"><i id="wilt-fill"></i></div>
+      </div>
       <p class="note">保存・シェアされる画像は、ボタンを受け付けた瞬間に「満開の姿」で描き直したものです。<br>画面の花が散りはじめても、画像はいつも満開です。</p>
       <button class="btn btn-sub" id="btn-again" style="display:none;">🌱 もう一度育てる</button>
     </div>
   </section>
+
+  <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
 
 </div>
 
@@ -178,7 +180,7 @@ function nameFlower(analysis, plant){
   const r = rng(hashStr(analysis.fingerprint + ':' + plant.family + ':' + plant.variantKey));
   const pc = ((Math.round(plant.meanMidi) % 12) + 12) % 12;
   const adj = ADJ[Math.floor(r()*ADJ.length)], gen = GENUS[Math.floor(r()*GENUS.length)], form = FORM[Math.floor(r()*FORM.length)];
-  const name = `${PC_PREFIX[pc]}の音に咲く ${adj}${gen}${form}`;
+  const name = `${adj} ${gen}${form}`;
   /* 紹介文：ルールは明かさない。「どんな歌だったか」と「どんな花になったか」を情緒的に重ね、ヒントだけを置く */
   const song = [];
   if (analysis.rangeSemis >= 10) song.push('高く低く、大きくうねるような歌でした');
@@ -463,6 +465,8 @@ const cv = $('stage'), ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 let selBg = 'field', garden = null, analysis = null, flowerInfo = null;
 let phase = 'idle', plantProg = {}, phaseT0 = 0, petals = [], wilt = null, rafId = null, saved = false;
+let showT0 = 0, showIv = null;
+const wiltboxHTML = $('wiltbox').innerHTML;
 
 function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0, 0); }
 const bgsEl = $('bgs');
@@ -474,7 +478,7 @@ Object.entries(BGS).forEach(([k, v]) => {
 });
 $('btn-to-setup').onclick = () => show('scr-setup');
 $('btn-back-home').onclick = () => show('scr-home');
-$('btn-again').onclick = () => { saved = false; wilt = null; petals = []; show('scr-setup'); };
+$('btn-again').onclick = () => { saved = false; wilt = null; petals = []; phase = 'off'; cancelAnimationFrame(rafId); clearInterval(showIv); garden = null; show('scr-setup'); };
 
 $('btn-start').onclick = async () => {
   try {
@@ -483,6 +487,7 @@ $('btn-start').onclick = async () => {
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
   } catch (e) { alert('マイクを使えませんでした。ブラウザのマイク許可を確認してください。'); return; }
   show('scr-play'); $('result').style.display = 'none'; $('btn-finish').style.display = 'block';
+  phase = 'off'; cancelAnimationFrame(rafId); clearInterval(showIv); garden = null; petals = []; wilt = null;
   const src = AC.createMediaStreamSource(stream);
   analyser = AC.createAnalyser(); analyser.fftSize = 2048; src.connect(analyser);
   frames = []; recStart = performance.now();
@@ -540,15 +545,23 @@ function runLoop(){
       });
       drawGarden(ctx, garden, W, H, plantProg, now, false);
       if (done){ phase = 'idle'; onBloom(); }
-    } else if (phase === 'idle' || phase === 'wilt'){
-      const w = phase === 'wilt' && wilt ? clamp(wilt.level, 0, 1) : 0;
+    } else if (phase === 'idle' || phase === 'show'){
+      drawGarden(ctx, garden, W, H, plantProg, now, true);
+    } else if (phase === 'wilt'){
+      const w = wilt ? clamp(wilt.level, 0, 1) : 0;
       ctx.save();
+      ctx.globalAlpha = 1 - 0.88 * w;
       if (w > 0) ctx.filter = `saturate(${1 - 0.72 * w}) brightness(${1 - 0.22 * w})`;
-      drawGarden(ctx, garden, W, H, plantProg, now, w === 0);
+      drawGarden(ctx, garden, W, H, plantProg, now, false);
       ctx.restore();
       updatePetals(now, w);
+      if (w >= 1){
+        phase = 'done';
+        loadImg(BGS[selBg].file).then(bgImg => { ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H); });
+        return;
+      }
     }
-    if (phase === 'grow' || phase === 'idle' || phase === 'wilt') rafId = requestAnimationFrame(step);
+    if (phase === 'grow' || phase === 'idle' || phase === 'show' || phase === 'wilt') rafId = requestAnimationFrame(step);
   };
   rafId = requestAnimationFrame(step);
 }
@@ -558,30 +571,43 @@ function onBloom(){
   $('f-no').textContent = 'Bloom No. ' + hashStr(analysis.fingerprint).toString(36).toUpperCase().padStart(7, '0');
   $('f-intro').textContent = flowerInfo.intro;
   $('result').style.display = 'block'; $('btn-again').style.display = 'none';
-  startWilt();
+  $('wiltbox').innerHTML = wiltboxHTML;
+  startShow();
   setTimeout(() => $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 350);
 }
-/* ========= 散る演出 ========= */
-function startWilt(){
-  wilt = { t0: performance.now(), level: 0, done: false };
-  phase = 'wilt';
-  const iv = setInterval(() => {
-    if (saved || !wilt){ clearInterval(iv); return; }
-    const el = (performance.now() - wilt.t0) / 1000;
-    wilt.level = clamp(el / 10, 0, 1);
-    $('wilt-sec').textContent = Math.max(0, Math.ceil(10 - el));
-    $('wilt-fill').style.width = (100 - wilt.level * 100) + '%';
-    if (el >= 10){
-      clearInterval(iv); wilt.done = true;
-      $('wiltbox').innerHTML = '<p class="timer">花は散りました。種が残っています 🌱</p>';
-      $('btn-again').style.display = 'block';
-      setTimeout(() => { if (!saved){ phase = 'idle'; } }, 2600);
+/* ========= 完成の表示（10秒）→ 枯れる（10秒）→ 土に戻る ========= */
+function startShow(){
+  phase = 'show'; showT0 = performance.now(); wilt = null;
+  clearInterval(showIv);
+  showIv = setInterval(() => {
+    if (phase !== 'show' && phase !== 'wilt'){ clearInterval(showIv); return; }
+    const now = performance.now();
+    if (phase === 'show'){
+      const el = (now - showT0) / 1000;
+      const sec = $('wilt-sec'); if (sec) sec.textContent = Math.max(0, Math.ceil(10 - el));
+      const fill = $('wilt-fill'); if (fill) fill.style.width = (100 - el * 5) + '%';
+      if (el >= 10) beginWilt(now);
+    } else if (phase === 'wilt' && wilt){
+      const el = (now - wilt.t0) / 1000;
+      wilt.level = clamp(el / 10, 0, 1);
+      const fill = $('wilt-fill'); if (fill) fill.style.width = (50 - wilt.level * 50) + '%';
+      if (el >= 10){
+        clearInterval(showIv); wilt.done = true;
+        $('wiltbox').innerHTML = '<p class="timer">花は散りました。種が残っています 🌱</p>';
+        $('btn-again').style.display = 'block';
+      }
     }
   }, 100);
 }
+function beginWilt(now){
+  phase = 'wilt'; wilt = { t0: now || performance.now(), level: 0, done: false };
+  const label = $('wilt-label'); if (label) label.textContent = '花が枯れていきます…';
+}
 function updatePetals(now, w){
-  if (w > 0.05 && Math.random() < w * 0.5 && petals.length < 90){
-    const p = garden.plants[Math.floor(Math.random() * garden.plants.length)];
+  if (w > 0.05 && Math.random() < w * 0.5 && petals.length < 70){
+    const blooming = garden.plants.filter(p => p.headSize >= 30);
+    if (!blooming.length) return;
+    const p = blooming[Math.floor(Math.random() * blooming.length)];
     const tip = curvePoint(p.pts, 1);
     petals.push({ img: p.petalImg, x: tip.x + (Math.random() - 0.5) * p.headSize * 0.6, y: tip.y, vx: (Math.random() - 0.5) * 0.4, vy: 0.4 + Math.random() * 0.5, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.06, size: 16 + Math.random() * 22, ph: Math.random() * 6.28 });
   }
@@ -615,9 +641,9 @@ function renderExport(){
   e.fillText('ハナウタ・ガーデン ' + APP_URL + '　©ボーカル道場K\'s VOX', EW / 2, EH - 26);
   return c;
 }
-function stopWilt(){ saved = true; if (wilt) wilt.level = 0; phase = 'idle'; $('wiltbox').innerHTML = '<p class="timer">押し花にしました 🌸 満開のまま持ち帰れます</p>'; }
+function onSavedAction(){ if (phase === 'show') beginWilt(); }
 $('btn-save').onclick = () => {
-  stopWilt();
+  onSavedAction();
   renderExport().toBlob(b => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(b); a.download = 'hanauta-garden.png'; a.click();
@@ -625,7 +651,7 @@ $('btn-save').onclick = () => {
   }, 'image/png');
 };
 $('btn-share').onclick = async () => {
-  stopWilt();
+  onSavedAction();
   const text = `鼻歌で咲かせた私だけの花「${flowerInfo.name}」🌸\nあなたの声でも咲かせてみて。\n${APP_URL}\n#ハナウタガーデン`;
   const c = renderExport();
   c.toBlob(async b => {
