@@ -22,7 +22,9 @@
   .howto-title{ text-align:center; font-weight:800; margin:0 0 4px; font-size:14px; letter-spacing:.14em; }
   h2.sec{ font-size:22px; margin:26px 0 2px; }
   .btn-big{ font-size:20px; padding:20px 16px; }
-  #result.gone .card, #result.gone #btn-save, #result.gone #btn-share, #result.gone .note, #result.gone #btn-zoom{ display:none !important; }
+  #result.gone .card, #result.gone .btnrow, #result.gone .note, #result.gone #btn-zoom{ display:none !important; }
+  .btnrow{ display:flex; gap:10px; }
+  .btnrow .btn{ flex:1; margin:6px 0; }
   h1{ font-size:30px; text-align:center; margin:22px 0 2px; letter-spacing:.06em; }
   .sub{ text-align:center; color:#7a7264; font-size:13px; margin:0 0 14px; }
   .hero{ width:100%; border-radius:18px; box-shadow:0 10px 30px rgba(60,40,20,.22); display:block; }
@@ -66,9 +68,9 @@
     </div>
     <div class="howto on-hero">
       <p class="howto-title">あそびかた</p>
-       ➀ スマホを口の前15cmに持って、30秒鼻歌をうたう🎵<br>
-       ➁ 歌声にある生命力が花に宿る🌱<br>
-       ➂ 咲いた花は図鑑カードにして持ち帰れる🌸
+      🎵 スマホを口の前15cmに持って、30秒鼻歌をうたう<br>
+      🌱 歌声にある生命力が花に宿る<br>
+      🌸 咲いた花は図鑑カードにして持ち帰れる
     </div>
   </header>
 
@@ -95,16 +97,18 @@
       <p class="fname" id="f-name"></p>
       <p class="fno" id="f-no"></p>
       <p class="fintro" id="f-intro"></p>
+      <button class="btn btn-sub" id="btn-zoom" style="margin:12px 0 2px; padding:11px; font-size:15px;">🔍 花のアップを見る</button>
     </div>
-    <button class="btn btn-sub" id="btn-zoom" style="margin-bottom:8px;">🔍 花のアップを見る</button>
-    <button class="btn btn-share" id="btn-save">💾 満開のまま保存する</button>
-    <button class="btn btn-share" id="btn-share" style="background:linear-gradient(135deg,#5b7fa6,#42648c); box-shadow:0 6px 18px rgba(66,100,140,.3);">📤 シェアする</button>
-    <div id="wiltbox">
-      <p class="timer" style="margin-bottom:0;"><span id="wilt-label">この花は <b id="wilt-sec">10</b> 秒後に枯れてしまいます</span></p>
-      <div class="wiltbar"><i id="wilt-fill"></i></div>
+    <div class="btnrow">
+      <button class="btn btn-share" id="btn-save">💾 保存する</button>
+      <button class="btn btn-share" id="btn-share" style="background:linear-gradient(135deg,#5b7fa6,#42648c); box-shadow:0 6px 18px rgba(66,100,140,.3);">📤 シェアする</button>
     </div>
-    <p class="note">保存・シェアされる画像は、ボタンを受け付けた瞬間に「満開の姿」で描き直したものです。<br>画面の花が散りはじめても、画像はいつも満開です。</p>
-    <button class="btn btn-sub" id="btn-again" style="display:none;">🌱 もう一度育てる</button>
+    <p class="note">保存・シェアされる画像は、いつも「満開の姿」で描き直したものです。</p>
+    <div class="btnrow">
+      <button class="btn btn-sub" id="btn-again">🌱 もう一度育てる</button>
+      <button class="btn btn-sub" id="btn-end">🌙 終了する</button>
+    </div>
+    <p class="note">「もう一度育てる」か「終了する」を押すと、花は枯れて土に還ります。</p>
   </div>
 
   <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
@@ -129,7 +133,7 @@ const APP_URL = 'https://hanauta-garden.ksvox.net/';
 const A3 = 'assets/', A4 = 'assets4/', A5 = 'assets5/';
 const BGS = {
   field: { file:'bg-field-2.jpg', label:'昼の花畑', ground:0.845 },
-  window:{ file:'bg-window-2.jpg', label:'昼の窓辺', ground:0.585 },
+  window:{ file:'bg-window-3.jpg', label:'昼の窓辺', ground:0.745 },
   night: { file:'bg-night-2.jpg', label:'夜の庭', ground:0.83 },
 };
 const ANCH = {"tulilily-full": {"w": 880, "h": 1220, "root": [0.397, 0.992], "head": [0.636, 0.274], "hb": [0.007, 0.316]}, "tulilily-fullb": {"w": 880, "h": 1150, "root": [0.695, 0.991], "head": [0.451, 0.294], "hb": [0.009, 0.323]}, "tulilily-bud": {"w": 664, "h": 1647, "root": [0.483, 0.991], "head": [0.632, 0.223], "hb": [0.009, 0.25]}, "tulilily-half": {"w": 880, "h": 1172, "root": [0.4, 0.991], "head": [0.622, 0.267], "hb": [0.008, 0.311]}, "mobius-full": {"w": 880, "h": 1086, "root": [0.197, 0.996], "head": [0.489, 0.312], "hb": [0.008, 0.378]}, "mobius-fullb": {"w": 880, "h": 981, "root": [0.755, 0.991], "head": [0.458, 0.308], "hb": [0.009, 0.361]}, "mobius-bud": {"w": 628, "h": 1732, "root": [0.28, 0.996], "head": [0.508, 0.181], "hb": [0.008, 0.185]}, "mobius-half": {"w": 880, "h": 1318, "root": [0.252, 0.998], "head": [0.486, 0.295], "hb": [0.008, 0.324]}, "candy-full": {"w": 880, "h": 999, "root": [0.269, 0.991], "head": [0.505, 0.3], "hb": [0.008, 0.352]}, "candy-fullb": {"w": 880, "h": 1010, "root": [0.764, 0.998], "head": [0.458, 0.298], "hb": [0.008, 0.352]}, "candy-bud": {"w": 880, "h": 1394, "root": [0.39, 0.991], "head": [0.503, 0.255], "hb": [0.009, 0.26]}, "candy-half": {"w": 880, "h": 938, "root": [0.274, 0.99], "head": [0.559, 0.299], "hb": [0.009, 0.342]}, "cotton-full": {"w": 880, "h": 1306, "root": [0.43, 0.993], "head": [0.503, 0.255], "hb": [0.008, 0.276]}, "cotton-fullb": {"w": 880, "h": 1481, "root": [0.684, 0.999], "head": [0.438, 0.245], "hb": [0.006, 0.252]}, "cotton-bud": {"w": 615, "h": 2537, "root": [0.253, 0.994], "head": [0.539, 0.15], "hb": [0.007, 0.131]}, "cotton-half": {"w": 880, "h": 1239, "root": [0.397, 0.994], "head": [0.558, 0.231], "hb": [0.012, 0.248]}, "bubble-full": {"w": 880, "h": 1901, "root": [0.527, 0.999], "head": [0.514, 0.251], "hb": [0.005, 0.258]}, "bubble-bud": {"w": 443, "h": 3019, "root": [0.42, 0.995], "head": [0.668, 0.241], "hb": [0.004, 0.329]}, "goldbell-full": {"w": 880, "h": 750, "root": [0.558, 0.984], "head": [0.433, 0.245], "hb": [0.008, 0.631]}, "goldbell-bud": {"w": 880, "h": 991, "root": [0.611, 0.99], "head": [0.433, 0.197], "hb": [0.01, 0.654]}, "goldbell-half": {"w": 880, "h": 703, "root": [0.647, 0.989], "head": [0.422, 0.276], "hb": [0.01, 0.622]}, "firefly-full": {"w": 880, "h": 728, "root": [0.626, 0.967], "head": [0.394, 0.232], "hb": [0.01, 0.607]}, "firefly-bud": {"w": 880, "h": 1169, "root": [0.648, 0.981], "head": [0.479, 0.227], "hb": [0.009, 0.498]}, "firefly-half": {"w": 880, "h": 707, "root": [0.564, 0.986], "head": [0.422, 0.243], "hb": [0.008, 0.614]}, "feather-full": {"w": 880, "h": 809, "root": [0.393, 0.99], "head": [0.52, 0.3], "hb": [0.01, 0.434]}, "feather-bud": {"w": 880, "h": 1868, "root": [0.309, 0.993], "head": [0.429, 0.312], "hb": [0.007, 0.489]}, "feather-half": {"w": 880, "h": 784, "root": [0.391, 0.99], "head": [0.524, 0.3], "hb": [0.009, 0.443]}, "moonring-full": {"w": 880, "h": 904, "root": [0.406, 0.989], "head": [0.41, 0.304], "hb": [0.01, 0.459]}, "moonring-bud": {"w": 880, "h": 885, "root": [0.384, 0.988], "head": [0.388, 0.289], "hb": [0.011, 0.437]}, "moonring-half": {"w": 880, "h": 851, "root": [0.365, 0.989], "head": [0.418, 0.309], "hb": [0.009, 0.418]}, "dahlia-full": {"w": 880, "h": 985, "root": [0.301, 0.991], "head": [0.517, 0.307], "hb": [0.009, 0.37]}, "rose-full": {"w": 880, "h": 807, "root": [0.297, 0.99], "head": [0.614, 0.297], "hb": [0.01, 0.362]}, "lily-full": {"w": 880, "h": 1283, "root": [0.29, 0.993], "head": [0.612, 0.304], "hb": [0.007, 0.341]}, "gerbera-full": {"w": 880, "h": 1100, "root": [0.3, 0.991], "head": [0.526, 0.243], "hb": [0.008, 0.266]}, "sunflower-full": {"w": 880, "h": 859, "root": [0.553, 0.999], "head": [0.556, 0.314], "hb": [0.01, 0.444]}, "anemone-full": {"w": 880, "h": 1358, "root": [0.365, 0.995], "head": [0.505, 0.265], "hb": [0.008, 0.275]}, "ranunculus-full": {"w": 880, "h": 1003, "root": [0.251, 0.99], "head": [0.5, 0.29], "hb": [0.01, 0.323]}, "marguerite-full": {"w": 880, "h": 877, "root": [0.263, 0.99], "head": [0.52, 0.236], "hb": [0.009, 0.25]}, "sprig-tulilily": {"w": 880, "h": 639, "root": [0.545, 0.998], "head": [0.536, 0.329], "hb": [0.016, 0.08]}, "sprig-mobius": {"w": 880, "h": 660, "root": [0.505, 0.998], "head": [0.521, 0.324], "hb": [0.017, 0.08]}, "sprig-rose": {"w": 880, "h": 608, "root": [0.49, 0.998], "head": [0.471, 0.338], "hb": [0.026, 0.08]}, "sprout-round": {"w": 880, "h": 474, "root": [0.499, 0.998], "head": [0.591, 0.288], "hb": [0.015, 0.382]}, "sprout-slender": {"w": 880, "h": 690, "root": [0.499, 0.999], "head": [0.571, 0.217], "hb": [0.041, 0.08]}, "sprout-red": {"w": 880, "h": 539, "root": [0.499, 0.998], "head": [0.491, 0.201], "hb": [0.017, 0.241]}, "sprout-leaves": {"w": 880, "h": 438, "root": [0.501, 0.998], "head": [0.526, 0.302], "hb": [0.014, 0.08]}, "galaxy-full": {"w": 880, "h": 1854, "root": [0.495, 0.999], "head": [0.49, 0.233], "hb": [0.005, 0.296]}, "galaxy-bud": {"w": 880, "h": 2245, "root": [0.316, 0.995], "head": [0.46, 0.185], "hb": [0.005, 0.164]}, "lantern-full": {"w": 880, "h": 1709, "root": [0.235, 0.992], "head": [0.475, 0.253], "hb": [0.007, 0.283]}, "lantern-bud": {"w": 668, "h": 1392, "root": [0.4, 0.991], "head": [0.522, 0.249], "hb": [0.009, 0.248]}, "crystal-full": {"w": 880, "h": 1204, "root": [0.462, 0.999], "head": [0.53, 0.298], "hb": [0.007, 0.356]}, "featherflower-full": {"w": 880, "h": 1227, "root": [0.321, 0.993], "head": [0.48, 0.289], "hb": [0.007, 0.339]}, "swirl-full": {"w": 880, "h": 1230, "root": [0.251, 0.998], "head": [0.549, 0.288], "hb": [0.007, 0.313]}, "rainbow-full": {"w": 880, "h": 746, "root": [0.189, 0.989], "head": [0.611, 0.302], "hb": [0.009, 0.429]}, "dahlia-bud": {"w": 880, "h": 1488, "root": [0.307, 0.991], "head": [0.526, 0.226], "hb": [0.009, 0.226]}, "rose-bud": {"w": 688, "h": 1081, "root": [0.4, 0.988], "head": [0.505, 0.296], "hb": [0.016, 0.34]}, "lily-bud": {"w": 880, "h": 1655, "root": [0.362, 0.992], "head": [0.594, 0.223], "hb": [0.008, 0.253]}, "gerbera-bud": {"w": 738, "h": 1517, "root": [0.513, 0.991], "head": [0.666, 0.192], "hb": [0.009, 0.225]}, "sunflower-bud": {"w": 816, "h": 1417, "root": [0.271, 0.991], "head": [0.57, 0.222], "hb": [0.009, 0.241]}, "anemone-bud": {"w": 708, "h": 1731, "root": [0.398, 0.992], "head": [0.54, 0.266], "hb": [0.008, 0.28]}, "ranunculus-bud": {"w": 749, "h": 1367, "root": [0.245, 0.99], "head": [0.459, 0.216], "hb": [0.01, 0.252]}, "marguerite-bud": {"w": 639, "h": 1365, "root": [0.356, 0.99], "head": [0.71, 0.234], "hb": [0.01, 0.325]}, "dahlia-half": {"w": 880, "h": 1191, "root": [0.313, 0.991], "head": [0.574, 0.258], "hb": [0.009, 0.281]}, "rose-half": {"w": 880, "h": 810, "root": [0.285, 0.99], "head": [0.608, 0.28], "hb": [0.01, 0.351]}, "lily-half": {"w": 880, "h": 1287, "root": [0.324, 0.992], "head": [0.607, 0.263], "hb": [0.007, 0.291]}, "gerbera-half": {"w": 880, "h": 1363, "root": [0.395, 0.991], "head": [0.607, 0.209], "hb": [0.009, 0.255]}, "sunflower-half": {"w": 880, "h": 963, "root": [0.305, 0.991], "head": [0.584, 0.298], "hb": [0.009, 0.34]}, "anemone-half": {"w": 850, "h": 1866, "root": [0.431, 0.994], "head": [0.55, 0.286], "hb": [0.008, 0.364]}, "ranunculus-half": {"w": 880, "h": 1126, "root": [0.252, 0.99], "head": [0.502, 0.283], "hb": [0.01, 0.298]}, "marguerite-half": {"w": 880, "h": 1012, "root": [0.272, 0.99], "head": [0.551, 0.221], "hb": [0.01, 0.239]}, "galaxy-half": {"w": 880, "h": 1771, "root": [0.227, 0.994], "head": [0.548, 0.224], "hb": [0.006, 0.228]}, "lantern-half": {"w": 880, "h": 950, "root": [0.421, 0.992], "head": [0.638, 0.279], "hb": [0.008, 0.318]}, "crystal-bud": {"w": 533, "h": 1989, "root": [0.489, 0.993], "head": [0.631, 0.252], "hb": [0.007, 0.263]}, "crystal-half": {"w": 880, "h": 1010, "root": [0.327, 0.991], "head": [0.624, 0.286], "hb": [0.009, 0.328]}, "featherflower-bud": {"w": 650, "h": 1842, "root": [0.398, 0.992], "head": [0.494, 0.181], "hb": [0.008, 0.172]}, "featherflower-half": {"w": 880, "h": 936, "root": [0.342, 0.991], "head": [0.551, 0.275], "hb": [0.009, 0.299]}, "swirl-bud": {"w": 880, "h": 1317, "root": [0.199, 0.991], "head": [0.388, 0.228], "hb": [0.008, 0.222]}, "swirl-half": {"w": 880, "h": 863, "root": [0.172, 0.991], "head": [0.566, 0.302], "hb": [0.009, 0.379]}, "rainbow-bud": {"w": 535, "h": 1829, "root": [0.343, 0.992], "head": [0.504, 0.173], "hb": [0.007, 0.15]}, "rainbow-half": {"w": 880, "h": 1166, "root": [0.214, 0.991], "head": [0.534, 0.284], "hb": [0.008, 0.314]}, "sakura-full": {"w": 880, "h": 809, "root": [0.393, 0.99], "head": [0.52, 0.3], "hb": [0.01, 0.434]}, "sakura-bud": {"w": 880, "h": 1868, "root": [0.309, 0.993], "head": [0.429, 0.312], "hb": [0.007, 0.489]}, "sakura-half": {"w": 880, "h": 784, "root": [0.391, 0.99], "head": [0.524, 0.3], "hb": [0.009, 0.443]}};
@@ -486,7 +490,7 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat){
   }
   /* 組み立て方式：花の数と育ち具合は成長シミュレーションで決まる */
   const flowers = simulateGrowth(group, feat || { stabCents: 20 });
-  const MH = clamp(600 * volScale * sf, 470, 730);
+  const MH = Math.min(clamp(600 * volScale * sf, 470, 730), Math.max(430, groundY - 205));
   const nodeFs = [0.32, 0.48, 0.40, 0.58, 0.52], lenFs = [0.40, 0.34, 0.37, 0.30, 0.33];
   let side = r() < 0.5 ? 1 : -1;
   const branches = [];
@@ -690,7 +694,6 @@ function drawHaloFrame(x, stockList, t01, part){
 let selBg = 'field', garden = null, analysis = null, flowerInfo = null;
 let phase = 'idle', petals = [], wilt = null, rafId = null, saved = false;
 let showT0 = 0, showIv = null;
-const wiltboxHTML = $('wiltbox').innerHTML;
 const bgsEl = $('bgs');
 Object.entries(BGS).forEach(([k, v]) => {
   const b = document.createElement('button'); b.className = 'bgopt' + (k === selBg ? ' sel' : '');
@@ -704,14 +707,15 @@ async function drawIdleStage(){
 }
 drawIdleStage();
 function stopAll(){ closeZoom(); phase = 'off'; cancelAnimationFrame(rafId); clearInterval(showIv); petals = []; wilt = null; garden = null; }
-$('btn-again').onclick = () => { stopAll(); $('result').style.display = 'none'; $('result').classList.remove('gone'); $('timer').textContent = ''; drawIdleStage(); $('btn-start').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+$('btn-again').onclick = () => { if (phase === 'show') beginWilt('again'); };
+$('btn-end').onclick = () => { if (phase === 'show') beginWilt('end'); };
 
 /* 録音中の簡易解析（成長表示用） */
 let liveSpecies = null, liveStocks = null, liveLockedAt = 0;
 async function refreshLive(t){
   const an = analyzeFrames(frames);
   if (!an) return;
-  if (!liveSpecies && (t >= 7 || an.phrases.length >= 3)){
+  if (!liveSpecies && (t >= 3.5 || an.phrases.length >= 2)){
     const sp = selectSpecies(an.feat, an.fingerprint);
     liveSpecies = sp; liveLockedAt = t;
     const color = pickColor(an.feat, sp, hashStr(an.fingerprint));
@@ -727,31 +731,78 @@ async function refreshLive(t){
     for (const st of liveStocks) st.imgs = await loadSpeciesImages(st.sp);
     garden = liveStocks;
   } else if (liveStocks){
-    /* 花の数が変わったら株を作り直す（配置を保つため seed と volScale は維持） */
-    const keep = liveStocks[0];
-    const rebuilt = buildStock(an.groups[0], liveSpecies, keep.color, keep.rootX, keep.groundY, keep.seedStr || 'live', keep.volScale || 1, an.feat);
-    if (rebuilt.stems.length !== keep.stems.length){
-      rebuilt.imgs = keep.imgs;
-      liveStocks[0] = rebuilt; garden = liveStocks;
-    }
+    /* 歌が進むたびに株を作り直し、成長カーブを最新の歌へ追随させる（配置・色・画像は維持） */
+    const gy = H * BGS[selBg].ground;
+    const volScale = clamp(0.85 + an.feat.meanRms * 1.2, 0.85, 1.25);
+    const two = !!an.groups[1];
+    const keep0 = liveStocks[0];
+    const nb0 = buildStock(an.groups[0], liveSpecies, keep0.color, two ? W * 0.3 : W / 2, gy, keep0.seedStr || 'live', volScale, an.feat);
+    nb0.imgs = keep0.imgs; liveStocks[0] = nb0;
+    if (two){
+      const keep1 = liveStocks[1];
+      if (keep1){
+        const nb1 = buildStock(an.groups[1], keep1.sp, keep1.color, W * 0.78, gy, keep1.seedStr || 'liveb', volScale, groupFeatures(an, an.groups[1]));
+        nb1.imgs = keep1.imgs; liveStocks[1] = nb1;
+      } else {
+        const sp2 = selectSpecies(groupFeatures(an, an.groups[1]), an.fingerprint + 'b');
+        const nb1 = buildStock(an.groups[1], sp2, pickColor(an.feat, sp2, hashStr(an.fingerprint + 'b')), W * 0.78, gy, an.fingerprint + 'b', volScale, an.feat);
+        nb1.imgs = await loadSpeciesImages(sp2); liveStocks.push(nb1);
+      }
+    } else if (liveStocks.length > 1) liveStocks.length = 1;
+    garden = liveStocks;
   }
+}
+let liveDispMap = new Map(), livePrevT = null, liveSproutImg = null;
+function drawCountChip(t){
+  const remain = Math.max(0, Math.ceil(30 - t));
+  const label = 'あと ' + remain + ' 秒';
+  ctx.save();
+  ctx.font = '700 30px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+  const tw = ctx.measureText(label).width + 46;
+  const x0 = W - tw - 18, y0 = 18;
+  ctx.fillStyle = 'rgba(30,24,16,0.55)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x0, y0, tw, 52, 26); else ctx.rect(x0, y0, tw, 52);
+  ctx.fill();
+  ctx.fillStyle = '#fff7e6'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x0 + tw / 2, y0 + 28);
+  ctx.restore();
 }
 async function drawLiveFrame(t){
   const bgImg = await loadImg(A3 + BGS[selBg].file);
   ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
   const gy = H * BGS[selBg].ground;
   if (!garden){
-    /* 0〜7秒：土と芽だけ（種はまだ決まらない） */
+    /* 種が決まるまで：土から芽が出る */
     ctx.save(); ctx.fillStyle = 'rgba(70,50,30,0.35)';
     ctx.beginPath(); ctx.ellipse(W/2, gy + 6, 60 + t * 9, 13 + t * 1.1, 0, 0, 6.29); ctx.fill(); ctx.restore();
+    if (!liveSproutImg) liveSproutImg = await loadImg(A4 + 'sprout-round.webp');
+    if (liveSproutImg && t > 0.4){
+      const sp = clamp((t - 0.4) / 3.0, 0, 1);
+      drawAnchored(ctx, liveSproutImg, 'sprout-round', W / 2, gy + 4, 14 + 92 * easeOut(sp), 0, false, Math.min(1, sp * 2));
+    }
+    drawCountChip(t);
     return;
   }
-  const progOf = {
-    global: clamp((t - 2) / 24, 0, 1),
-    sprout: clamp(t / 3, 0, 1),
-    stem: (st) => st.flower ? flowerProgAt(st.flower, t) : clamp((t - 9 - Math.max(0, st.birth - 9) * 0.35) / 15, 0, 1),
+  const dt = livePrevT === null ? 0.05 : clamp(t - livePrevT, 0, 0.25); livePrevT = t;
+  let curStock = 0;
+  const dispOf = (st, i) => {
+    const key = curStock + ':' + i;
+    const target = st.flower ? flowerProgAt(st.flower, t) : clamp((t - 8 - i * 2) / 16, 0, 1);
+    /* 時間の上限キャップで30秒全体に成長を配分する（早く歌えても一気に完成しない） */
+    const cap = i === 0 ? clamp((t - 2) / 24, 0, 1) : clamp((t - 6 - (i - 1) * 4) / 18, 0, 1);
+    const prev = liveDispMap.get(key) || 0;
+    const d = Math.max(prev, Math.min(target, cap, prev + dt * 0.5));
+    liveDispMap.set(key, d);
+    return d;
   };
-  for (const stock of garden) drawStock(ctx, stock, progOf, performance.now(), {});
+  const progOf = {
+    global: clamp((t - 1) / 20, 0, 1),
+    sprout: clamp(t / 4.5, 0, 1),
+    stem: dispOf,
+  };
+  garden.forEach((stock, si) => { curStock = si; drawStock(ctx, stock, progOf, performance.now(), {}); });
+  drawCountChip(t);
 }
 $('btn-start').onclick = async () => {
   try {
@@ -759,8 +810,31 @@ $('btn-start').onclick = async () => {
     if (AC.state === 'suspended') await AC.resume();
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
   } catch (e) { alert('マイクを使えませんでした。ブラウザのマイク許可を確認してください。'); return; }
-  $('result').style.display = 'none'; $('result').classList.remove('gone'); $('btn-finish').style.display = 'block'; $('stagewrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  stopAll(); liveSpecies = null; liveStocks = null; garden = null;
+  $('result').style.display = 'none'; $('result').classList.remove('gone'); $('stagewrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  stopAll(); liveSpecies = null; liveStocks = null; garden = null; liveDispMap = new Map(); livePrevT = null;
+  const btn = $('btn-start');
+  btn.disabled = true;
+  /* 3・2・1 カウントイン */
+  const bgImg = await loadImg(A3 + BGS[selBg].file);
+  const gy0 = H * BGS[selBg].ground;
+  for (const n of [3, 2, 1]){
+    btn.textContent = '🎤 ' + n;
+    $('timer').textContent = '歌う準備をしてください…';
+    ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+    ctx.save(); ctx.fillStyle = 'rgba(70,50,30,0.35)';
+    ctx.beginPath(); ctx.ellipse(W/2, gy0 + 6, 60, 13, 0, 0, 6.29); ctx.fill(); ctx.restore();
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,250,238,0.95)'; ctx.font = '800 190px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(30,20,5,0.45)'; ctx.shadowBlur = 24;
+    ctx.fillText(String(n), W / 2, H * 0.42);
+    ctx.restore();
+    pluck(660, 0, 0.10);
+    await new Promise(r => setTimeout(r, 750));
+  }
+  btn.textContent = '🌸 うたっています… あと 30 秒';
+  $('timer').textContent = '';
+  $('btn-finish').style.display = 'block';
   const src = AC.createMediaStreamSource(stream);
   analyser = AC.createAnalyser(); analyser.fftSize = 2048; src.connect(analyser);
   frames = []; recStart = performance.now();
@@ -774,7 +848,7 @@ $('btn-start').onclick = async () => {
     let num = 0, den = 0;
     for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / analyser.fftSize) * m; den += m; }
     frames.push({ t, f, rms, cent: den > 0 ? num / den : 0 });
-    $('timer').innerHTML = `うたっています… あと <b>${Math.max(0, 30 - Math.floor(t))}</b> 秒`;
+    btn.textContent = `🌸 うたっています… あと ${Math.max(0, 30 - Math.floor(t))} 秒`;
     if (t - lastLive > 0.45){ lastLive = t; refreshLive(t); }
     drawLiveFrame(t);
     if (t >= 30) return finishRecording();
@@ -782,12 +856,14 @@ $('btn-start').onclick = async () => {
   };
   tick();
 };
+function resetStartBtn(){ const b = $('btn-start'); b.disabled = false; b.textContent = '♬鼻歌を歌う(30秒)'; }
 function finishRecording(){
   clearTimeout(recTimer);
   if (stream) stream.getTracks().forEach(tr => tr.stop());
   $('btn-finish').style.display = 'none';
+  resetStartBtn();
   analysis = analyzeFrames(frames);
-  if (!analysis){ $('timer').textContent = '声がうまく拾えませんでした。もう少し近くで、はっきりうたってみてください。'; $('btn-again').style.display = 'block'; $('result').style.display = 'block'; $('f-name').textContent = ''; $('f-intro').textContent = ''; $('f-no').textContent = ''; return; }
+  if (!analysis){ $('timer').textContent = '声がうまく拾えませんでした。もう少し近くで、はっきりうたってみてください。'; return; }
   startCeremony();
 }
 $('btn-finish').onclick = finishRecording;
@@ -814,6 +890,12 @@ async function startCeremony(){
   flowerInfo = makeFlowerInfo(an, stocks[0]);
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
   $('timer').textContent = '花が咲きました 🌸';
+  /* ライブ表示の進捗を引き継ぎ、暗転→フェイドインで「ジャジャーン」と見せる */
+  stocks.forEach((stk, si) => stk.stems.forEach((st, i) => {
+    st.__to = st.finalProg !== undefined ? st.finalProg : 1;
+    const d = liveDispMap.get(si + ':' + i);
+    st.__from = d !== undefined ? d : Math.min(st.__to, 0.7);
+  }));
   phase = 'ceremony'; const t0 = performance.now();
   const step = (now) => {
     if (phase !== 'ceremony') return;
@@ -821,12 +903,15 @@ async function startCeremony(){
     const bgP = loadImg(A3 + BGS[selBg].file);
     bgP.then(bgImg => {
       ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
-      const progOf = { global: 1, sprout: 1, stem: (st) => st === hero ? lerp(heroFrom, 1, easeOut(clamp(el / 1.6, 0, 1))) : (st.finalProg !== undefined ? st.finalProg : clamp(0.72 + el / 1.6 * 0.28, 0, 1)) };
-      drawHaloFrame(ctx, garden, clamp(el / 1.2, 0, 1), 'halo');
+      const k = easeOut(clamp((el - 0.7) / 1.7, 0, 1));
+      const progOf = { global: 1, sprout: 1, stem: (st) => lerp(st.__from !== undefined ? st.__from : 0, st.__to !== undefined ? st.__to : 1, k) };
+      drawHaloFrame(ctx, garden, k, 'halo');
       for (const stock of garden) drawStock(ctx, stock, progOf, now, {});
-      drawHaloFrame(ctx, garden, clamp(el / 1.2, 0, 1), 'frame');
+      drawHaloFrame(ctx, garden, k, 'frame');
+      const dark = el < 0.7 ? 0.62 * (el / 0.7) : 0.62 * (1 - clamp((el - 0.7) / 1.7, 0, 1));
+      if (dark > 0.01){ ctx.save(); ctx.fillStyle = `rgba(12,8,4,${dark})`; ctx.fillRect(0, 0, W, H); ctx.restore(); }
     });
-    if (el < 1.9) rafId = requestAnimationFrame(step);
+    if (el < 2.5) rafId = requestAnimationFrame(step);
     else { phase = 'show'; runLoop(); onBloom(); }
   };
   rafId = requestAnimationFrame(step);
@@ -838,14 +923,15 @@ function runLoop(){
       ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
       if (!garden) return;
       if (phase === 'wilt'){
-        const w = wilt ? clamp(wilt.level, 0, 1) : 0;
+        if (wilt) wilt.level = clamp((now - wilt.t0) / 10000, 0, 1);
+        const w = wilt ? wilt.level : 0;
         ctx.save(); ctx.globalAlpha = 1 - 0.9 * w;
         if (w > 0) ctx.filter = `saturate(${1 - 0.72 * w}) brightness(${1 - 0.22 * w})`;
         const progOf = { global: 1, sprout: 1, stem: (st) => st.finalProg !== undefined ? st.finalProg : 1 };
         for (const stock of garden) drawStock(ctx, stock, progOf, now, {});
         ctx.restore();
         updatePetals(now, w);
-        if (w >= 1){ phase = 'done'; return; }
+        if (w >= 1){ finishWilt(); return; }
       } else {
         const progOf = { global: 1, sprout: 1, stem: (st) => st.finalProg !== undefined ? st.finalProg : 1 };
         drawHaloFrame(ctx, garden, phase === 'show' ? 1 : 0.6, 'halo');
@@ -863,12 +949,10 @@ function onBloom(){
   $('f-name').textContent = flowerInfo.name;
   $('f-no').textContent = 'Bloom No. ' + hashStr(analysis.fingerprint).toString(36).toUpperCase().padStart(7, '0');
   $('f-intro').textContent = flowerInfo.intro;
-  $('result').style.display = 'block'; $('result').classList.remove('gone'); $('btn-again').style.display = 'none';
-  $('wiltbox').innerHTML = wiltboxHTML;
-  startShow();
+  $('result').style.display = 'block'; $('result').classList.remove('gone');
   setTimeout(() => $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 350);
 }
-/* ========= 完成の表示（10秒）→ 枯れる（10秒）→ 土に戻る ========= */
+/* ========= 完成の表示 → 「もう一度育てる」「終了する」で枯れる → 土に戻る ========= */
 let zoomOpen = false;
 function closeZoom(){ zoomOpen = false; $('zoomModal').style.display = 'none'; }
 $('btn-zoom').onclick = () => {
@@ -881,38 +965,21 @@ $('btn-zoom').onclick = () => {
 };
 $('btn-zoom-close').onclick = closeZoom;
 $('zoomModal').addEventListener('click', e => { if (e.target === $('zoomModal')) closeZoom(); });
-function startShow(){
-  phase = 'show'; showT0 = performance.now(); wilt = null;
-  clearInterval(showIv);
-  let ivLast = performance.now();
-  showIv = setInterval(() => {
-    if (phase !== 'show' && phase !== 'wilt'){ clearInterval(showIv); return; }
-    const now = performance.now();
-    if (zoomOpen && phase === 'show') showT0 += (now - ivLast); /* ポップアップ表示中はカウント停止 */
-    ivLast = now;
-    if (phase === 'show'){
-      const el = (now - showT0) / 1000;
-      const sec = $('wilt-sec'); if (sec) sec.textContent = Math.max(0, Math.ceil(10 - el));
-      const fill = $('wilt-fill'); if (fill) fill.style.width = (100 - el * 5) + '%';
-      if (el >= 10) beginWilt(now);
-    } else if (phase === 'wilt' && wilt){
-      const el = (now - wilt.t0) / 1000;
-      wilt.level = clamp(el / 10, 0, 1);
-      const fill = $('wilt-fill'); if (fill) fill.style.width = (50 - wilt.level * 50) + '%';
-      if (el >= 10){
-        clearInterval(showIv); wilt.done = true;
-        $('wiltbox').innerHTML = '<p class="timer">花は散りました。種が残っています 🌱</p>';
-        $('btn-again').style.display = 'block';
-        drawIdleStage();
-      }
-    }
-  }, 100);
+function finishWilt(){
+  const mode = wilt ? wilt.mode : 'again';
+  phase = 'done'; wilt = null; petals = [];
+  $('result').style.display = 'none'; $('result').classList.remove('gone');
+  $('timer').textContent = '花は土に還りました 🌱';
+  drawIdleStage();
+  if (mode === 'again') setTimeout(() => $('btn-start').scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
+  else setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 350);
 }
-function beginWilt(now){
+function beginWilt(mode){
   closeZoom();
-  phase = 'wilt'; wilt = { t0: now || performance.now(), level: 0, done: false };
+  phase = 'wilt'; wilt = { t0: performance.now(), level: 0, mode: mode || 'again' };
   $('result').classList.add('gone');
-  const label = $('wilt-label'); if (label) label.textContent = '花が枯れていきます…';
+  $('timer').textContent = '花が枯れていきます…';
+  $('stagewrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   runLoop();
 }
 let petalImgs = [];
@@ -1012,9 +1079,7 @@ function renderExport(){
   e.fillText('ハナウタ・ガーデン ' + APP_URL + '　©ボーカル道場K\'s VOX', EW / 2, EH - 26);
   return c;
 }
-function onSavedAction(){ if (phase === 'show') beginWilt(); }
 $('btn-save').onclick = () => {
-  onSavedAction();
   renderExport().toBlob(b => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(b); a.download = 'hanauta-garden.png'; a.click();
@@ -1022,7 +1087,6 @@ $('btn-save').onclick = () => {
   }, 'image/png');
 };
 $('btn-share').onclick = async () => {
-  onSavedAction();
   const text = `鼻歌で咲かせた私だけの花「${flowerInfo.name}」🌸
 あなたの声でも咲かせてみて。
 ${APP_URL}
