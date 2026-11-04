@@ -273,15 +273,20 @@ function analyzeFrames(fr){
   if (cur) phrases.push(cur);
   const P = phrases.filter(p => p.frames.length >= 4).map(p => {
     const midis = p.frames.map(x => 69 + 12 * Math.log2(x.f / 440));
-    /* 音符へ丸める（中央値フィルタ） */
-    const notes = []; let seg = [midis[0]], segT = [p.frames[0].t];
+    /* 音符へ丸める（中央値フィルタ）。segsはビブラート測定用に生の音高列も残す */
+    const notes = [], segs = []; let seg = [midis[0]], segT = [p.frames[0].t];
+    const pushSeg = () => {
+      const med = seg.slice().sort((a,b)=>a-b)[seg.length>>1];
+      notes.push({ midi: med, dur: segT[segT.length-1] - segT[0] + 0.05, dev: seg.reduce((s,v)=>s+Math.abs(v-med),0)/seg.length });
+      segs.push({ midis: seg, t0: segT[0], t1: segT[segT.length-1] });
+    };
     for (let i = 1; i < midis.length; i++){
-      if (Math.abs(midis[i] - seg[seg.length-1]) > 0.75){ notes.push({ midi: seg.slice().sort((a,b)=>a-b)[seg.length>>1], dur: segT[segT.length-1] - segT[0] + 0.05, dev: seg.reduce((s,v)=>s+Math.abs(v-seg.slice().sort((a,b)=>a-b)[seg.length>>1]),0)/seg.length }); seg = [midis[i]]; segT = [p.frames[i].t]; }
+      if (Math.abs(midis[i] - seg[seg.length-1]) > 0.75){ pushSeg(); seg = [midis[i]]; segT = [p.frames[i].t]; }
       else { seg.push(midis[i]); segT.push(p.frames[i].t); }
     }
-    notes.push({ midi: seg.slice().sort((a,b)=>a-b)[seg.length>>1], dur: segT[segT.length-1] - segT[0] + 0.05, dev: seg.reduce((s,v)=>s+Math.abs(v-seg.slice().sort((a,b)=>a-b)[seg.length>>1]),0)/seg.length });
+    pushSeg();
     const good = notes.filter(n => n.dur >= 0.07);
-    return { start:p.start, end:p.end, durSec: p.end - p.start, notes: good.length ? good : notes,
+    return { start:p.start, end:p.end, durSec: p.end - p.start, notes: good.length ? good : notes, segs,
       meanRms: p.frames.reduce((s,x)=>s+x.rms,0)/p.frames.length,
       meanCent: p.frames.reduce((s,x)=>s+(x.cent||0),0)/p.frames.length,
       scaleKey: scaleFit(midis) };
@@ -300,10 +305,11 @@ function analyzeFrames(fr){
   const stabNotes = allNotes.filter(n => n.dur >= 0.22);
   const stabCents = stabNotes.length ? stabNotes.reduce((s,n)=>s+n.dev*100*n.dur,0)/stabNotes.reduce((s,n)=>s+n.dur,0) : 20;
   const stab = stabCents <= 30 ? 'very' : stabCents <= 58 ? 'almost' : 'none';
-  const rangePool = allNotes.filter(n => n.dur >= 0.12);
-  const rangeMidis = (rangePool.length >= 4 ? rangePool : allNotes).map(n => n.midi).sort((a,b)=>a-b);
-  const trimK = rangeMidis.length >= 10 ? Math.floor(rangeMidis.length * 0.08) : 0;
-  const rangeSemis = rangeMidis[rangeMidis.length - 1 - trimK] - rangeMidis[trimK];
+  /* 音域は「実際に届いた幅」そのもの（端の音を切り捨てると、跳躍して届いた音が消えてしまう）。
+     ごく短い音だけ誤検出対策で除く */
+  const rangePool = allNotes.filter(n => n.dur >= 0.15);
+  const rangeMidis = (rangePool.length >= 4 ? rangePool : allNotes).map(n => n.midi);
+  const rangeSemis = Math.max(...rangeMidis) - Math.min(...rangeMidis);
   const totalDur = P.reduce((s,p)=>s+p.durSec,0);
   const feat = {
     rangeSemis,
@@ -336,18 +342,130 @@ function analyzeFrames(fr){
     voicedSec: totalDur,
     medianPhraseSec: (()=>{ const ds = P.map(p=>p.durSec).sort((a,b)=>a-b); return ds[ds.length>>1]; })(),
   };
+  /* ===== ハミング前提の測定（v11） ===== */
+  /* 声域の高さ（テッシトゥーラ）: 全音の中央値 */
+  const sortedMidis = allMidis.slice().sort((a,b)=>a-b);
+  const tessitura = sortedMidis[sortedMidis.length>>1];
+  /* 音数 = 音高の変化回数（4秒あたり）。発音のないハミングでは区切りでなく変化を数える */
+  const changes = intervals.filter(v => Math.abs(v) >= 0.5).length;
+  const changesPer4s = totalDur > 0 ? changes / totalDur * 4 : 0;
+  /* フレーズ = 0.7秒以上の途切れで区切る（0.35秒分割のフレーズを連結し直す） */
+  const segDurs = []; let segStartT = P[0].start, segEndT = P[0].end, break70 = 0;
+  for (let i = 1; i < P.length; i++){
+    if (P[i].start - P[i-1].end >= 0.7){ segDurs.push(segEndT - segStartT); segStartT = P[i].start; break70++; }
+    segEndT = P[i].end;
+  }
+  segDurs.push(segEndT - segStartT);
+  const segSorted = segDurs.slice().sort((a,b)=>a-b);
+  const segMedianSec = segSorted[segSorted.length>>1];
+  /* ロングトーン: 1.5秒以上伸ばした音の合計（バラード型の「音の量」） */
+  const longToneSec = allNotes.filter(n => n.dur >= 1.5).reduce((s,n)=>s+n.dur,0);
+  const longToneRatio = totalDur > 0 ? longToneSec / totalDur : 0;
+  /* キーが特定できるか: 音の長さで重み付けした、1つの音階への収まり具合 */
+  const pcW = new Array(12).fill(0); let pcTot = 0;
+  allNotes.forEach(n => { const pc = ((Math.round(n.midi) % 12) + 12) % 12; pcW[pc] += n.dur; pcTot += n.dur; });
+  const MAJS = [0,2,4,5,7,9,11], MINS = [0,2,3,5,7,8,10];
+  let keyCov = 0;
+  for (let root = 0; root < 12; root++) for (const sc of [MAJS, MINS]){
+    let cov = 0; for (const d of sc) cov += pcW[(root + d) % 12];
+    if (pcTot > 0) keyCov = Math.max(keyCov, cov / pcTot);
+  }
+  const keyIdentifiable = keyCov >= 0.87 && allNotes.length >= 8;
+  /* ビブラート: 0.6秒以上伸ばした音の、ピッチの周期的な揺れの深さ */
+  let vibNotes = 0, vibDepthSum = 0;
+  P.forEach(p => (p.segs || []).forEach(sg => {
+    const dur = sg.t1 - sg.t0 + 0.05;
+    if (dur < 0.6 || sg.midis.length < 10) return;
+    const n = sg.midis.length, xs = sg.midis;
+    const meanX = xs.reduce((s,v)=>s+v,0)/n, meanT = (n-1)/2;
+    let num2 = 0, den2 = 0; for (let i = 0; i < n; i++){ num2 += (i-meanT)*(xs[i]-meanX); den2 += (i-meanT)*(i-meanT); }
+    const slope = den2 > 0 ? num2/den2 : 0;
+    const resid = xs.map((v,i) => v - (meanX + slope*(i-meanT)));
+    const sd = Math.sqrt(resid.reduce((s,v)=>s+v*v,0)/n);
+    const amp = sd * 1.41; /* 揺れの振幅（半音） */
+    let cross = 0; for (let i = 1; i < n; i++) if ((resid[i-1] < 0) !== (resid[i] < 0)) cross++;
+    const rate = cross / 2 / dur; /* 揺れの速さ Hz */
+    if (amp >= 0.24 && rate >= 2 && rate <= 9.5){ vibNotes++; vibDepthSum += amp; }
+  }));
+  const vibratoDepth = vibNotes ? (vibDepthSum / vibNotes) * 100 : 0; /* セント */
+  const vibratoPresent = vibNotes >= 2 || (vibNotes >= 1 && vibratoDepth >= 42);
+  /* 緩急: 4秒窓ごとの変化回数のコントラスト＋音の長さのばらつき */
+  const onsets = []; { P.forEach(p => { let t0 = p.start; p.notes.forEach(nt => { onsets.push(t0); t0 += nt.dur; }); }); }
+  const winCounts = [];
+  for (let w0 = 0; w0 + 4 <= 30.5; w0 += 2){
+    let c = 0; for (let i = 1; i < onsets.length; i++) if (onsets[i] >= w0 && onsets[i] < w0 + 4 && Math.abs(allNotes[i].midi - allNotes[i-1].midi) >= 0.5) c++;
+    if (c > 0) winCounts.push(c); /* 歌っていない窓は数えない */
+  }
+  const wMean = winCounts.length ? winCounts.reduce((s,v)=>s+v,0)/winCounts.length : 0;
+  /* 変化が少ない歌では窓の対比は偶然に左右されるので、平均2回以上の時だけ使う */
+  const winContrast = (winCounts.length >= 3 && wMean >= 2) ? (Math.max(...winCounts) - Math.min(...winCounts)) / wMean : 0;
+  const durMean = allNotes.reduce((s,n)=>s+n.dur,0)/Math.max(1,allNotes.length);
+  const durCV = durMean > 0 ? Math.sqrt(allNotes.reduce((s,n)=>s+(n.dur-durMean)*(n.dur-durMean),0)/Math.max(1,allNotes.length)) / durMean : 0;
+  const pacingScore = Math.max(winContrast, durCV * 0.8);
+  const pacingPresent = pacingScore >= 0.55 && winCounts.length >= 3;
+  /* 声の太さ = 倍音の豊かさ（とりあえずの指標。関門には使わない） */
+  const richVals = voiced.map(x => x.rich || 0);
+  const thickness = richVals.length ? clamp(richVals.reduce((s,v)=>s+v,0)/richVals.length / 0.75, 0, 1) : 0;
+  /* 音高の動きの型: つながり（3度まで/4度/5度以上）と、型5種を回数で測る */
+  const nIv = Math.max(1, intervals.length);
+  const shareLE2 = absI.filter(v => v <= 2.5).length / nIv;
+  let sameRuns = 0, maxSameRun = 1, runLen = 1;
+  for (const v of intervals){ if (Math.abs(v) <= 0.5){ runLen++; } else { if (runLen >= 3) sameRuns++; maxSameRun = Math.max(maxSameRun, runLen); runLen = 1; } }
+  if (runLen >= 3) sameRuns++; maxSameRun = Math.max(maxSameRun, runLen);
+  /* ハミングの同音反復は音符化すると1つの長い音に潰れてしまうので、フレーム列でも数える:
+     短い無音（0.09〜0.35秒）を挟んで同じ高さに戻る = 繰り返しとみなす */
+  {
+    const runs = []; let curRun = null;
+    for (const x of fr){
+      if (x.f > 0 && x.rms > 0.008){ if (!curRun) curRun = { midis: [], firstT: x.t, lastT: x.t }; curRun.midis.push(69 + 12 * Math.log2(x.f / 440)); curRun.lastT = x.t; }
+      else if (curRun){ runs.push(curRun); curRun = null; }
+    }
+    if (curRun) runs.push(curRun);
+    const bigRuns = runs.filter(r2 => r2.midis.length >= 2);
+    const medA = a => a.slice().sort((p2, q2) => p2 - q2)[a.length >> 1];
+    let chain = 1, chainCount = 0;
+    for (let i = 1; i < bigRuns.length; i++){
+      const gp = bigRuns[i].firstT - bigRuns[i-1].lastT;
+      if (gp >= 0.09 && gp <= 0.35 && Math.abs(medA(bigRuns[i].midis) - medA(bigRuns[i-1].midis)) <= 0.5){ chain++; maxSameRun = Math.max(maxSameRun, chain); }
+      else { if (chain >= 3) chainCount++; chain = 1; }
+    }
+    if (chain >= 3) chainCount++;
+    sameRuns = Math.max(sameRuns, chainCount);
+  }
+  let oscEvents = 0;
+  for (let i = 1; i < intervals.length; i++){
+    const a = intervals[i-1], b = intervals[i];
+    if (a && b && Math.sign(a) !== Math.sign(b) && Math.abs(a) >= 0.75 && Math.abs(a) <= 2.5 && Math.abs(b) >= 0.75 && Math.abs(b) <= 2.5 && Math.abs(a + b) <= 0.75) oscEvents++;
+  }
+  const midMoves = absI.filter(v => v >= 2.5 && v <= 4.5).length;
+  const octaveLeaps = absI.filter(v => v >= 11.5).length;
+  const pat = {
+    smooth: shareLE2 >= 0.75 ? 3 : shareLE2 >= 0.6 ? 2 : shareLE2 >= 0.45 ? 1 : 0,
+    step: clamp(Math.round((absI.filter(v => v >= 0.75 && v <= 2.5).length - oscEvents) / nIv * 4), 0, 3),
+    mid: midMoves >= 5 ? 3 : midMoves >= 3 ? 2 : midMoves >= 2 ? 1 : 0,
+    leap: clamp((leaps >= 4 ? 3 : leaps >= 2 ? 2 : leaps >= 1 ? 1 : 0) + (octaveLeaps >= 1 ? 0.5 : 0), 0, 3),
+    osc: oscEvents >= 4 ? 3 : oscEvents >= 2 ? 2 : oscEvents >= 1 ? 1 : 0,
+    same: sameRuns >= 2 ? 3 : sameRuns >= 1 ? 2 : maxSameRun >= 3 ? 1 : 0,
+    rise: (rises + falls) > 0 ? (rises / (rises + falls) >= 0.7 ? 3 : rises / (rises + falls) >= 0.6 ? 2 : rises / (rises + falls) >= 0.55 ? 1 : 0) : 0,
+    clear: keyIdentifiable ? (keyCov >= 0.93 ? 3 : 2) : 0,
+  };
+  Object.assign(feat, { tessitura, changesPer4s, segMedianSec, segFeat: Math.min(segMedianSec, 9), break70, longToneSec, longToneRatio,
+    keyCov, keyIdentifiable, vibratoDepth, vibratoPresent, vibNotes, pacingScore, pacingPresent,
+    thickness, pat, oscEvents, midMoves, octaveLeaps, maxSameRun });
   feat.topMoves = Object.entries(feat.moveScores).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0).map(x=>x[0]);
   if (!feat.topMoves.length) feat.topMoves = ['smooth'];
-  /* 株の分割：2秒以上の無音があり、その前後でスケール（調）が変わった時だけ第2株 */
-  let splitAt = -1;
+  /* 株は必ず1つ。2秒以上の「間」は、同スケールで再開した時だけ「意味のある間」として記録する
+     （スケールが変わっていたら、ただ迷っただけとして無視する） */
+  let meaningfulPause = false;
   for (let i = 1; i < P.length; i++){
     if (P[i].start - P[i-1].end >= 2.0){
       const keyA = scaleFit(P.slice(0, i).flatMap(p => p.notes.map(n => n.midi)));
       const keyB = scaleFit(P.slice(i).flatMap(p => p.notes.map(n => n.midi)));
-      if (keyA !== keyB){ splitAt = i; break; }
+      if (keyA === keyB) meaningfulPause = true;
     }
   }
-  const groups = splitAt > 0 ? [P.slice(0, splitAt), P.slice(splitAt)] : [P];
+  feat.meaningfulPause = meaningfulPause;
+  const groups = [P];
   const fp = allNotes.map(n => Math.round(n.midi * 2)).join(',') + '|' + P.length;
   return { phrases: P, groups, feat, fingerprint: fp, totalSec: fr[fr.length-1].t };
 }
@@ -375,33 +493,73 @@ function flowerCurve(R){ return R <= 0.8 ? 0.1 + R : 0.9 + 0.5 * (R - 0.8); }
 /* 選定は段階（バケツ）ではなく生の数値そのもので測る: 定義表の条件を24種それぞれの
    「原型（プロトタイプ）」の数値に変換し、歌の特徴ベクトルとの距離が一番近い種類を選ぶ。
    似た歌い方でも小さな違いが効くので、同じ花ばかりにならない */
-const PROTO_C = { range:{narrow:3.2, mid:7.5, wide:13.5, vwide:24}, notes:{few:0.5, mid:1.0, many:1.7}, phrase:{short:2.0, mid:4.2, midlong:6.3, long:8.8}, vol:{small:0.04, mid:0.08, big:0.135, huge:0.185} };
-/* 声の明るさの原型（定義表「歌の印象（声質）」から） */
-const BRIGHTC = { dahlia:0.52, rose:0.50, lily:0.42, gerbera:0.60, sunflower:0.62, anemone:0.34, ranunculus:0.46, marguerite:0.50, kobana:0.58, galaxy:0.30, lantern:0.48, crystal:0.44, featherflower:0.44, swirl:0.48, rainbow:0.60, tulilily:0.54, candy:0.50, goldbell:0.58, mobius:0.54, bubble:0.42, firefly:0.36, sakura:0.52, cotton:0.56, moonring:0.40 };
-function protoCenter(list, kind){ const m = PROTO_C[kind]; return list.reduce((sm, x) => sm + m[x], 0) / list.length; }
+/* 選定（v11・ハミング前提）: 歌の特徴を「測れる個性」で表し、24種それぞれの原型との距離で選ぶ。
+   数値の物差しは既成曲で裏を取った（例: 音域の線引き=オクターブ12半音、ロングトーン1.5秒以上が歌唱時間の25%以上
+   = MISIA「Everything」約35〜45%・中島みゆき「糸」約20〜27%の中間、変化回数/4秒 = 糸サビ約5回・Everything約3〜4回）。
+   声量と明るさは測らない。代わりに声域の高さ・声の太さ（倍音の豊かさ）を使う */
+const PROTO2 = {
+  dahlia:{r:13, c:9.5, s:7.4, t:61, th:.55, lt:.12, pat:{mid:.8, leap:.6, smooth:.3}},
+  rose:{r:10, c:5.0, s:8.0, t:60, th:.60, lt:.30, pat:{smooth:1, mid:.3, clear:.3}},
+  lily:{r:8, c:3.5, s:8.0, t:62, th:.45, lt:.34, pat:{smooth:1, clear:.4}, calm:1},
+  gerbera:{r:10, c:6.5, s:5.6, t:63, th:.50, lt:.08, pat:{step:.9, smooth:.5}},
+  sunflower:{r:13, c:6.5, s:8.0, t:60, th:.62, lt:.18, pat:{leap:.8, smooth:.4, mid:.4}},
+  anemone:{r:9.5, c:5.5, s:5.6, t:59, th:.40, lt:.12, pat:{osc:.5, step:.6, smooth:.4}},
+  ranunculus:{r:10, c:6.5, s:5.6, t:61, th:.50, lt:.14, pat:{smooth:.8, mid:.4}},
+  marguerite:{r:8.5, c:6.5, s:5.6, t:62, th:.42, lt:.08, pat:{step:.9, smooth:.5, same:.3}},
+  kobana:{r:9, c:10, s:4.2, t:66, th:.40, lt:.04, pat:{step:.6, same:.6, osc:.4}},
+  galaxy:{r:17, c:6.0, s:8.0, t:58, th:.50, lt:.22, pat:{leap:1, mid:.5}},
+  lantern:{r:10, c:3.5, s:8.0, t:58, th:.50, lt:.32, pat:{smooth:.9, same:.3}, calm:1},
+  crystal:{r:10, c:4.2, s:7.4, t:63, th:.30, lt:.24, pat:{clear:1, step:.5, smooth:.4}, calm:1},
+  featherflower:{r:10, c:4.2, s:8.0, t:64, th:.33, lt:.26, pat:{osc:.6, smooth:.6}, calm:1},
+  swirl:{r:11.5, c:10, s:5.6, t:61, th:.50, lt:.06, pat:{osc:1, step:.4}},
+  rainbow:{r:17, c:5.5, s:8.0, t:61, th:.58, lt:.20, pat:{leap:1, mid:.6, smooth:.3}},
+  tulilily:{r:10, c:6.0, s:7.4, t:62, th:.48, lt:.24, pat:{rise:1, smooth:.6}},
+  candy:{r:12, c:6.0, s:5.6, t:65, th:.45, lt:.08, pat:{same:.8, step:.6}},
+  goldbell:{r:10, c:9.5, s:4.2, t:64, th:.48, lt:.05, pat:{mid:.7, step:.5, same:.3}},
+  mobius:{r:13, c:6.5, s:8.0, t:60, th:.55, lt:.12, pat:{osc:.9, leap:.5, mid:.5}},
+  bubble:{r:10, c:4.2, s:7.4, t:63, th:.28, lt:.23, pat:{smooth:.9, clear:.3}, calm:1},
+  firefly:{r:8.5, c:4.0, s:4.2, t:60, th:.38, lt:.10, pat:{step:.7, smooth:.5, same:.3}, calm:1},
+  sakura:{r:10, c:9.5, s:4.2, t:62, th:.42, lt:.05, pat:{osc:.6, step:.5, mid:.4}},
+  cotton:{r:13, c:6.0, s:8.0, t:61, th:.60, lt:.26, pat:{smooth:.8, leap:.6, mid:.4}},
+  moonring:{r:8.5, c:9.5, s:4.2, t:58, th:.40, lt:.14, pat:{smooth:.8, same:.4, step:.3}, calm:1},
+};
+/* r=音域(半音) c=音高変化/4秒 s=フレーズ中央値(秒・0.7秒区切り) t=声域の高さ(MIDI) th=声の太さ lt=ロングトーン比率 */
+/* 上位クラス: SR 5種 + SSR 1種（虹の花）。入口条件 = キーが特定できること＋緩急があること＋ビブラートがあること */
+const SR_SET = new Set(['rose','lily','galaxy','crystal','tulilily']);
+const SSR_SET = new Set(['rainbow']);
+function skillOK(f){ return !!(f.keyIdentifiable && f.pacingPresent && f.vibratoPresent); }
+function gatedOut(sp, f){
+  if (SR_SET.has(sp.id) || SSR_SET.has(sp.id)){
+    if (!skillOK(f)) return true;
+    /* 虹（SSR）はさらに: オクターブ以上の音域＋大きな跳躍＋「音の量」。
+       音の量は OR 条件（変化が多い か、ロングトーン合計が歌唱時間の25%以上）＝バラード型を落とさない */
+    if (SSR_SET.has(sp.id) && !(f.rangeSemis >= 12 && f.leaps >= 2 && ((f.changesPer4s || 0) >= 8.5 || (f.longToneRatio || 0) >= 0.25))) return true;
+  }
+  return false;
+}
+function scoreSpecies(f, sp){
+  if (gatedOut(sp, f)) return null;
+  const P = PROTO2[sp.id]; if (!P) return null;
+  const dR = (f.rangeSemis - P.r) / 3.4, dC = ((f.changesPer4s || 0) - P.c) / 1.8, dS = ((f.segFeat !== undefined ? f.segFeat : Math.min(f.segMedianSec || 0, 9)) - P.s) / 2.9;
+  const dT = ((f.tessitura || 60) - P.t) / 4.5, dTh = ((f.thickness || 0) - P.th) / 0.28, dL = (Math.min(f.longToneRatio || 0, 0.55) - P.lt) / 0.20;
+  let s = -2.0 * (1.25 * dR * dR + 1.15 * dC * dC + 0.6 * dS * dS + 0.55 * dL * dL + 0.50 * dT * dT + 0.40 * dTh * dTh);
+  const pat = f.pat || {};
+  for (const k in P.pat) s += (pat[k] || 0) * P.pat[k] * 0.6;
+  /* 意味のある間: 穏やかな花と上位クラスへの加点要素 */
+  if (f.meaningfulPause){ if (P.calm) s += 0.5; if (SR_SET.has(sp.id) || SSR_SET.has(sp.id)) s += 0.4; }
+  /* ピッチの安定は優劣ではなく系統の分かれ目（関門のある種類は上のゲートで処理済み） */
+  if (!SR_SET.has(sp.id) && !SSR_SET.has(sp.id)){
+    const wild = (P.pat.leap || 0) >= 0.6 || (P.pat.osc || 0) >= 0.6;
+    if (f.stab === 'very') s += wild ? 0.05 : 0.35;
+    else if (f.stab === 'none') s += wild ? 0.4 : -0.1;
+  }
+  return s;
+}
 function selectSpecies(f, seedStr){
   let best = null;
-  const nps = f.noteCount / Math.max(1, f.voicedSec || 1);
-  const bright = clamp(((f.meanBrightness || 0.4) - 0.18) / 0.5, 0, 1);
   for (const sp of SPECIES){
-    if ((sp.id === 'galaxy' || sp.id === 'rainbow') && (f.bigLeaps < 3 || f.rangeB !== 'vwide')) continue;
-    if (sp.prof.stab === 'very' && f.stab !== 'very') continue;
-    if (sp.prof.stab === 'almost' && f.stab === 'none') continue;
-    const dR = (f.rangeSemis - protoCenter(sp.prof.range, 'range')) / 6;
-    const dN = (nps - protoCenter(sp.prof.notes, 'notes')) / 0.42;
-    const dP = ((f.medianPhraseSec || 0) - protoCenter(sp.prof.phrase, 'phrase')) / 2.0;
-    const dV = (f.meanRms - protoCenter(sp.prof.vol, 'vol')) / 0.05;
-    const dB = (bright - (BRIGHTC[sp.id] || 0.48)) / 0.17;
-    let s = -2.0 * (1.15 * dR * dR + 1.3 * dN * dN + 1.2 * dP * dP + 0.9 * dV * dV + 0.35 * dB * dB);
-    sp.prof.move.forEach((m, i) => { const ms = f.moveScores[m] || 0; s += ms * (i === 0 ? 1.15 : 0.8); });
-    if (sp.prof.stab && f.stab !== 'none') s += 1.2;
-    /* ピッチの安定度は優劣ではなく系統の分かれ目（入口条件のある種類は上のゲートで処理済み） */
-    if (!sp.prof.stab){
-      const wild = sp.prof.move.some(m => ['wave','bigwave','wavefine','bigleap','leap'].includes(m));
-      if (f.stab === 'very') s += wild ? 0.05 : 0.6;
-      else if (f.stab === 'almost') s += wild ? 0.2 : 0.3;
-      else s += wild ? 0.7 : -0.15;
-    }
+    const s = scoreSpecies(f, sp);
+    if (s === null) continue;
     if (!best || s > best.score) best = { sp, score: s };
   }
   return best ? best.sp : SPECIES[0];
@@ -410,15 +568,31 @@ function selectSpecies(f, seedStr){
 function pickColor(f, sp, seed){
   const r = rng(seed);
   if (!sp.dye) return { fixed: sp.fixedWord || 'クリア', fam: null, hue: 0, sat: 0, light: 0.6 };
-  if (f.rangeB === 'narrow' && r() < 0.55) return { fam:'white', hue:0, sat:0.06, light:0.75, word: COLOR_WORDS.white[Math.floor(r()*4)] };
-  const moveFam = { rise:'pink', leap:'red', bigleap:'orange', smooth:'purple', wave:'blue', wavefine:'blue', fine:'yellow', bigwave:'purple', bigmove:'red', rhythm:'pink', small:'green', step:'yellow', smallleaps:'orange', smoothleap:'pink', clear:'blue' };
-  const fam = moveFam[f.topMoves[0]] || 'pink';
-  const sat = { narrow:0.16, mid:0.42, wide:0.68, vwide:0.86 }[f.rangeB];
-  const light = clamp(0.3 + f.meanRms * 1.6 + f.meanBrightness * 0.3, 0.3, 0.95);
+  if (f.rangeSemis < 5.5 && r() < 0.5) return { fam:'white', hue:0, sat:0.06, light:0.78, word: COLOR_WORDS.white[Math.floor(r()*4)] };
+  /* 色相は「音高の動きの型」のブレンドで連続的に決める（分類の1位で決めない＝紫一辺倒の解消） */
+  const HUE_ANCHOR = { smooth:275, step:48, mid:332, leap:12, osc:212, same:150, rise:34, clear:200 };
+  const HOME_HUE = { dahlia:332, rose:350, lily:298, gerbera:45, sunflower:48, anemone:265, ranunculus:18, marguerite:55, kobana:340, featherflower:312, swirl:255, tulilily:335, candy:345, mobius:285, sakura:340, cotton:325, moonring:250 };
+  const pat = f.pat || {};
+  let sx = 0, sy = 0, sw = 0;
+  for (const k in HUE_ANCHOR){ const wgt = pat[k] || 0; if (wgt > 0){ const a = HUE_ANCHOR[k] * Math.PI / 180; sx += Math.cos(a) * wgt; sy += Math.sin(a) * wgt; sw += wgt; } }
+  const home = HOME_HUE[sp.id] !== undefined ? HOME_HUE[sp.id] : 330;
+  let hue;
+  if (sw > 0){
+    const blend = Math.atan2(sy, sx), ha = home * Math.PI / 180;
+    hue = Math.atan2(Math.sin(blend) * 0.65 + Math.sin(ha) * 0.35, Math.cos(blend) * 0.65 + Math.cos(ha) * 0.35) * 180 / Math.PI;
+  } else hue = home;
+  hue = ((hue + (r() * 12 - 6)) % 360 + 360) % 360;
+  /* 鮮やかさは音域で（オクターブ=12半音が一つの線） */
+  const sat = clamp(0.16 + clamp((f.rangeSemis - 4) / 10, 0, 1) * 0.62, 0.14, 0.85);
+  /* 明るさは声域の高さで（声そのものの明るさは測らない） */
+  const light = clamp(0.36 + clamp(((f.tessitura || 60) - 52) / 22, 0, 1) * 0.30 + ((f.thickness || 0) - 0.45) * 0.10, 0.32, 0.78);
+  /* 色の言葉は、最終色相に一番近い色の家族から */
+  let fam = 'pink', bd = 1e9;
+  for (const k in FAMILY_HUE){ if (k === 'white') continue; let d = Math.abs(hue - FAMILY_HUE[k]); d = Math.min(d, 360 - d); if (d < bd){ bd = d; fam = k; } }
+  if (sat < 0.13) fam = 'white';
   const words = COLOR_WORDS[fam];
-  return { fam, hue: FAMILY_HUE[fam] + (r() * 16 - 8), sat, light, word: words[Math.floor(r() * words.length)] };
+  return { fam, hue, sat, light, word: words[Math.floor(r() * words.length)] };
 }
-
 /* ========= 染め替え（茎・葉は染めない） ========= */
 const dyeCache = {};
 function dyeImage(img, sp, hue, sat, light){
@@ -851,6 +1025,8 @@ $('btn-end').onclick = () => { if (phase === 'show') beginWilt('end'); };
 /* 録音中の簡易解析（成長表示用） */
 let liveSpecies = null, liveStocks = null, liveLockedAt = 0;
 let liveBusy = false, livePending = false;
+/* 覚醒✨/変身⁉: xform={type, sp, startT, swapT, endT, swapped, imgs} */
+let xform = null, xformCand = null, xformCandSince = 0, awakenUsed = false, henshinUsed = false;
 async function refreshLive(t){
   if (liveBusy){ livePending = true; return; }
   liveBusy = true;
@@ -862,41 +1038,63 @@ async function refreshLiveInner(t){
   const an = analyzeFrames(frames);
   if (!an) return;
   stemR = Math.max(stemR, stemRatio(an.feat));
+  const gy = H * BGS[selBg].ground;
+  const volScale = clamp(0.85 + an.feat.meanRms * 1.2, 0.85, 1.25);
   if (!liveSpecies && t >= 15 && an.phrases.length >= 1){
     const sp = selectSpecies(an.feat, an.fingerprint);
     liveSpecies = sp; liveLockedAt = t;
     const color = pickColor(an.feat, sp, hashStr(an.fingerprint));
-    const gy = H * BGS[selBg].ground;
-    const volScale = clamp(0.85 + an.feat.meanRms * 1.2, 0.85, 1.25);
     liveStocks = [buildStock(an.groups[0], sp, color, W / 2, gy, an.fingerprint, volScale, an.feat)];
-    if (an.groups[1]){
-      const sp2 = selectSpecies(groupFeatures(an, an.groups[1]), an.fingerprint + 'b');
-      const color2 = pickColor(an.feat, sp2, hashStr(an.fingerprint + 'b'));
-      liveStocks.push(buildStock(an.groups[1], sp2, color2, W * 0.78, gy, an.fingerprint + 'b', volScale, an.feat));
-      liveStocks[0].rootX = W * 0.3;
-    }
     for (const st of liveStocks) st.imgs = await loadSpeciesImages(st.sp);
     garden = liveStocks;
-  } else if (liveStocks){
-    /* 歌が進むたびに株を作り直し、成長カーブを最新の歌へ追随させる（配置・色・画像は維持） */
-    const gy = H * BGS[selBg].ground;
-    const volScale = clamp(0.85 + an.feat.meanRms * 1.2, 0.85, 1.25);
-    const two = !!an.groups[1];
-    const keep0 = liveStocks[0];
-    const nb0 = buildStock(an.groups[0], liveSpecies, keep0.color, two ? W * 0.3 : W / 2, gy, keep0.seedStr || 'live', volScale, an.feat);
-    nb0.imgs = keep0.imgs || await loadSpeciesImages(nb0.sp); liveStocks[0] = nb0;
-    if (two){
-      const keep1 = liveStocks[1];
-      if (keep1){
-        const nb1 = buildStock(an.groups[1], keep1.sp, keep1.color, W * 0.78, gy, keep1.seedStr || 'liveb', volScale, groupFeatures(an, an.groups[1]));
-        nb1.imgs = keep1.imgs || await loadSpeciesImages(nb1.sp); liveStocks[1] = nb1;
-      } else {
-        const sp2 = selectSpecies(groupFeatures(an, an.groups[1]), an.fingerprint + 'b');
-        const nb1 = buildStock(an.groups[1], sp2, pickColor(an.feat, sp2, hashStr(an.fingerprint + 'b')), W * 0.78, gy, an.fingerprint + 'b', volScale, an.feat);
-        nb1.imgs = await loadSpeciesImages(sp2); liveStocks.push(nb1);
-      }
-    } else if (liveStocks.length > 1) liveStocks.length = 1;
-    garden = liveStocks;
+    return;
+  }
+  if (!liveStocks) return;
+  /* 変身の実行: ベールが一番濃い瞬間に、株ごと新しい花種へ作り替える（色も新しい歌で決め直す） */
+  if (xform && !xform.swapped && t >= xform.swapT){
+    const nsp = xform.sp;
+    const color = pickColor(an.feat, nsp, hashStr(an.fingerprint + 'x'));
+    const nb = buildStock(an.groups[0], nsp, color, W / 2, gy, an.fingerprint + 'x', volScale, an.feat);
+    nb.imgs = xform.imgs || await loadSpeciesImages(nsp);
+    liveStocks = [nb]; liveSpecies = nsp; garden = liveStocks;
+    xform.swapped = true;
+    if (xform.type === 'awaken'){
+      const base = SSR_SET.has(nsp.id) ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [523.25, 659.25, 783.99, 1046.5];
+      base.forEach((fq, i) => setTimeout(() => pluck(fq, 0, 0.13), i * 95));
+    } else { pluck(392, 0, 0.10); setTimeout(() => pluck(523.25, 0, 0.10), 130); }
+    return;
+  }
+  /* 歌が進むたびに株を作り直し、成長カーブを最新の歌へ追随させる（配置・色・画像は維持） */
+  const keep0 = liveStocks[0];
+  const nb0 = buildStock(an.groups[0], liveSpecies, keep0.color, W / 2, gy, keep0.seedStr || 'live', volScale, an.feat);
+  nb0.imgs = keep0.imgs || await loadSpeciesImages(nb0.sp); liveStocks[0] = nb0;
+  garden = liveStocks;
+  /* ===== 覚醒✨ / 変身⁉ の判定（17〜27秒） =====
+     後半の歌で別の花が「はっきり上回った」状態が約2秒続いた時だけ起きる（僅差では起きない）。
+     上位クラス（SR/SSR）への変化だけが「覚醒✨」で1曲に1回、それ以外は「変身⁉」で1回まで */
+  if (!xform && !awakenUsed && t >= 17 && t <= 27){
+    const cand = selectSpecies(an.feat, an.fingerprint);
+    if (cand.id !== liveSpecies.id){
+      const sNew = scoreSpecies(an.feat, cand);
+      const curSp = SPECIES.find(s2 => s2.id === liveSpecies.id);
+      const sCur = curSp ? scoreSpecies(an.feat, curSp) : null;
+      if (sNew !== null && sCur !== null && sNew - sCur >= 1.5){
+        if (xformCand === cand.id && t - xformCandSince >= 1.6){
+          const toUpper = SR_SET.has(cand.id) || SSR_SET.has(cand.id);
+          const fromUpper = SR_SET.has(liveSpecies.id) || SSR_SET.has(liveSpecies.id);
+          let type = null;
+          if (toUpper && !fromUpper) type = 'awaken';
+          else if (!henshinUsed) type = 'henshin';
+          if (type){
+            const dur = type === 'awaken' ? 2.6 : 1.6;
+            xform = { type, sp: cand, startT: t, swapT: t + dur * 0.45, endT: t + dur, swapped: false, imgs: null };
+            loadSpeciesImages(cand).then(im => { if (xform && xform.sp === cand) xform.imgs = im; });
+            if (type === 'awaken') awakenUsed = true; else henshinUsed = true;
+            xformCand = null;
+          }
+        } else if (xformCand !== cand.id){ xformCand = cand.id; xformCandSince = t; }
+      } else xformCand = null;
+    } else xformCand = null;
   }
 }
 let liveDispMap = new Map(), livePrevT = null, liveSproutImg = null, liveSproutImgs = null;
@@ -958,7 +1156,15 @@ async function drawLiveFrame(t){
   ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
   const gy = H * BGS[selBg].ground;
   /* ベール: 芽が育つ最初の数秒は素のまま見せ、8秒ごろからキラキラが自然に加わる。花種が決まると2.5秒で晴れる */
-  const veil = liveLockedAt ? 1 - clamp((t - liveLockedAt) / 2.5, 0, 1) : clamp((t - 7.5) / 2, 0, 1);
+  let veil = liveLockedAt ? 1 - clamp((t - liveLockedAt) / 2.5, 0, 1) : clamp((t - 7.5) / 2, 0, 1);
+  /* 覚醒・変身の間はベールを強めにかけ、その中で花が姿を変える */
+  const xfNow = xform;
+  if (xfNow){
+    const xk = clamp((t - xfNow.startT) / (xfNow.endT - xfNow.startT), 0, 1);
+    const xv = Math.sin(Math.min(1, xk) * Math.PI);
+    veil = Math.max(veil, xv * (xfNow.type === 'awaken' ? 1 : 0.75));
+    if (xk >= 1 && xform === xfNow) xform = null;
+  }
   const stage = sproutStageAt(t);
   if (!garden){
     /* 芽フェーズ（共通・3段階）。種は15秒時点で決まる */
@@ -1008,6 +1214,39 @@ async function drawLiveFrame(t){
   }
   garden.forEach((stock, si) => { curStock = si; drawStock(ctx, stock, progOf, performance.now(), {}); });
   drawVeil(veil, garden[0] ? garden[0].rootX : W / 2, gy);
+  /* 覚醒✨ / 変身⁉ の文字（覚醒は大きく、変身は控えめに） */
+  if (xfNow){
+    const xk = clamp((t - xfNow.startT) / (xfNow.endT - xfNow.startT), 0, 1);
+    if (xk < 1){
+      const fade = xk < 0.18 ? xk / 0.18 : xk > 0.78 ? Math.max(0, (1 - xk) / 0.22) : 1;
+      ctx.save();
+      ctx.globalAlpha = fade;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (xfNow.type === 'awaken'){
+        const ssr = SSR_SET.has(xfNow.sp.id);
+        const pulse = 1 + Math.sin(performance.now() / 130) * 0.03;
+        ctx.translate(W / 2, H * 0.36); ctx.scale(pulse, pulse);
+        const grd = ctx.createLinearGradient(-200, 0, 200, 0);
+        if (ssr){ grd.addColorStop(0, '#ff5f6d'); grd.addColorStop(0.25, '#ffc371'); grd.addColorStop(0.5, '#f9f871'); grd.addColorStop(0.75, '#7be495'); grd.addColorStop(1, '#6db3f2'); }
+        else { grd.addColorStop(0, '#ffe9a8'); grd.addColorStop(0.55, '#ffd34d'); grd.addColorStop(1, '#ff9d2e'); }
+        ctx.font = '800 96px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+        ctx.shadowColor = ssr ? 'rgba(255,120,180,0.85)' : 'rgba(255,170,40,0.8)'; ctx.shadowBlur = 34;
+        ctx.fillStyle = grd;
+        ctx.fillText('覚醒✨', 0, 0);
+      } else {
+        ctx.font = '700 46px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+        const label = '変身⁉';
+        const tw2 = ctx.measureText(label).width + 40;
+        ctx.fillStyle = 'rgba(30,24,16,0.55)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(W / 2 - tw2 / 2, H * 0.30 - 31, tw2, 62, 31); else ctx.rect(W / 2 - tw2 / 2, H * 0.30 - 31, tw2, 62);
+        ctx.fill();
+        ctx.fillStyle = '#fff7e6';
+        ctx.fillText(label, W / 2, H * 0.30 + 2);
+      }
+      ctx.restore();
+    }
+  }
   drawCountChip(t);
 }
 
@@ -1019,6 +1258,7 @@ $('btn-start').onclick = async () => {
   } catch (e) { alert('マイクを使えませんでした。ブラウザのマイク許可を確認してください。'); return; }
   $('result').style.display = 'none'; $('result').classList.remove('gone'); $('stagewrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   stopAll(); liveSpecies = null; liveStocks = null; liveLockedAt = 0; stemR = 0.5; colorSatMul = 1; garden = null; liveDispMap = new Map(); livePrevT = null;
+  xform = null; xformCand = null; awakenUsed = false; henshinUsed = false;
   const btn = $('btn-start');
   btn.disabled = true;
   /* 3・2・1 カウントイン */
@@ -1053,7 +1293,15 @@ $('btn-start').onclick = async () => {
     analyser.getFloatFrequencyData(fbuf);
     let num = 0, den = 0;
     for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / analyser.fftSize) * m; den += m; }
-    frames.push({ t, f, rms, cent: den > 0 ? num / den : 0 });
+    /* 声の太さ（倍音の豊かさ）: 基音に対する2〜5倍音のエネルギー比 */
+    let rich = 0;
+    if (f > 0){
+      const binHz = AC.sampleRate / analyser.fftSize;
+      const magAt = hz => { const b = Math.round(hz / binHz); let m = 0; for (let j = Math.max(2, b - 1); j <= Math.min(fbuf.length - 1, b + 1); j++) m = Math.max(m, Math.pow(10, fbuf[j] / 20)); return m; };
+      const F0 = magAt(f); let Hh = 0; for (let k = 2; k <= 5; k++) Hh += magAt(f * k);
+      if (F0 + Hh > 0) rich = Hh / (F0 + Hh);
+    }
+    frames.push({ t, f, rms, cent: den > 0 ? num / den : 0, rich });
     btn.textContent = `🌸 うたっています… あと ${Math.max(0, 30 - Math.floor(t))} 秒`;
     if (t - lastLive > 0.45){ lastLive = t; refreshLive(t); }
     drawLiveFrame(t);
@@ -1115,12 +1363,7 @@ async function startCeremony(){
   const stocks = [];
   const mainSp = liveSpecies || selectSpecies(an.feat, an.fingerprint);
   const mainColor = pickColor(an.feat, mainSp, hashStr(an.fingerprint));
-  const two = an.groups.length > 1;
-  stocks.push(buildStock(an.groups[0], mainSp, mainColor, two ? W * 0.3 : W / 2, gy, an.fingerprint, volScale, an.feat));
-  if (two){
-    const sp2 = selectSpecies(groupFeatures(an, an.groups[1]), an.fingerprint + 'b');
-    stocks.push(buildStock(an.groups[1], sp2, pickColor(an.feat, sp2, hashStr(an.fingerprint + 'b')), W * 0.76, gy, an.fingerprint + 'b', volScale, groupFeatures(an, an.groups[1])));
-  }
+  stocks.push(buildStock(an.groups[0], mainSp, mainColor, W / 2, gy, an.fingerprint, volScale, an.feat));
   for (const st of stocks) st.imgs = await loadSpeciesImages(st.sp);
   garden = stocks;
   /* 完成 = 29秒で止めた時点の姿（満開への底上げはしない）。
@@ -1316,10 +1559,8 @@ function makeFlowerInfo(an, stock){
   const rImp = rng(hashStr(an.fingerprint + sp.id + 'imp'));
   const impKeys = [];
   if (f.rangeSemis >= 10) impKeys.push('wide'); else if (f.rangeSemis <= 5.5) impKeys.push('narrow');
-  if (f.noteCount >= 30 || f.noteCount / Math.max(1, f.voicedSec) >= 1.5) impKeys.push('manynotes');
+  if (f.noteCount >= 30 || (f.changesPer4s || 0) >= 6) impKeys.push('manynotes');
   if (f.longestNoteSec >= 1.5) impKeys.push('longphrase');
-  if (f.meanRms >= 0.115) impKeys.push('bigvol'); else if (f.meanRms <= 0.055) impKeys.push('smallvol');
-  if (f.meanBrightness >= 0.55) impKeys.push('bright'); else if (f.meanBrightness <= 0.3) impKeys.push('deep');
   const impKey = impKeys.length ? impKeys[Math.floor(rImp() * impKeys.length)] : 'mid';
   const songSen = SONG_IMPRESSIONS[impKey][Math.floor(rImp() * 2)][0];
   /* 花を表す言葉 */
