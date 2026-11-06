@@ -1959,11 +1959,12 @@ function orgelBadge(show){ const b = $('fmsgOrgel'); if (b) b.style.display = sh
 function stopOrgel(){ for (const id of orgelTimers) clearTimeout(id); orgelTimers = []; orgelOn = false; orgelBadge(false); }
 function playOrgel(){
   stopOrgel();
-  if (!AC || !analysis || !analysis.groups) return;
+  if (!AC || !analysis) return;
+  const phrases = analysis.phrases || (analysis.groups && analysis.groups[0]) || [];
   const notes = [];
-  for (const g of analysis.groups) for (const n of (g.notes || [])) if (n.midi > 0) notes.push(n);
+  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) notes.push(n);
   if (!notes.length) return;
-  if (AC.state === 'suspended') AC.resume();
+  if (AC.state !== 'running') { try { AC.resume(); } catch (e) { /* 再開できない環境では無音のまま */ } }
   orgelOn = true; orgelBadge(true);
   const t0 = notes[0].start || 0;
   for (const n of notes){
