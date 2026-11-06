@@ -141,6 +141,7 @@
     <p id="fmsg-cheer"></p>
     <p id="fmsg-lucky" class="blucky"></p>
   </div>
+  <div id="fmsgOrgel" style="display:none; margin-top:14px; padding:6px 14px; border-radius:999px; background:rgba(253,243,227,.13); border:1px solid rgba(253,243,227,.32); color:#f3e6cf; font-size:12.5px; letter-spacing:.02em;">今、流れているのはあなたのハナウタです♫</div>
   <img id="fmsgFairy" style="height:190px; margin-top:18px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));" alt="花の妖精">
   <button class="btn btn-sub" id="btn-fmsg-close" style="margin-top:14px;">閉じる</button>
 </div>
@@ -350,7 +351,7 @@ function analyzeFrames(fr){
     const notes = [], segs = [];
     const flush = (a, b) => {
       const med = medOf(a, b);
-      notes.push({ midi: med, dur: p.frames[b - 1].t - p.frames[a].t + 0.05, dev: midis.slice(a, b).reduce((sm, v) => sm + Math.abs(v - med), 0) / Math.max(1, b - a) });
+      notes.push({ midi: med, start: p.frames[a].t, dur: p.frames[b - 1].t - p.frames[a].t + 0.05, dev: midis.slice(a, b).reduce((sm, v) => sm + Math.abs(v - med), 0) / Math.max(1, b - a) });
       segs.push({ midis: raw.slice(a, b), t0: p.frames[a].t, t1: p.frames[b - 1].t });
     };
     let a0 = 0;
@@ -1326,7 +1327,7 @@ async function drawIdleStage(){
   ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
 }
 drawIdleStage();
-function stopAll(){ closeZoom(); phase = 'off'; loopRunning = false; cancelAnimationFrame(rafId); clearInterval(showIv); petals = []; wilt = null; garden = null; }
+function stopAll(){ closeZoom(); if (typeof stopOrgel === 'function') stopOrgel(); phase = 'off'; loopRunning = false; cancelAnimationFrame(rafId); clearInterval(showIv); petals = []; wilt = null; garden = null; }
 $('btn-again').onclick = () => { if (phase === 'show') beginWilt('again'); };
 $('btn-end').onclick = () => { if (phase === 'show') beginWilt('end'); };
 
@@ -1828,7 +1829,7 @@ $('btn-zoom').onclick = () => {
 };
 $('btn-zoom-close').onclick = closeZoom;
 $('zoomModal').addEventListener('click', e => { if (e.target === $('zoomModal')) closeZoom(); });
-function closeFmsg(){ $('fmsgModal').style.display = 'none'; }
+function closeFmsg(){ stopOrgel(); $('fmsgModal').style.display = 'none'; }
 $('btn-fmsg').onclick = () => {
   const m = buildFlowerMessage(); if (!m) return;
   $('fmsg-one').textContent = m.one;
@@ -1836,6 +1837,7 @@ $('btn-fmsg').onclick = () => {
   $('fmsg-lucky').textContent = m.lucky;
   $('fmsgFairy').src = A5 + 'fairy-' + m.fairy + '.webp';
   $('fmsgModal').style.display = 'flex';
+  playOrgel();
 };
 $('btn-fmsg-close').onclick = closeFmsg;
 $('fmsgModal').addEventListener('click', e => { if (e.target === $('fmsgModal')) closeFmsg(); });
@@ -1950,6 +1952,28 @@ function makeFlowerInfo(an, stock){
   return { name, intro, sp, color };
 }
 /* ========= オルゴール ========= */
+/* 歌ったメロディ（音程データのみ。声そのものは再生しない）をオルゴール音色で再生する。
+   フラワーメッセージを開いている間だけ鳴らし、閉じたら止める */
+let orgelTimers = [], orgelOn = false;
+function orgelBadge(show){ const b = $('fmsgOrgel'); if (b) b.style.display = show ? 'block' : 'none'; }
+function stopOrgel(){ for (const id of orgelTimers) clearTimeout(id); orgelTimers = []; orgelOn = false; orgelBadge(false); }
+function playOrgel(){
+  stopOrgel();
+  if (!AC || !analysis || !analysis.groups) return;
+  const notes = [];
+  for (const g of analysis.groups) for (const n of (g.notes || [])) if (n.midi > 0) notes.push(n);
+  if (!notes.length) return;
+  if (AC.state === 'suspended') AC.resume();
+  orgelOn = true; orgelBadge(true);
+  const t0 = notes[0].start || 0;
+  for (const n of notes){
+    const dt = Math.max(0, ((n.start || 0) - t0) * 1000);
+    orgelTimers.push(setTimeout(() => pluck(440 * Math.pow(2, ((n.midi - 69) / 12)), 0, 0.11), dt));
+  }
+  const last = notes[notes.length - 1];
+  const endMs = Math.max(0, ((last.start || 0) - t0 + (last.dur || 0.3)) * 1000) + 600;
+  orgelTimers.push(setTimeout(() => { orgelOn = false; orgelBadge(false); }, endMs));
+}
 function pluck(freq, when, vol){
   if (!AC) return;
   const t = AC.currentTime + when;
