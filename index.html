@@ -2004,10 +2004,51 @@ function orgelMelody(){
     return true;
   });
 }
+/* リズム補正: オルゴールに揺らぎは要らない（先生の指定）。歌の音の間隔から拍の格子を推定し、
+   音の頭をいちばん近い格子へ完全に寄せる。拍が読み取れる歌にだけ掛け、拍のない歌はそのままにする */
+function quantizeOnsets(list){
+  if (list.length < 4) return list;
+  const s0 = list[0].start;
+  const S = list.map(n => n.start - s0);
+  const iois = [];
+  for (let i = 1; i < S.length; i++) if (S[i] - S[i - 1] > 0.05) iois.push(S[i] - S[i - 1]);
+  if (!iois.length) return list;
+  /* 候補は間隔そのものから作ると、ブレた間隔ばかりで本当の拍が候補に入らない。全域を細かく走査する */
+  const cand = new Set();
+  for (let u = 0.12; u <= 0.6501; u += 0.004) cand.add(Math.round(u / 0.004) * 0.004);
+  /* 格子選び: 「いちばん残差の小さい格子」を選ぶと、ブレに蛇行する細かい格子が勝ってしまう。
+     十分に合う格子の中でいちばん粗い（＝音楽として素直な）ものを選ぶ */
+  const fits = [];
+  for (const u of cand){
+    const phases = new Set([0]);
+    for (const s of S) phases.add(Math.round((((s % u) + u) % u) / 0.004) * 0.004);
+    for (const ph of phases){
+      let sum = 0;
+      for (const s of S){ let d = Math.abs(((s - ph) % u + u) % u); d = Math.min(d, u - d); sum += d; }
+      const meanRel = (sum / S.length) / u;
+      if (meanRel <= 0.17) fits.push({ u, ph, meanRel });
+    }
+  }
+  if (!fits.length) return list;
+  /* 粗い格子の仲間（最大の94%以上）の中から、いちばん残差の小さいものを採る */
+  const maxU = Math.max(...fits.map(f => f.u));
+  const family = fits.filter(f => f.u >= maxU * 0.94);
+  family.sort((a, b) => a.meanRel - b.meanRel || b.u - a.u);
+  const best = family[0];
+  const { u, ph } = best;
+  let prev = -Infinity;
+  list.forEach((n, i) => {
+    let ns = s0 + ph + Math.round((S[i] - ph) / u) * u;
+    if (ns <= prev) ns = prev + u;
+    n.start = ns; prev = ns;
+  });
+  for (let i = 0; i < list.length - 1; i++) list[i].dur = Math.max(0.12, list[i + 1].start - list[i].start);
+  return list;
+}
 function playOrgel(){
   stopOrgel();
   if (!AC || !analysis) return;
-  const notes = orgelMelody();
+  const notes = quantizeOnsets(orgelMelody());
   if (!notes.length) return;
   if (AC.state !== 'running') { try { AC.resume(); } catch (e) { /* 再開できない環境では無音のまま */ } }
   orgelBus = AC.createGain(); orgelBus.gain.value = 1; orgelBus.connect(AC.destination);
