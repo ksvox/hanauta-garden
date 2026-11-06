@@ -1977,19 +1977,44 @@ function orgelNote(freq, tAbs, vol){
     o.start(tAbs); o.stop(tAbs + dec + 0.1);
   }
 }
+/* 解析の音符列を、そのままではオルゴールに載せない。歌唱解析は「声を追うための刻み」なので、
+   一瞬の検出漏れ（穴）・音と音の移行の破片・オクターブ誤検出が混ざる。これらを整えてから鳴らす */
+function orgelMelody(){
+  const phrases = analysis.phrases || (analysis.groups && analysis.groups[0]) || [];
+  const raw = [];
+  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) raw.push({ midi: Math.round(n.midi), start: n.start || 0, dur: n.dur || 0.2 });
+  raw.sort((a, b) => a.start - b.start);
+  /* 前後とも同じ音の長い音に挟まれた、オクターブだけ違う短い音は検出ミスとして前後の音に戻す */
+  for (let i = 1; i < raw.length - 1; i++){
+    const prev = raw[i - 1], n = raw[i], next = raw[i + 1];
+    if (prev.midi === next.midi && Math.abs(n.midi - prev.midi) === 12 && n.dur < 0.4) n.midi = prev.midi;
+  }
+  /* 同じ音が検出漏れで割れていたら、1つの音に戻す（実測では0.5秒の検出漏れで約0.5秒の穴が開く） */
+  const merged = [];
+  for (const n of raw){
+    const last = merged[merged.length - 1];
+    if (last && n.midi === last.midi && n.start - (last.start + last.dur) < 0.55){ last.dur = Math.max(last.dur, n.start + n.dur - last.start); continue; }
+    merged.push({ ...n });
+  }
+  /* 前後の長い音の間にある短い移行音（なだらかな移行の破片）は落とす */
+  return merged.filter((n, i) => {
+    if (n.dur >= 0.16) return true;
+    const prev = merged[i - 1], next = merged[i + 1];
+    if (prev && next && prev.dur >= 0.3 && next.dur >= 0.3 && n.midi >= Math.min(prev.midi, next.midi) && n.midi <= Math.max(prev.midi, next.midi)) return false;
+    return true;
+  });
+}
 function playOrgel(){
   stopOrgel();
   if (!AC || !analysis) return;
-  const phrases = analysis.phrases || (analysis.groups && analysis.groups[0]) || [];
-  const notes = [];
-  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) notes.push(n);
+  const notes = orgelMelody();
   if (!notes.length) return;
   if (AC.state !== 'running') { try { AC.resume(); } catch (e) { /* 再開できない環境では無音のまま */ } }
   orgelBus = AC.createGain(); orgelBus.gain.value = 1; orgelBus.connect(AC.destination);
   orgelOn = true; orgelBadge(true);
   const t0 = notes[0].start || 0;
   const base = AC.currentTime + 0.06;
-  for (const n of notes) orgelNote(440 * Math.pow(2, ((n.midi - 69) / 12)), base + Math.max(0, (n.start || 0) - t0), 0.16);
+  for (const n of notes) orgelNote(440 * Math.pow(2, ((n.midi - 69) / 12)), base + Math.max(0, (n.start || 0) - t0), n.dur < 0.25 ? 0.11 : 0.16);
   const last = notes[notes.length - 1];
   const endMs = (Math.max(0, (last.start || 0) - t0 + (last.dur || 0.3)) + 1.4) * 1000;
   orgelEndTimer = setTimeout(() => stopOrgel(), endMs);
