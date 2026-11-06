@@ -38,6 +38,11 @@
   .btn-main{ background:linear-gradient(135deg,#d9577f,#c2456e); color:#fff; box-shadow:0 6px 18px rgba(194,69,110,.35); }
   .btn-sub{ background:#efe7d8; color:var(--ink); }
   .btn-share{ background:linear-gradient(135deg,#4b8a5e,#3f7a4e); color:#fff; box-shadow:0 6px 18px rgba(63,122,78,.3); }
+  .bubble{ position:relative; background:#fffdf6; border-radius:18px; padding:18px 20px 14px; max-width:520px; width:100%; box-shadow:0 14px 44px rgba(0,0,0,.5); color:#4a3b28; font-size:16px; line-height:1.75; }
+  .bubble::after{ content:''; position:absolute; left:50%; bottom:-12px; transform:translateX(-50%); border:13px solid transparent; border-top-color:#fffdf6; border-bottom:0; }
+  .bubble p{ margin:0 0 8px; }
+  .bubble .btitle{ font-weight:700; color:#a35d7a; margin-bottom:10px; }
+  .bubble .blucky{ margin-bottom:2px; }
   .btn:disabled{ opacity:.45; }
   .bgs{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:12px 0; }
   .bgopt{ flex:1; border:3px solid transparent; border-radius:14px; overflow:hidden; cursor:pointer; padding:0; background:none; }
@@ -96,6 +101,7 @@
       <p class="fname" id="f-name"></p>
       <p class="fno" id="f-no"></p>
       <p class="fintro" id="f-intro"></p>
+      <button class="btn btn-sub" id="btn-fmsg" style="margin:12px 0 2px; padding:11px; font-size:15px; background:linear-gradient(135deg,#fdf3e3,#fbe9f2);">💌 フラワーメッセージ</button>
       <button class="btn btn-sub" id="btn-zoom" style="margin:12px 0 2px; padding:11px; font-size:15px;">🔍 花のアップを見る</button>
     </div>
     <div class="btnrow">
@@ -126,6 +132,17 @@
   <img id="zoomImg" style="max-width:92vw; max-height:70vh; border-radius:14px; box-shadow:0 14px 44px rgba(0,0,0,.55);" alt="花のアップ">
   <p id="zoomName" style="color:#f5ead2; font-size:20px; font-weight:700; margin:16px 0 10px; text-align:center;"></p>
   <button class="btn btn-sub" id="btn-zoom-close">閉じる</button>
+</div>
+
+<div id="fmsgModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:60; align-items:center; justify-content:center; flex-direction:column; padding:22px;">
+  <div class="bubble">
+    <p class="btitle">💌 フラワーメッセージ</p>
+    <p id="fmsg-one"></p>
+    <p id="fmsg-cheer"></p>
+    <p id="fmsg-lucky" class="blucky"></p>
+  </div>
+  <img id="fmsgFairy" style="height:190px; margin-top:18px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));" alt="花の妖精">
+  <button class="btn btn-sub" id="btn-fmsg-close" style="margin-top:14px;">閉じる</button>
 </div>
 
 <script>
@@ -185,7 +202,7 @@ function drawSoilMound(x, cx, gy, rx, ry, rgb){
   x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.29); x.fill(); x.restore();
 }
 const ANCH = {"tulip-full": {"w": 957, "h": 1964, "root": [0.535, 0.996], "head": [0.497, 0.074], "hb": [0.005, 0.182]}, "tulip-bud": {"w": 953, "h": 1952, "root": [0.535, 0.996], "head": [0.528, 0.07], "hb": [0.005, 0.159]}, "tulip-half": {"w": 956, "h": 1962, "root": [0.535, 0.996], "head": [0.515, 0.08], "hb": [0.005, 0.178]}, "tulilily-full": {"w": 880, "h": 1220, "root": [0.397, 0.992], "head": [0.636, 0.274], "hb": [0.007, 0.316]}, "tulilily-fullb": {"w": 880, "h": 1150, "root": [0.695, 0.991], "head": [0.451, 0.294], "hb": [0.009, 0.323]}, "tulilily-bud": {"w": 664, "h": 1647, "root": [0.483, 0.991], "head": [0.632, 0.223], "hb": [0.009, 0.25]}, "tulilily-half": {"w": 880, "h": 1172, "root": [0.4, 0.991], "head": [0.622, 0.267], "hb": [0.008, 0.311]}, "mobius-full": {"w": 880, "h": 1086, "root": [0.197, 0.996], "head": [0.489, 0.312], "hb": [0.008, 0.378]}, "mobius-fullb": {"w": 880, "h": 981, "root": [0.755, 0.991], "head": [0.458, 0.308], "hb": [0.009, 0.361]}, "mobius-bud": {"w": 628, "h": 1732, "root": [0.28, 0.996], "head": [0.508, 0.181], "hb": [0.008, 0.185]}, "mobius-half": {"w": 880, "h": 1318, "root": [0.252, 0.998], "head": [0.486, 0.295], "hb": [0.008, 0.324]}, "candy-full": {"w": 880, "h": 999, "root": [0.269, 0.991], "head": [0.505, 0.3], "hb": [0.008, 0.352]}, "candy-fullb": {"w": 880, "h": 1010, "root": [0.764, 0.998], "head": [0.458, 0.298], "hb": [0.008, 0.352]}, "candy-bud": {"w": 880, "h": 1394, "root": [0.39, 0.991], "head": [0.503, 0.255], "hb": [0.009, 0.26]}, "candy-half": {"w": 880, "h": 938, "root": [0.274, 0.99], "head": [0.559, 0.299], "hb": [0.009, 0.342]}, "cotton-full": {"w": 880, "h": 1306, "root": [0.43, 0.993], "head": [0.503, 0.255], "hb": [0.008, 0.276]}, "cotton-fullb": {"w": 880, "h": 1481, "root": [0.684, 0.999], "head": [0.438, 0.245], "hb": [0.006, 0.252]}, "cotton-bud": {"w": 615, "h": 2537, "root": [0.253, 0.994], "head": [0.539, 0.15], "hb": [0.007, 0.131]}, "cotton-half": {"w": 880, "h": 1239, "root": [0.397, 0.994], "head": [0.558, 0.231], "hb": [0.012, 0.248]}, "bubble-full": {"w": 880, "h": 1901, "root": [0.527, 0.999], "head": [0.514, 0.251], "hb": [0.005, 0.258]}, "bubble-bud": {"w": 443, "h": 3019, "root": [0.42, 0.995], "head": [0.668, 0.241], "hb": [0.004, 0.329]}, "goldbell-full": {"w": 880, "h": 750, "root": [0.558, 0.984], "head": [0.433, 0.245], "hb": [0.008, 0.631]}, "goldbell-bud": {"w": 880, "h": 991, "root": [0.611, 0.99], "head": [0.433, 0.197], "hb": [0.01, 0.654]}, "goldbell-half": {"w": 880, "h": 703, "root": [0.647, 0.989], "head": [0.422, 0.276], "hb": [0.01, 0.622]}, "firefly-full": {"w": 880, "h": 728, "root": [0.626, 0.967], "head": [0.394, 0.232], "hb": [0.01, 0.607]}, "firefly-bud": {"w": 880, "h": 1169, "root": [0.648, 0.981], "head": [0.479, 0.227], "hb": [0.009, 0.498]}, "firefly-half": {"w": 880, "h": 707, "root": [0.564, 0.986], "head": [0.422, 0.243], "hb": [0.008, 0.614]}, "feather-full": {"w": 1029, "h": 2100, "root": [0.517, 0.997], "head": [0.493, 0.275], "hb": [0.008, 0.465]}, "feather-bud": {"w": 868, "h": 2091, "root": [0.532, 0.997], "head": [0.463, 0.264], "hb": [0.008, 0.433]}, "feather-half": {"w": 922, "h": 2068, "root": [0.524, 0.997], "head": [0.489, 0.262], "hb": [0.008, 0.452]}, "moonring-full": {"w": 880, "h": 904, "root": [0.406, 0.989], "head": [0.41, 0.304], "hb": [0.01, 0.459]}, "moonring-bud": {"w": 880, "h": 885, "root": [0.384, 0.988], "head": [0.388, 0.289], "hb": [0.011, 0.437]}, "moonring-half": {"w": 880, "h": 851, "root": [0.365, 0.989], "head": [0.418, 0.309], "hb": [0.009, 0.418]}, "dahlia-full": {"w": 880, "h": 985, "root": [0.301, 0.991], "head": [0.517, 0.307], "hb": [0.009, 0.37]}, "rose-full": {"w": 880, "h": 807, "root": [0.297, 0.99], "head": [0.614, 0.297], "hb": [0.01, 0.362]}, "lily-full": {"w": 880, "h": 1283, "root": [0.29, 0.993], "head": [0.612, 0.304], "hb": [0.007, 0.341]}, "gerbera-full": {"w": 880, "h": 1100, "root": [0.3, 0.991], "head": [0.526, 0.243], "hb": [0.008, 0.266]}, "sunflower-full": {"w": 880, "h": 859, "root": [0.553, 0.999], "head": [0.556, 0.314], "hb": [0.01, 0.444]}, "anemone-full": {"w": 880, "h": 1358, "root": [0.365, 0.995], "head": [0.505, 0.265], "hb": [0.008, 0.275]}, "ranunculus-full": {"w": 880, "h": 1003, "root": [0.251, 0.99], "head": [0.5, 0.29], "hb": [0.01, 0.323]}, "marguerite-full": {"w": 880, "h": 877, "root": [0.263, 0.99], "head": [0.52, 0.236], "hb": [0.009, 0.25]}, "sprig-tulilily": {"w": 880, "h": 639, "root": [0.545, 0.998], "head": [0.536, 0.329], "hb": [0.016, 0.08]}, "sprig-mobius": {"w": 880, "h": 660, "root": [0.505, 0.998], "head": [0.521, 0.324], "hb": [0.017, 0.08]}, "sprig-rose": {"w": 880, "h": 608, "root": [0.49, 0.998], "head": [0.471, 0.338], "hb": [0.026, 0.08]}, "sprout-round": {"w": 880, "h": 474, "root": [0.499, 0.998], "head": [0.591, 0.288], "hb": [0.015, 0.382]}, "sprout-slender": {"w": 880, "h": 690, "root": [0.499, 0.999], "head": [0.571, 0.217], "hb": [0.041, 0.08]}, "sprout-red": {"w": 880, "h": 539, "root": [0.499, 0.998], "head": [0.491, 0.201], "hb": [0.017, 0.241]}, "sprout-leaves": {"w": 880, "h": 438, "root": [0.501, 0.998], "head": [0.526, 0.302], "hb": [0.014, 0.08]}, "galaxy-full": {"w": 880, "h": 1854, "root": [0.495, 0.999], "head": [0.49, 0.233], "hb": [0.005, 0.296]}, "galaxy-bud": {"w": 880, "h": 2245, "root": [0.316, 0.995], "head": [0.46, 0.185], "hb": [0.005, 0.164]}, "lantern-full": {"w": 880, "h": 1709, "root": [0.235, 0.992], "head": [0.475, 0.253], "hb": [0.007, 0.283]}, "lantern-bud": {"w": 668, "h": 1392, "root": [0.4, 0.991], "head": [0.522, 0.249], "hb": [0.009, 0.248]}, "crystal-full": {"w": 880, "h": 1204, "root": [0.462, 0.999], "head": [0.53, 0.298], "hb": [0.007, 0.356]}, "featherflower-full": {"w": 880, "h": 1227, "root": [0.321, 0.993], "head": [0.48, 0.289], "hb": [0.007, 0.339]}, "swirl-full": {"w": 880, "h": 1230, "root": [0.251, 0.998], "head": [0.549, 0.288], "hb": [0.007, 0.313]}, "rainbow-full": {"w": 880, "h": 746, "root": [0.189, 0.989], "head": [0.611, 0.302], "hb": [0.009, 0.429]}, "dahlia-bud": {"w": 880, "h": 1488, "root": [0.307, 0.991], "head": [0.526, 0.226], "hb": [0.009, 0.226]}, "rose-bud": {"w": 688, "h": 1081, "root": [0.4, 0.988], "head": [0.505, 0.296], "hb": [0.016, 0.34]}, "lily-bud": {"w": 880, "h": 1655, "root": [0.362, 0.992], "head": [0.594, 0.223], "hb": [0.008, 0.253]}, "gerbera-bud": {"w": 738, "h": 1517, "root": [0.513, 0.991], "head": [0.666, 0.192], "hb": [0.009, 0.225]}, "sunflower-bud": {"w": 816, "h": 1417, "root": [0.271, 0.991], "head": [0.57, 0.222], "hb": [0.009, 0.241]}, "anemone-bud": {"w": 708, "h": 1731, "root": [0.398, 0.992], "head": [0.54, 0.266], "hb": [0.008, 0.28]}, "ranunculus-bud": {"w": 749, "h": 1367, "root": [0.245, 0.99], "head": [0.459, 0.216], "hb": [0.01, 0.252]}, "marguerite-bud": {"w": 639, "h": 1365, "root": [0.356, 0.99], "head": [0.71, 0.234], "hb": [0.01, 0.325]}, "dahlia-half": {"w": 880, "h": 1191, "root": [0.313, 0.991], "head": [0.574, 0.258], "hb": [0.009, 0.281]}, "rose-half": {"w": 880, "h": 810, "root": [0.285, 0.99], "head": [0.608, 0.28], "hb": [0.01, 0.351]}, "lily-half": {"w": 880, "h": 1287, "root": [0.324, 0.992], "head": [0.607, 0.263], "hb": [0.007, 0.291]}, "gerbera-half": {"w": 880, "h": 1363, "root": [0.395, 0.991], "head": [0.607, 0.209], "hb": [0.009, 0.255]}, "sunflower-half": {"w": 880, "h": 963, "root": [0.305, 0.991], "head": [0.584, 0.298], "hb": [0.009, 0.34]}, "anemone-half": {"w": 850, "h": 1866, "root": [0.431, 0.994], "head": [0.55, 0.286], "hb": [0.008, 0.364]}, "ranunculus-half": {"w": 880, "h": 1126, "root": [0.252, 0.99], "head": [0.502, 0.283], "hb": [0.01, 0.298]}, "marguerite-half": {"w": 880, "h": 1012, "root": [0.272, 0.99], "head": [0.551, 0.221], "hb": [0.01, 0.239]}, "galaxy-half": {"w": 880, "h": 1771, "root": [0.227, 0.994], "head": [0.548, 0.224], "hb": [0.006, 0.228]}, "lantern-half": {"w": 880, "h": 950, "root": [0.421, 0.992], "head": [0.638, 0.279], "hb": [0.008, 0.318]}, "crystal-bud": {"w": 533, "h": 1989, "root": [0.489, 0.993], "head": [0.631, 0.252], "hb": [0.007, 0.263]}, "crystal-half": {"w": 880, "h": 1010, "root": [0.327, 0.991], "head": [0.624, 0.286], "hb": [0.009, 0.328]}, "featherflower-bud": {"w": 650, "h": 1842, "root": [0.398, 0.992], "head": [0.494, 0.181], "hb": [0.008, 0.172]}, "featherflower-half": {"w": 880, "h": 936, "root": [0.342, 0.991], "head": [0.551, 0.275], "hb": [0.009, 0.299]}, "swirl-bud": {"w": 880, "h": 1317, "root": [0.199, 0.991], "head": [0.388, 0.228], "hb": [0.008, 0.222]}, "swirl-half": {"w": 880, "h": 863, "root": [0.172, 0.991], "head": [0.566, 0.302], "hb": [0.009, 0.379]}, "rainbow-bud": {"w": 535, "h": 1829, "root": [0.343, 0.992], "head": [0.504, 0.173], "hb": [0.007, 0.15]}, "rainbow-half": {"w": 880, "h": 1166, "root": [0.214, 0.991], "head": [0.534, 0.284], "hb": [0.008, 0.314]}, "sakura-full": {"w": 1029, "h": 2100, "root": [0.517, 0.997], "head": [0.493, 0.275], "hb": [0.008, 0.465]}, "sakura-bud": {"w": 868, "h": 2091, "root": [0.532, 0.997], "head": [0.463, 0.264], "hb": [0.008, 0.433]}, "sakura-half": {"w": 922, "h": 2068, "root": [0.524, 0.997], "head": [0.489, 0.262], "hb": [0.008, 0.452]}};
-const P5 = {"noirrose-full":{"a": 0.409, "b": 0.986, "ar": 1.067}, "noirrose-fullb":{"a": 0.498, "b": 0.992, "ar": 1.453}, "noirrose-bud":{"a": 0.359, "b": 0.962, "ar": 0.889}, "noirrose-half":{"a": 0.47, "b": 0.992, "ar": 1.35}, "stem-rose":{"rx":0.529,"tx":0.514},"branch-rose":{"rx":0.553,"tx":0.634},"stem-lily":{"rx":0.503,"tx":0.493,"ar":0.48},"branch-lily":{"rx":0.478,"tx":0.497,"ar":1.068},"stem-dahlia":{"rx":0.471,"tx":0.422},"branch-dahlia":{"rx":0.241,"tx":0.637},"stem-gerbera":{"rx":0.499,"tx":0.5,"ar":0.462},"branch-gerbera":{"rx":0.392,"tx":0.5,"ar":1.026},"stem-sunflower":{"rx":0.462,"tx":0.447},"branch-sunflower":{"rx":0.218,"tx":0.412},"stem-iris":{"rx":0.555,"tx":0.567,"ar":0.179},"branch-iris":{"rx":0.538,"tx":0.567,"ar":0.399},"stem-cherry":{"rx":0.45,"tx":0.429,"ar":0.366},"branch-cherry":{"rx":0.457,"tx":0.429,"ar":0.814},"stem-anemone":{"rx":0.483,"tx":0.498,"ar":0.526},"branch-anemone":{"rx":0.462,"tx":0.426,"ar":0.395},"tulilily-full":{"a":0.658,"b":0.946,"ar":0.965},"tulilily-fullb":{"a":0.575,"b":0.921,"ar":1.39},"tulilily-bud":{"a":0.386,"b":0.993,"ar":0.799},"tulilily-half":{"a":0.483,"b":0.994,"ar":1.094},"mobius-full":{"a":0.397,"b":0.885,"ar":1.011},"mobius-fullb":{"a":0.565,"b":0.86,"ar":0.89},"mobius-bud":{"a":0.505,"b":0.992,"ar":0.974},"mobius-half":{"a":0.493,"b":0.87,"ar":0.964},"candy-full":{"a":0.47,"b":0.972,"ar":1.007},"candy-fullb":{"a":0.494,"b":0.976,"ar":1.036},"candy-bud":{"a":0.514,"b":0.993,"ar":0.994},"candy-half":{"a":0.467,"b":0.993,"ar":0.949},"cotton-full":{"a":0.483,"b":0.994,"ar":1.001},"cotton-fullb":{"a":0.494,"b":0.868,"ar":1.013},"cotton-bud":{"a":0.606,"b":0.993,"ar":0.981},"cotton-half":{"a":0.51,"b":0.987,"ar":1.018},"bubble-full":{"a":0.36,"b":0.99,"ar":0.911},"bubble-bud":{"a":0.5,"b":0.994,"ar":0.567},"dahlia-full":{"a":0.469,"b":0.899,"ar":0.887},"rose-full":{"a":0.449,"b":0.994,"ar":1.042},"lily-full":{"a":0.497,"b":0.925,"ar":0.992},"gerbera-full":{"a":0.66,"b":0.902,"ar":0.907},"sunflower-full":{"a":0.483,"b":0.909,"ar":0.811},"anemone-full":{"a":0.542,"b":0.994,"ar":0.942},"ranunculus-full":{"a":0.535,"b":0.993,"ar":1.008},"marguerite-full":{"a":0.402,"b":0.906,"ar":0.867},"galaxy-full":{"a":0.594,"b":0.983,"ar":0.988},"galaxy-bud":{"a":0.484,"b":0.993,"ar":0.846},"crystal-full":{"a":0.578,"b":0.99,"ar":1.017},"featherflower-full":{"a":0.524,"b":0.891,"ar":0.971},"swirl-full":{"a":0.513,"b":0.988,"ar":0.939},"rainbow-full":{"a":0.563,"b":0.892,"ar":0.999},"dahlia-bud":{"a":0.485,"b":0.993,"ar":0.887},"rose-bud":{"a":0.489,"b":0.993,"ar":0.921},"lily-bud":{"a":0.284,"b":0.988,"ar":0.969},"gerbera-bud":{"a":0.5,"b":0.991,"ar":1.083},"sunflower-bud":{"a":0.629,"b":0.993,"ar":0.933},"anemone-bud":{"a":0.54,"b":0.99,"ar":1.02},"ranunculus-bud":{"a":0.409,"b":0.992,"ar":0.975},"marguerite-bud":{"a":0.54,"b":0.991,"ar":1.043},"dahlia-half":{"a":0.506,"b":0.922,"ar":0.9},"rose-half":{"a":0.513,"b":0.956,"ar":0.982},"lily-half":{"a":0.501,"b":0.838,"ar":0.946},"gerbera-half":{"a":0.644,"b":0.936,"ar":0.893},"sunflower-half":{"a":0.522,"b":0.993,"ar":0.828},"anemone-half":{"a":0.556,"b":0.993,"ar":0.874},"ranunculus-half":{"a":0.591,"b":0.944,"ar":1.026},"marguerite-half":{"a":0.504,"b":0.899,"ar":0.986},"galaxy-half":{"a":0.369,"b":0.991,"ar":1.116},"crystal-bud":{"a":0.307,"b":0.99,"ar":0.575},"crystal-half":{"a":0.621,"b":0.99,"ar":1.057},"featherflower-bud":{"a":0.386,"b":0.99,"ar":0.921},"featherflower-half":{"a":0.471,"b":0.981,"ar":1.141},"swirl-bud":{"a":0.483,"b":0.992,"ar":0.883},"swirl-half":{"a":0.402,"b":0.994,"ar":0.95},"rainbow-bud":{"a":0.495,"b":0.992,"ar":0.954},"rainbow-half":{"a":0.486,"b":0.994,"ar":0.949},"anemone-fullb":{"a":0.492,"b":0.906,"ar":1.043},"bubble-fullb":{"a":0.297,"b":0.993,"ar":0.751},"crystal-fullb":{"a":0.564,"b":0.99,"ar":0.825},"dahlia-fullb":{"a":0.493,"b":0.82,"ar":1.067},"featherflower-fullb":{"a":0.389,"b":0.985,"ar":0.792},"galaxy-fullb":{"a":0.401,"b":0.948,"ar":1.106},"gerbera-fullb":{"a":0.436,"b":0.925,"ar":0.747},"lily-fullb":{"a":0.539,"b":0.911,"ar":0.976},"lily-fullc":{"a":0.539,"b":0.875,"ar":1.042},"marguerite-fullb":{"a":0.488,"b":0.868,"ar":0.933},"rainbow-fullb":{"a":0.451,"b":0.895,"ar":0.856},"ranunculus-fullb":{"a":0.507,"b":0.888,"ar":0.885},"rose-fullb":{"a":0.357,"b":0.95,"ar":1.026},"sunflower-fullb":{"a":0.596,"b":0.906,"ar":0.86},"swirl-fullb":{"a":0.494,"b":0.971,"ar":0.857}};
+const P5 = {"noirrose-full":{"a":0.409,"b":0.986,"ar":1.067},"noirrose-fullb":{"a":0.498,"b":0.92,"ar":1.453},"noirrose-bud":{"a":0.359,"b":0.962,"ar":0.889},"noirrose-half":{"a":0.47,"b":0.992,"ar":1.35},"stem-rose":{"rx":0.529,"tx":0.514},"branch-rose":{"rx":0.553,"tx":0.634},"stem-lily":{"rx":0.503,"tx":0.493,"ar":0.48},"branch-lily":{"rx":0.478,"tx":0.497,"ar":1.068},"stem-dahlia":{"rx":0.471,"tx":0.422},"branch-dahlia":{"rx":0.241,"tx":0.637},"stem-gerbera":{"rx":0.499,"tx":0.5,"ar":0.462},"branch-gerbera":{"rx":0.392,"tx":0.5,"ar":1.026},"stem-sunflower":{"rx":0.462,"tx":0.447},"branch-sunflower":{"rx":0.218,"tx":0.412},"stem-iris":{"rx":0.555,"tx":0.567,"ar":0.179},"branch-iris":{"rx":0.538,"tx":0.567,"ar":0.399},"stem-cherry":{"rx":0.45,"tx":0.429,"ar":0.366},"branch-cherry":{"rx":0.457,"tx":0.429,"ar":0.814},"stem-anemone":{"rx":0.483,"tx":0.498,"ar":0.526},"branch-anemone":{"rx":0.462,"tx":0.426,"ar":0.395},"tulilily-full":{"a":0.44,"b":0.62,"ar":0.965},"tulilily-fullb":{"a":0.52,"b":0.6,"ar":1.39},"tulilily-bud":{"a":0.386,"b":0.993,"ar":0.799},"tulilily-half":{"a":0.49,"b":0.82,"ar":1.094},"mobius-full":{"a":0.46,"b":0.82,"ar":1.011},"mobius-fullb":{"a":0.565,"b":0.86,"ar":0.89},"mobius-bud":{"a":0.505,"b":0.992,"ar":0.974},"mobius-half":{"a":0.493,"b":0.87,"ar":0.964},"candy-full":{"a":0.47,"b":0.972,"ar":1.007},"candy-fullb":{"a":0.494,"b":0.976,"ar":1.036},"candy-bud":{"a":0.514,"b":0.993,"ar":0.994},"candy-half":{"a":0.467,"b":0.993,"ar":0.949},"cotton-full":{"a":0.483,"b":0.994,"ar":1.001},"cotton-fullb":{"a":0.494,"b":0.868,"ar":1.013},"cotton-bud":{"a":0.606,"b":0.993,"ar":0.981},"cotton-half":{"a":0.51,"b":0.987,"ar":1.018},"bubble-full":{"a":0.36,"b":0.99,"ar":0.911},"bubble-bud":{"a":0.5,"b":0.994,"ar":0.567},"dahlia-full":{"a":0.469,"b":0.899,"ar":0.887},"rose-full":{"a":0.449,"b":0.994,"ar":1.042},"lily-full":{"a":0.5,"b":0.62,"ar":0.992},"gerbera-full":{"a":0.49,"b":0.86,"ar":0.907},"sunflower-full":{"a":0.483,"b":0.909,"ar":0.811},"anemone-full":{"a":0.542,"b":0.994,"ar":0.942},"ranunculus-full":{"a":0.535,"b":0.993,"ar":1.008},"marguerite-full":{"a":0.47,"b":0.82,"ar":0.867},"galaxy-full":{"a":0.594,"b":0.983,"ar":0.988},"galaxy-bud":{"a":0.484,"b":0.993,"ar":0.846},"crystal-full":{"a":0.578,"b":0.99,"ar":1.017},"featherflower-full":{"a":0.524,"b":0.891,"ar":0.971},"swirl-full":{"a":0.513,"b":0.988,"ar":0.939},"rainbow-full":{"a":0.563,"b":0.892,"ar":0.999},"dahlia-bud":{"a":0.485,"b":0.993,"ar":0.887},"rose-bud":{"a":0.489,"b":0.993,"ar":0.921},"lily-bud":{"a":0.284,"b":0.988,"ar":0.969},"gerbera-bud":{"a":0.5,"b":0.991,"ar":1.083},"sunflower-bud":{"a":0.629,"b":0.993,"ar":0.933},"anemone-bud":{"a":0.54,"b":0.99,"ar":1.02},"ranunculus-bud":{"a":0.409,"b":0.992,"ar":0.975},"marguerite-bud":{"a":0.54,"b":0.991,"ar":1.043},"dahlia-half":{"a":0.48,"b":0.68,"ar":0.9},"rose-half":{"a":0.48,"b":0.8,"ar":0.982},"lily-half":{"a":0.52,"b":0.6,"ar":0.946},"gerbera-half":{"a":0.48,"b":0.85,"ar":0.893},"sunflower-half":{"a":0.49,"b":0.82,"ar":0.828},"anemone-half":{"a":0.556,"b":0.993,"ar":0.874},"ranunculus-half":{"a":0.5,"b":0.75,"ar":1.026},"marguerite-half":{"a":0.504,"b":0.899,"ar":0.986},"galaxy-half":{"a":0.46,"b":0.85,"ar":1.116},"crystal-bud":{"a":0.307,"b":0.99,"ar":0.575},"crystal-half":{"a":0.621,"b":0.99,"ar":1.057},"featherflower-bud":{"a":0.386,"b":0.99,"ar":0.921},"featherflower-half":{"a":0.471,"b":0.981,"ar":1.141},"swirl-bud":{"a":0.483,"b":0.992,"ar":0.883},"swirl-half":{"a":0.46,"b":0.78,"ar":0.95},"rainbow-bud":{"a":0.495,"b":0.992,"ar":0.954},"rainbow-half":{"a":0.486,"b":0.994,"ar":0.949},"anemone-fullb":{"a":0.48,"b":0.75,"ar":1.043},"bubble-fullb":{"a":0.297,"b":0.993,"ar":0.751},"crystal-fullb":{"a":0.564,"b":0.99,"ar":0.825},"dahlia-fullb":{"a":0.493,"b":0.82,"ar":1.067},"featherflower-fullb":{"a":0.44,"b":0.74,"ar":0.792},"galaxy-fullb":{"a":0.47,"b":0.82,"ar":1.106},"gerbera-fullb":{"a":0.45,"b":0.8,"ar":0.747},"lily-fullb":{"a":0.48,"b":0.58,"ar":0.976},"lily-fullc":{"a":0.84,"b":0.44,"ar":1.042},"marguerite-fullb":{"a":0.488,"b":0.868,"ar":0.933},"rainbow-fullb":{"a":0.37,"b":0.58,"ar":0.856},"ranunculus-fullb":{"a":0.48,"b":0.7,"ar":0.885},"rose-fullb":{"a":0.46,"b":0.78,"ar":1.026},"sunflower-fullb":{"a":0.47,"b":0.84,"ar":0.86},"swirl-fullb":{"a":0.494,"b":0.971,"ar":0.857}};
 for (const k of ['full','fullb','half','bud']) if (P5['crystal-' + k]) P5['crystalx-' + k] = P5['crystal-' + k]; /* 水晶ヘッドは改名してキャッシュを切り替える */
 
 /* ========= 種カタログ（定義シート definitions-v3） ========= */
@@ -222,6 +239,42 @@ const FAMILY_JP = { red:'赤', orange:'橙', yellow:'黄', green:'緑', blue:'�
 /* 説明文用: 色名は名前にだけ入れ、文中では色に呼応した表現を使う（先生の指定 2026-11-06） */
 const COLOR_EXPR = { red:['情熱を帯びた','心が燃えるような'], orange:['陽だまりのように温かな','元気があふれる'], yellow:['希望に輝く','明るい光を放つ'], green:['安らぎに満ちた','深呼吸したくなるような'], blue:['静けさをたたえた','凛とした'], purple:['気品のある','秘めた輝きの'], pink:['ときめきを運ぶ','ふわりと心ほどける'], white:['澄んだ光をまとった','清らかな'] };
 const FIXED_EXPR = { 'クリア':'氷のように澄んだ', 'ゴールド':'幸運を呼ぶように輝く', 'ギャラクシー':'星屑をちりばめたような', 'レインボー':'夢のように色づく', 'ルミナス':'ほのかに灯る', 'ファール':'夕暮れに灯る温かな', 'ノワール':'夜の静けさを帯びた' };
+/* ========= フラワーメッセージ（文面は先生確認済みシートが正） ========= */
+const FMSG = {"species": {"dahlia": {"trait": "華やかで堂々とした存在感", "mood": "華やか", "one": ["大きな花が咲いたね。その堂々とした感じ、あなたの声の伸びやかさそのものみたい。", "存在感のある花だなあ。歌っているときのあなた、きっと目立ってたんじゃない？"], "cheer": ["きっと大事な場面でも、この花みたいに堂々と咲けるよ。", "華やかさはあなたの武器だね。遠慮しないで、もっと輝いていいんだよ。"]}, "rose": {"trait": "気品と情熱をあわせ持つ美しさ", "mood": "華やか", "one": ["気品のある花が咲いたね。でも、どこか情熱も感じられてすごく素敵。", "凛とした美しい花だね。あなたの声、芯があって色気もあるなんてずるいなぁ。"], "cheer": ["その品性は本物だよ。誰かの真似じゃなく、あなたのままで咲き続けて。", "情熱を秘めた人は本当に強いよ。迷わず、自分に自信をもって行動してね。"]}, "lily": {"trait": "凛とした清らかさ", "mood": "清らか", "one": ["すっと背筋の伸びるような花。あなたの声、澄んでいて気持ちよかったよ。", "清らかな花が咲いたね。無理のない、まっすぐな声だったみたい。"], "cheer": ["その清らかさは、きっと聴く人の心を静かに整えてくれるよ。", "凛とした強さは、静かな人の特権だね。雑音に惑わされず、いつでもあなたらしく振舞って大丈夫だよ。"]}, "gerbera": {"trait": "太陽みたいな明るさ", "mood": "元気", "one": ["すごく明るい花が咲いたね。 あなたの声を聴いていたら、こっちまで元気が出たよ。", "太陽みたいな花が咲いたね。今日は調子がいいんじゃない？"], "cheer": ["その明るさが、周りの人を照らしてるよ。今日もいい日にしようね。", "前向きな声は誰かの力になるよ。その笑顔の声、また聞かせてね。"]}, "sunflower": {"trait": "太陽に向かうまっすぐな力", "mood": "元気", "one": ["太陽を追う花が咲いたよ。あなたの声、まっすぐで力強かったなぁ", "とても前向きな花が咲いたね。迷いのない声って、こういうのを言うんだと思うな。"], "cheer": ["あなたの誠実さは本物だよ。そのまま進めば、きっと光に届くよ。", "まっすぐな人は強い。最後に笑うのは、きっと諦めなかった人だよ。"]}, "anemone": {"trait": "儚くて神秘的な雰囲気", "mood": "神秘", "one": ["儚げな花が咲いたよ。あなたの声、夢の中みたいに柔らかかった。", "神秘的な花だね。声に影があって、私はすごく惹かれちゃう。"], "cheer": ["儚さは弱さじゃないよ。その繊細さに救われる人がいるんだから。", "夢みる力は大切にしてね。あなたの世界は、これからもっと広がっていくはずだよ。"]}, "ranunculus": {"trait": "幾重にも重なる優しさ", "mood": "穏やか", "one": ["花びらが何重にも重なる花。まるで、あなたの優しさが層になって咲いたみたい。", "ふんわり包み込むような花だね。とても穏やかで、聴いていてほっとしたよ。"], "cheer": ["優しい人は本当は強い人。その穏やかさを、これからも大切にしてね。", "あなたの声は、きっと誰かの一日をそっと温められるはずだよ。"]}, "marguerite": {"trait": "誠実で清楚な佇まい", "mood": "清らか", "one": ["清楚な花が咲いたよ。飾らない声って、すごく信頼できるなぁ。", "誠実で可愛らしい花だね。あなたの声、嘘がない感じで好きだよ。"], "cheer": ["誠実さは一番の魅力だよ。そのまっすぐさ、失わないでね。", "清楚な強さって素敵だね。今日もあなたのペースで大丈夫だよ。"]}, "tulip": {"trait": "凛とまっすぐな潔さ", "mood": "清らか", "one": ["すっとまっすぐな花が咲いたね。あなたの声、潔くてすごく気持ちがいい。", "凛として清らかな花だね。あなたの潔さがそのまま花になったみたいで素敵。"], "cheer": ["まっすぐ立つ姿は本当にきれい。その迷いのない清らかさはあなたの武器だよ。", "シンプル・イズ・ベスト。でも実はこれが一番難しいんだよ。あなたはすごいなぁ。"]}, "galaxy": {"trait": "星屑をまとった深遠さ", "mood": "神秘", "one": ["あっ、星の花が咲いたよ！ あなたの声、果てしなく広が宇宙みたいに神秘的。", "あっ、銀河の花なんて、めったに咲かないんだよ！すごいね。まさに声に宇宙を感じたよ。"], "cheer": ["その深さは、あなたのだけのもの。誰にも真似できない、あなたの魅力だね。", "果てしない世界を持っている人は強い。もっともっとあなたの世界を広げていってね。"]}, "lantern": {"trait": "温もりの灯り", "mood": "穏やか", "one": ["とても温かい灯りの花が咲いたよ！聴いていて、心がほっとしたなぁ。", "ランタンみたいな花が咲いた！あなたの声、そばに寄り添うような温かさだよ。"], "cheer": ["その温もりは、誰かの心を優しくを照らすよ。これからも大切にしてね。", "その優しい灯りは消えないよ。これからも、あなたのペースで灯し続けてほしいな。"]}, "crystal": {"trait": "澄みきった透明感", "mood": "清らか", "one": ["あっ、水晶の花だ！ あなたの声、澄みきっていて鳥肌が立ったよ。", "あっ、透明な水晶のような花だ！濁りのない声って、こういうことだね。"], "cheer": ["その透明感は才能だよ！決して曇らせることなく、磨き続けてほしいな。", "澄んだ声は人の心に直に届くよ！自信を持っていいんだからね。"]}, "featherflower": {"trait": "羽根のような軽やかさと癒し", "mood": "穏やか", "one": ["羽根みたいに軽い花が咲いた！あなたの声、ふわりと心に触れたよ。", "柔らかな花が咲いたね！聴いていると肩の力が抜けるなあ。"], "cheer": ["その柔らかさは、誰かを癒す力だよ。無理しないで、ふわりとね。", "軽やかに漂うのも素敵な生き方だよ。あなたのペースで大丈夫だからね。"]}, "swirl": {"trait": "渦巻く個性のエネルギー", "mood": "元気", "one": ["渦巻きの花だね！ あなたの声、個性がぐるぐる渦巻いてたよ。", "面白い花が咲いた！その回転するエネルギー、癖になるなぁ。"], "cheer": ["個性的って魅力的ってこと。そんなあなたに、人は惹かれるんだから。", "その躍動感、大切にね。次は表情を見せてくれるか、すごく楽しみだよ。"]}, "rainbow": {"trait": "唯一無二の輝き", "mood": "華やか", "one": ["わぁすごい、虹の花だ！ こんな花、なかなか咲かないんだよ。声が色とりどりに輝いてた。", "わぁ、唯一無二の花が咲いたね！あなたの声、誰のものでもない特別な色をしてたよ。"], "cheer": ["その輝きはまさに本物！これからも色を増やしながら、あなただけの輝きを放ってね。", "特別な花を咲かせるあなたは特別な存在！出し惜しみせず、もっと前に出ていこう。"]}, "tulilily": {"trait": "伸びやかに開いていく愛らしさ", "mood": "可憐", "one": ["あっ、伸びやかな素敵な花！声がすっと開いていく感じが魅力的だった。", "あっ、なんて愛らしい花なの！あなたの声、明るくてとっても伸びやかだったよ。"], "cheer": ["あなたには切り開いていく力がある！迷うことなんてない！そのまま進んでいいんだよ。", "柔よく剛を制す！あなたのしなやかさは誰にも折られることはないよ。"]}, "candy": {"trait": "甘くて儚い可愛さ", "mood": "可憐", "one": ["なんて甘い花が咲いたの！あなたの声、とろけるみたいに可愛かったなあ。", "キャンディーみたいな花だ！儚い甘さって、なんかずるいよね。"], "cheer": ["その甘さは、人の心をとかす力がある。皆あなたにメロメロになっちゃう。", "可愛さは正義！あなたなら、少しくらいの失敗は赦されちゃうんじゃない？"]}, "goldbell": {"trait": "鈴の音のような軽やかさ", "mood": "可憐", "one": ["鈴みたいな花が咲いたね！あなたの声、軽やかに鳴ってたなぁ。", "金色の可愛らしい花だね！小さな音の粒が、きらきら跳ねてたよ。"], "cheer": ["その軽やかさ、聴く人を笑顔にするよ。心まで軽くなっちゃうみたい。", "鈴の音のような軽やかなステップで、今日も一日乗り切ろうね。"]}, "mobius": {"trait": "うねる大胆さ", "mood": "華やか", "one": ["大胆な花が咲いたね！声のうねり、すごく躍動的だったよ。", "まるでメビウスみたいな花だ！あなたの声、大きく波打ってたからなぁ。"], "cheer": ["その大胆さはあなたの魅力だよ。波を恐れず、乗りこなしてね。", "華やかで躍動的なあなたに、まわりも引っ張られるんじゃないかな？"]}, "bubble": {"trait": "透きとおる優美さ", "mood": "清らか", "one": ["あっ、透きとおってシャボン玉みたい！ほんとに綺麗。声が虹色に光ってたよ。", "あっ、すごく清らかな花が咲いた！儚いのに、目が離せない魅力があるね。"], "cheer": ["その優美さは、きっと注目の的だよ！無理して弾けないように大切にしてね。", "清らかで澄んだあなたの輝きは、必ず誰かに届いているから自信をもって！"]}, "noirrose": {"trait": "静かな気品と妖しい美しさ", "mood": "神秘", "one": ["あっ、なんて神秘的なバラなの！静かなのに、すごい存在感。声に深みがあったからだね。", "あっ、すごく個性的な花が咲いたね！気品と妖しさ、両方ある声って稀少だよ。"], "cheer": ["その静かな気品は正しく本物！あなたを特別視している人がいるはずだよ。", "妖しい美しさはまさに大人の魅力って感じ！自信を持って、その魅力をふりまいてね。"]}, "firefly": {"trait": "控えめな蛍火の優しさ", "mood": "穏やか", "one": ["蛍火みたいな花が咲いたよ！小さな灯りだけど、心が温まる感じ。", "控えめで可愛い花が咲いたね！でもその優しい光、すごく癒されるよ。"], "cheer": ["小さな光は、暗い場所でこそ輝くよ。あなたの優しさは必要な人にちゃんと届いてるからね。", "控えめな強さって素敵だよ。ここぞというときに、あなたを頼りにしている人の力になってあげて。"]}, "sakura": {"trait": "羽ばたく意志の強さ", "mood": "元気", "one": ["羽根の桜が咲いたよ！あなたの声、羽ばたく力があって素敵だった。", "意志の強い花がさいたね！リズムに乗る声、気持ちよかったなあ。"], "cheer": ["あなたには、きっと野心があるはず。その意志で、望むものを手に入れてね。", "強い意志は逆境にも負けない。きっとこれまでのことが報われる日が来るはず。"]}, "cotton": {"trait": "ふわりと甘い華やかさ", "mood": "可憐", "one": ["ふわふわの花だ！ あなたの声、甘くて華やかだったなぁ。", "ワタアメみたいな花が咲いた！軽くて甘い、幸せな声だね。"], "cheer": ["そのふんわり感は、周りを幸せにするよ。まさにあなたは癒し系だね。", "一見すると、つかみどころのないタイプだけど、それこそが魅力だよ。皆を包み込んであげてね。"]}, "moonring": {"trait": "月明かりのような可憐さ", "mood": "神秘", "one": ["月の輪の花が咲いたよ！静かで可憐で、思わず見とれちゃった。", "月明かりの花だね！あなたの声、夜に似合う静けさがあるんだよねぇ。"], "cheer": ["静かな輝きは、まわりを優しく包み込む力があるよ。派手さはなくては、それこそが魅力だよ。", "焦らなくていいよ。あなたのペースで、ゆっくり満ちて行けばいいからね。"]}}, "tpl": ["{特徴}を感じる花が咲いたよ。あなたの声が、この花にしてくれたんだね。", "{色}の花が咲いたよ。{特徴}が、あなたの声そのものみたい。", "今日は{特徴}が声に表れてたみたい。この花が証拠だよ。", "{特徴}って、あなたの声の魅力だよね。それでこの花が咲いたんだよ。", "この花の{特徴}、あなたにそっくりだなあ。", "{色}に染まった花が咲いたよ。{特徴}も相まって、世界にひとつだけだね。"], "luckyColor": {"赤": [["オレンジ", "気持ちを前向きにしてくれる色だよ"], ["ワインレッド", "深みと自信をくれる色だよ"]], "橙": [["イエロー", "気分を軽くしてくれる色だよ"], ["コーラル", "人との縁を温めてくれる色だよ"]], "黄": [["オレンジ", "元気を後押ししてくれる色だよ"], ["ライムグリーン", "新しい始まりを呼ぶ色だよ"]], "緑": [["ミントグリーン", "気持ちを落ち着けてくれる色だよ"], ["エメラルド", "集中を助けてくれる色だよ"]], "青": [["スカイブルー", "心を澄ませてくれる色だよ"], ["ネイビー", "集中と信頼をくれる色だよ"]], "紫": [["ラベンダー", "心を穏やかにしてくれる色だよ"], ["プラム", "気品を引き立ててくれる色だよ"]], "ピンク": [["ローズピンク", "ときめきを運んでくれる色だよ"], ["サーモンピンク", "優しい気持ちにしてくれる色だよ"]], "白": [["パールホワイト", "気持ちをリセットしてくれる色だよ"], ["アイボリー", "穏やかさを守ってくれる色だよ"]]}, "luckyItem": {"元気": ["お気に入りの靴", "ハンドタオル", "ミントタブレット", "炭酸飲料"], "穏やか": ["のど飴", "温かい飲み物", "文庫本", "ハンドクリーム"], "華やか": ["お気に入りのアクセサリー", "香りのいいハンドクリーム", "とっておきのハンカチ", "新しい靴"], "清らか": ["新しいハンカチ", "ガラスのコップ", "小さな観葉植物", "白いシャツ"], "神秘": ["ノートとペン", "お香", "星のモチーフの小物", "ブレスレット"], "可憐": ["リボンの小物", "オーデコロン", "揺れるピアス(イヤリング)", "手鏡"]}, "luckySpot": {"元気": ["日当たりのいい公園", "駅前の広場", "スポーツジム", "ゲームセンター"], "穏やか": ["静かなカフェ", "遊歩道", "ベランダ", "図書館"], "華やか": ["ショッピングモール", "展望台", "イルミネーションの通り", "ホテルのロビー"], "清らか": ["神社の境内", "朝の公園", "川沿いの道", "噴水"], "神秘": ["プラネタリウム", "夜の散歩道", "アンティークショップ", "古い本屋"], "可憐": ["花屋さん", "アクセサリーショップ", "ケーキ屋さん", "行きつけの雑貨店"]}, "fixedFam": {"galaxy": "青", "rainbow": "ピンク", "crystal": "白", "goldbell": "黄", "firefly": "緑", "lantern": "橙", "bubble": "紫", "noirrose": "赤"}, "fixedExpr": {"クリア": ["氷のように澄んだ", "澄んだ輝きをもつ"]}};
+function buildFlowerMessage(){
+  if (!flowerInfo) return null;
+  const sp = flowerInfo.sp, color = flowerInfo.color;
+  const d = FMSG.species[sp.id]; if (!d) return null;
+  const r = rng(hashStr(bloomNo + sp.id + 'fmsg'));
+  const pick = arr => arr[Math.floor(r() * arr.length)];
+  /* 色の言い回しと {色} の差し込み（例: 情熱を帯びたルビー） */
+  let expr;
+  if (color.fixed) expr = pick(FMSG.fixedExpr[color.fixed] || [FIXED_EXPR[color.fixed] || color.fixed]);
+  else expr = pick(COLOR_EXPR[color.fam] || COLOR_EXPR.pink);
+  const colorNoun = expr + (color.fixed || color.word || '');
+  /* ① 専用文＋共通テンプレートから */
+  const oneCands = [];
+  for (const s of d.one) if (s) oneCands.push(s);
+  for (const t of FMSG.tpl) oneCands.push(t.replaceAll('{特徴}', d.trait).replaceAll('{色}', colorNoun));
+  const one = pick(oneCands);
+  /* ② エール */
+  const cheer = pick(d.cheer.filter(Boolean));
+  /* ③ ラッキー要素（カラー／アイテム／スポットから1種） */
+  const kind = pick(['color', 'item', 'spot']);
+  let lucky;
+  if (kind === 'color'){
+    const fam = color.fixed ? (FMSG.fixedFam[sp.id] || 'ピンク') : (FAMILY_JP[color.fam] || 'ピンク');
+    const [nm, reason] = pick(FMSG.luckyColor[fam]);
+    lucky = `ラッキーカラーは${nm}。${reason}${reason.endsWith('。') ? '' : '。'}`;
+  } else if (kind === 'item'){
+    lucky = `ラッキーアイテムは、${pick(FMSG.luckyItem[d.mood])}。`;
+  } else {
+    lucky = `ラッキースポットは、${pick(FMSG.luckySpot[d.mood])}。`;
+  }
+  /* 妖精は花の格で（ユーザーには明示しない） */
+  const fairy = (SR_SET.has(sp.id) || SSR_SET.has(sp.id)) ? 3 : (TIER2_SET.has(sp.id) ? 2 : 1);
+  return { one, cheer, lucky, fairy };
+}
 const FAMILY_HUE = { red:352, orange:30, yellow:52, green:130, blue:218, purple:272, pink:332, white:0 };
 const CLOSINGS = ['その歌がなければ、この花は咲かなかった。','その歌が生み出した、あなただけの花。','儚くも、この花に命を与えた。','あなたから生まれた、特別な花。','世界にひとつだけの、あなたの花。','歌も、花も、儚いからこそ美しい。','次の歌では、また違う花が待っている。'];
 const SONG_IMPRESSIONS = {
@@ -525,31 +578,31 @@ function flowerCurve(R){ return R <= 0.8 ? 0.1 + R : 0.9 + 0.5 * (R - 0.8); }
    = MISIA「Everything」約35〜45%・中島みゆき「糸」約20〜27%の中間、変化回数/4秒 = 糸サビ約5回・Everything約3〜4回）。
    声量と明るさは測らない。代わりに声域の高さ・声の太さ（倍音の豊かさ）を使う */
 const PROTO2 = {
-  dahlia:{r:13.5, c:10.5, s:7.4, t:61, th:.55, lt:.12, pat:{mid:.6, leap:.8, smooth:.3}},
+  dahlia:{r:13.5, c:7.6, s:7.6, t:61, th:.55, lt:.10, pat:{mid:.6, leap:.8, smooth:.3}},
   rose:{r:10, c:4.6, s:6.6, t:60, th:.60, lt:.30, pat:{smooth:1, mid:.3, clear:.3}},
   lily:{r:8, c:3.0, s:7.2, t:62, th:.45, lt:.38, pat:{smooth:1, clear:.4}, calm:1},
-  gerbera:{r:10, c:6.5, s:6.2, t:63, th:.50, lt:.08, pat:{step:.9, smooth:.5}},
+  gerbera:{r:10, c:7.2, s:6.2, t:63, th:.52, lt:.08, pat:{step:.9, smooth:.5}},
   sunflower:{r:13, c:6.5, s:6.8, t:60, th:.62, lt:.14, pat:{leap:.8, rise:.6, smooth:.3, mid:.3}},
   anemone:{r:9.5, c:5.5, s:5.6, t:59, th:.40, lt:.12, pat:{osc:.5, step:.6, smooth:.4}},
   ranunculus:{r:10, c:6.5, s:5.6, t:61, th:.50, lt:.14, pat:{smooth:.8, mid:.4}},
-  marguerite:{r:8.5, c:6.5, s:5.6, t:62, th:.42, lt:.08, pat:{step:.9, smooth:.5, same:.3}},
-  tulip:{r:9.5, c:5.2, s:5.8, t:62, th:.46, lt:.10, pat:{step:.7, smooth:.6}},
+  marguerite:{r:8.5, c:6.5, s:5.2, t:62, th:.42, lt:.08, pat:{step:.9, smooth:.5, same:.3}},
+  tulip:{r:9.5, c:5.6, s:6.0, t:62, th:.46, lt:.10, pat:{step:.7, smooth:.6}},
   galaxy:{r:17, c:6.0, s:8.0, t:58, th:.50, lt:.22, pat:{leap:1, mid:.5}},
   lantern:{r:10, c:3.5, s:6.8, t:57, th:.50, lt:.36, pat:{smooth:.9, same:.3}, calm:1},
   crystal:{r:10, c:4.2, s:5.4, t:65, th:.26, lt:.20, pat:{clear:.55, step:.35, smooth:.4}, calm:1},
   featherflower:{r:10, c:4.2, s:7.4, t:66, th:.33, lt:.30, pat:{osc:.6, smooth:.6}, calm:1},
-  swirl:{r:11.5, c:10, s:5.6, t:61, th:.50, lt:.06, pat:{osc:1, step:.4}},
+  swirl:{r:11.5, c:8.2, s:5.6, t:61, th:.50, lt:.06, pat:{osc:1, step:.4}},
   rainbow:{r:17, c:5.5, s:8.0, t:61, th:.58, lt:.20, pat:{leap:1, mid:.6, smooth:.3}},
   tulilily:{r:10, c:6.0, s:6.6, t:62, th:.48, lt:.24, pat:{rise:1, smooth:.6}},
   candy:{r:12, c:6.0, s:6.7, t:62, th:.45, lt:.08, pat:{same:.8, step:.6}},
-  goldbell:{r:10, c:9.5, s:4.2, t:64, th:.48, lt:.05, pat:{mid:.7, step:.5, same:.3}},
+  goldbell:{r:10, c:8.4, s:3.4, t:64, th:.48, lt:.05, pat:{mid:.7, step:.5, same:.3}},
   mobius:{r:13, c:6.5, s:7.9, t:60, th:.55, lt:.17, pat:{osc:.7, leap:.5, mid:.5}},
   bubble:{r:10, c:4.2, s:5.6, t:63, th:.30, lt:.16, pat:{smooth:.9, clear:.3}, calm:1},
   noirrose:{r:11, c:3.8, s:7.6, t:59, th:.62, lt:.36, pat:{smooth:1, clear:.3}, calm:1},
-  firefly:{r:8.5, c:4.0, s:4.2, t:60, th:.38, lt:.10, pat:{step:.7, smooth:.5, same:.3}, calm:1},
-  sakura:{r:10, c:9.5, s:4.2, t:62, th:.42, lt:.05, pat:{osc:.6, step:.5, mid:.4}},
+  firefly:{r:8.5, c:4.0, s:3.8, t:60, th:.38, lt:.10, pat:{step:.7, smooth:.5, same:.3}, calm:1},
+  sakura:{r:10, c:8.8, s:4.6, t:62, th:.42, lt:.05, pat:{osc:.6, step:.5, mid:.4}},
   cotton:{r:13, c:6.0, s:7.4, t:61, th:.60, lt:.26, pat:{smooth:.8, leap:.6, mid:.4}},
-  moonring:{r:8.5, c:9.5, s:4.2, t:58, th:.40, lt:.14, pat:{smooth:.8, same:.4, step:.3}, calm:1},
+  moonring:{r:8.5, c:7.8, s:4.8, t:58, th:.40, lt:.18, pat:{smooth:.8, same:.4, step:.3}, calm:1},
 };
 /* r=音域(半音) c=音高変化/4秒 s=フレーズ中央値(秒・0.7秒区切り) t=声域の高さ(MIDI) th=声の太さ lt=ロングトーン比率 */
 /* 上位クラス: SR 5種 + SSR 1種（虹の花）。入口条件 = キーが特定できること＋緩急があること＋ビブラートがあること */
@@ -612,8 +665,9 @@ function scoreSpecies(f, sp){
   /* 意味のある間: 穏やかな花と上位クラスへの加点要素 */
   if (f.meaningfulPause){ if (P.calm) s += 0.5; if (SR_SET.has(sp.id) || SSR_SET.has(sp.id)) s += 0.4; }
   /* 3分類の加点: ②（架空・レア以外）は精度が高いほど出やすくなる。①は何も足さない（純粋に歌い方で決まる）。
-     加点の最大1.25は僅差の分散幅（0.85）より大きく、レア種が自分の原型どおりの歌では負けない範囲に収める */
-  if (TIER2_SET.has(sp.id)) s += precisionScore(f) * 1.25;
+     v19: 加点の原点を精度0.5に移し、(精度-0.5)×2.0 とする。精度が高い歌では最大+1.0の後押し、
+     明らかに不安定な歌（精度0.5未満）では②が退き、①（実在花）が出やすくなる */
+  if (TIER2_SET.has(sp.id)) s += (precisionScore(f) - 0.5) * 2.0;
   return s;
 }
 /* スコア最大の種類（僅差の分散をしない素の判定）。変身・覚醒の判定はこちらを使う:
@@ -1025,12 +1079,66 @@ function drawComposite(x, stock, progOf, now){
   const brMeta = P5['branch-' + sp.stemFam] || { rx: 0.5, tx: 0.5 };
   const pMain = progOf.stem(stock.stems[0], 0);
   const revealMain = easeOut(clamp(pMain / 0.55, 0, 1));
+  /* v19: 小枝が花に触れないよう、描画前に全ての花頭の円（中心・半径）を幾何計算しておく */
+  const headDiscs = [];
+  const tipOfPart = (img, meta, rootX, rootY, dispH, rotDeg, reveal) => {
+    if (!img || !meta) return null;
+    const w = img.width * (dispH / img.height);
+    const th = rotDeg * Math.PI / 180;
+    const lx = (meta.tx - meta.rx) * w, ly = -dispH;
+    const fx = rootX + lx * Math.cos(th) - ly * Math.sin(th), fy = rootY + lx * Math.sin(th) + ly * Math.cos(th);
+    return { x: rootX + (fx - rootX) * reveal, y: rootY + (fy - rootY) * reveal };
+  };
+  const headScaleAt = (hp) => {
+    const pts = [[0, 0.30], [0.45, 0.48], [0.75, 0.75], [1, 1]];
+    for (let i = 1; i < pts.length; i++){ if (hp <= pts[i][0]){ const x0 = pts[i - 1][0], y0 = pts[i - 1][1], x1 = pts[i][0], y1 = pts[i][1]; return y0 + (y1 - y0) * (hp - x0) / (x1 - x0); } }
+    return 1;
+  };
+  const addDisc = (st, idx, tipPos) => {
+    if (!tipPos || !st) return;
+    const hp = clamp((progOf.stem(st, idx) - 0.3) / 0.7, 0, 1);
+    if (hp <= 0) return;
+    const h = st.headH * headScaleAt(hp);
+    const metaNm = imgs.metaName[st.ind] || imgs.metaName.full;
+    const ar = (P5[metaNm] && P5[metaNm].ar) || 1;
+    headDiscs.push({ x: tipPos.x, y: tipPos.y - h * 0.42, r: Math.max(h, h * ar) * 0.58 });
+  };
+  addDisc(stock.stems[0], 0, tipOfPart(imgs.stemPart, stemMeta, RX, gy + 2, plan.MH, sway * 0.3, revealMain));
+  for (const br of plan.branches){
+    const st = stock.stems[br.stemIdx]; if (!st) continue;
+    const bp = progOf.stem(st, br.stemIdx);
+    const reveal = bp <= 0.3 ? easeOut(clamp(bp / 0.3, 0, 1)) * 0.45 : 0.45 + 0.55 * easeOut(clamp((bp - 0.3) / 0.7, 0, 1));
+    if (revealMain < br.nodeF || reveal <= 0) continue;
+    const nx = RX + sway * br.nodeF * 2, ny = gy - plan.MH * br.nodeF * revealMain;
+    addDisc(st, br.stemIdx, tipOfPart(imgs.branchPart, brMeta, nx, ny, br.len, br.rot + sway * 0.5, reveal));
+  }
+  /* 小枝の長さを頭の円に触れない範囲へ（縮めても触れるなら 0 = 描かない） */
+  const sprigFit = (rootX, rootY, rotDeg, len) => {
+    let L = len;
+    for (let k = 0; k < 5; k++){
+      const th = rotDeg * Math.PI / 180;
+      const txp = rootX + Math.sin(th) * L, typ = rootY - Math.cos(th) * L;
+      let hit = false;
+      for (const d of headDiscs){
+        const vx = txp - rootX, vy = typ - rootY, L2 = (vx * vx + vy * vy) || 1;
+        let t = ((d.x - rootX) * vx + (d.y - rootY) * vy) / L2; t = Math.max(0, Math.min(1, t));
+        const dx = d.x - (rootX + vx * t), dy = d.y - (rootY + vy * t);
+        if (dx * dx + dy * dy < d.r * d.r){ hit = true; break; }
+      }
+      if (!hit) return L;
+      L *= 0.78;
+    }
+    return 0;
+  };
   /* 根元の葉（先頭2枚） */
   stock.sprigs.forEach((sg, i) => {
     if (i > 1) return;
     const p = clamp((progOf.global - sg.delay) / 0.6, 0, 1);
     if (p <= 0 || !imgs.sprig) return;
-    drawAnchored(x, imgs.sprig, sp.sprig, RX, gy + 4, sg.len * (0.4 + 0.6 * easeOut(p)), sg.rot + sway * 0.5, sg.flip, Math.min(1, p * 1.6));
+    const rot = sg.rot + sway * 0.5;
+    const lenF = sprigFit(RX, gy + 4, rot, sg.len * (0.4 + 0.6 * easeOut(p)));
+    if (lenF <= 0) return;
+    drawAnchored(x, imgs.sprig, sp.sprig, RX, gy + 4, lenF, rot, sg.flip, Math.min(1, p * 1.6));
   });
   /* 芽は共通フェーズ＋ベールで受け渡す。ここで小さい芽を描き直さない（双葉の後に芽が戻る事象の対策） */
   /* 枝（主茎より先に描き、付け根を主茎で隠す） */
@@ -1061,7 +1169,10 @@ function drawComposite(x, stock, progOf, now){
     if (revealMain < f) return;
     const p = clamp((progOf.global - sg.delay) / 0.6, 0, 1); if (p <= 0) return;
     const side = i % 2 === 0 ? 1 : -1;
-    drawAnchored(x, imgs.sprig, sp.sprig, RX + side * 4, gy - plan.MH * f * revealMain, Math.min(84, sg.len * 0.42 * (0.4 + 0.6 * easeOut(p))), side * (52 + (sg.rot % 10)) + sway * 0.5, side < 0, Math.min(1, p * 1.6));
+    const rotS = side * (52 + (sg.rot % 10)) + sway * 0.5, rootY = gy - plan.MH * f * revealMain;
+    const lenS = sprigFit(RX + side * 4, rootY, rotS, Math.min(84, sg.len * 0.42 * (0.4 + 0.6 * easeOut(p))));
+    if (lenS <= 2) return;
+    drawAnchored(x, imgs.sprig, sp.sprig, RX + side * 4, rootY, lenS, rotS, side < 0, Math.min(1, p * 1.6));
   });
   /* 枝の付け根の葉（繋ぎ目を自然に隠す） */
   if (imgs.sprig && sp.stemFam !== 'sunflower'){
@@ -1069,7 +1180,10 @@ function drawComposite(x, stock, progOf, now){
       const st = stock.stems[br.stemIdx]; if (!st) continue;
       const bp = progOf.stem(st, br.stemIdx);
       if (revealMain < br.nodeF || bp <= 0 || br.nodeF > 0.5) continue; /* 節の小枝も上半分には出さない */
-      drawAnchored(x, imgs.sprig, sp.sprig, RX + br.side * 6, gy - plan.MH * br.nodeF * revealMain, 78, br.side * 58 + sway * 0.5, br.side < 0, 0.95);
+      const rotN = br.side * 58 + sway * 0.5, rootYN = gy - plan.MH * br.nodeF * revealMain;
+      const lenN = sprigFit(RX + br.side * 6, rootYN, rotN, 78);
+      if (lenN <= 2) continue;
+      drawAnchored(x, imgs.sprig, sp.sprig, RX + br.side * 6, rootYN, lenN, rotN, br.side < 0, 0.95);
     }
   }
   /* 頭（枝→主役の順に描く） */
@@ -1680,6 +1794,17 @@ $('btn-zoom').onclick = () => {
 };
 $('btn-zoom-close').onclick = closeZoom;
 $('zoomModal').addEventListener('click', e => { if (e.target === $('zoomModal')) closeZoom(); });
+function closeFmsg(){ $('fmsgModal').style.display = 'none'; }
+$('btn-fmsg').onclick = () => {
+  const m = buildFlowerMessage(); if (!m) return;
+  $('fmsg-one').textContent = m.one;
+  $('fmsg-cheer').textContent = m.cheer;
+  $('fmsg-lucky').textContent = m.lucky;
+  $('fmsgFairy').src = A5 + 'fairy-' + m.fairy + '.webp';
+  $('fmsgModal').style.display = 'flex';
+};
+$('btn-fmsg-close').onclick = closeFmsg;
+$('fmsgModal').addEventListener('click', e => { if (e.target === $('fmsgModal')) closeFmsg(); });
 function finishWilt(){
   const mode = wilt ? wilt.mode : 'again';
   phase = 'done'; wilt = null; petals = [];
