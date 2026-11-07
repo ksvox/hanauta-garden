@@ -116,6 +116,10 @@
   </div>
 
 
+  <div style="text-align:center; margin:18px 0 4px;">
+    <button class="btn btn-sub" id="btn-coll-open" style="padding:11px 22px; font-size:15px;">📖 マイ図鑑コレクション</button>
+  </div>
+
   <!-- うたう -->
   <h2 class="sec" id="sec-sing">2️⃣ 花を育てる</h2>
   <div class="howto">
@@ -126,6 +130,20 @@
 
   <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
 
+</div>
+
+<div id="collectionPage" style="display:none; position:fixed; inset:0; z-index:55; background:#f7f1e3; overflow-y:auto; padding:24px 16px 44px;">
+  <h2 style="text-align:center; font-size:23px; margin:4px 0 6px; color:#4c3a22;">マイ図鑑コレクション</h2>
+  <p id="collCount" style="text-align:center; font-size:16px; font-weight:700; color:#7a5c2e; margin:2px 0 10px;"></p>
+  <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 14px;">ここに残るのは花種の記録だけ。色や形の組み合わせは世界にひとつだけ。あなたの花は、いつもあなただけの特別です。</p>
+  <div style="background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.75; color:#6b6151; margin:0 2px 18px;">
+    機種変更やブラウザのデータ消去で記録は消えます。残しておきたい図鑑カードは、個別に保存しておいてください。<br>
+    ※iPhoneをご利用の方は、長く開かないでいると記録が消えてしまうことがあります。ホーム画面に追加しておくと安心です。
+  </div>
+  <div id="collGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 10px;"></div>
+  <div style="text-align:center; margin-top:26px;">
+    <button class="btn btn-sub" id="btn-coll-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
+  </div>
 </div>
 
 <div id="zoomModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:60; align-items:center; justify-content:center; flex-direction:column; padding:22px;">
@@ -1704,6 +1722,7 @@ async function startCeremony(){
   }));
   bloomNo = makeBloomNo(mainSp);
   flowerInfo = makeFlowerInfo(an, stocks[0]);
+  recordCollection(); /* マイ図鑑コレクションへ記録（失敗しても本体は止めない） */
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
   $('timer').textContent = '花が咲きました 🌸';
   phase = 'ceremony'; const t0 = performance.now();
@@ -1956,10 +1975,11 @@ function makeFlowerInfo(an, stock){
    フラワーメッセージを開いている間だけ鳴らし、閉じたら止める。
    再生は音声時計（AudioContext）上に全音符を予約する方式: JSタイマー任せだと端末側の
    タイマー絞りで音が歯抜けになる（v25の実機報告）。止める時はバスごと切断する */
-let orgelBus = null, orgelEndTimer = null, orgelOn = false;
+let orgelBus = null, orgelEndTimer = null, orgelOn = false, orgelFx = null;
 function orgelBadge(show){ const b = $('fmsgOrgel'); if (b) b.style.display = show ? 'block' : 'none'; }
 function stopOrgel(){
   if (orgelBus){ try { orgelBus.disconnect(); } catch (e) { /* 既に切断済み */ } orgelBus = null; }
+  if (orgelFx){ try { orgelFx.conv.disconnect(); orgelFx.wet.disconnect(); } catch (e) { /* 同上 */ } orgelFx = null; }
   if (orgelEndTimer){ clearTimeout(orgelEndTimer); orgelEndTimer = null; }
   orgelOn = false; orgelBadge(false);
 }
@@ -1982,7 +2002,7 @@ function orgelNote(freq, tAbs, vol){
 function orgelMelody(){
   const phrases = analysis.phrases || (analysis.groups && analysis.groups[0]) || [];
   const raw = [];
-  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) raw.push({ midi: Math.round(n.midi), start: n.start || 0, dur: n.dur || 0.2 });
+  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) raw.push({ midi: Math.round(n.midi), start: n.start || 0, dur: n.dur || 0.2, dev: n.dev || 0 });
   raw.sort((a, b) => a.start - b.start);
   /* 前後とも同じ音の長い音に挟まれた、オクターブだけ違う短い音は検出ミスとして前後の音に戻す */
   for (let i = 1; i < raw.length - 1; i++){
@@ -1997,13 +2017,136 @@ function orgelMelody(){
     merged.push({ ...n });
   }
   /* 前後の長い音の間にある短い移行音（なだらかな移行の破片）は落とす */
-  return merged.filter((n, i) => {
+  const cleaned = merged.filter((n, i) => {
     if (n.dur >= 0.16) return true;
     const prev = merged[i - 1], next = merged[i + 1];
     if (prev && next && prev.dur >= 0.3 && next.dur >= 0.3 && n.midi >= Math.min(prev.midi, next.midi) && n.midi <= Math.max(prev.midi, next.midi)) return false;
     return true;
   });
+  /* ノイズ落とし: 息継ぎの間のリップノイズ等が「ありもしないタイミングの音」になる。
+     (1) 音程が大きく揺れている短い音は、保たれた音ではなくノイズ
+     (2) 前後に空白がある短い孤立音は、フレーズの外で拾った音 */
+  const kept = cleaned.filter((n, i) => {
+    if (n.dev >= 0.9 && n.dur < 0.5) return false;
+    if (n.dur < 0.30){
+      const prev = cleaned[i - 1], next = cleaned[i + 1];
+      const gapB = prev ? n.start - (prev.start + prev.dur) : 9;
+      const gapA = next ? next.start - (n.start + n.dur) : 9;
+      if (gapB >= 0.35 && gapA >= 0.35) return false;
+    }
+    return true;
+  });
+  /* フレーズの頭に印を付ける（和音用）。リズム補正で dur が伸びると間隔から頭を判定できなくなるため、ここで確定させる */
+  kept.forEach((n, i) => { n.head = i === 0 || (n.start - (kept[i - 1].start + kept[i - 1].dur)) >= 0.35; });
+  return kept;
 }
+/* ========= マイ図鑑コレクション（端末内 IndexedDB に記録。サーバー・ログインなし） ========= */
+const collDB = {
+  db: null,
+  open(){
+    return new Promise(res => {
+      if (!('indexedDB' in window)) return res(null);
+      if (collDB.db) return res(collDB.db);
+      let rq;
+      try { rq = indexedDB.open('hanauta-garden', 1); } catch (e) { return res(null); }
+      rq.onupgradeneeded = () => { try { rq.result.createObjectStore('collection', { keyPath: 'id' }); } catch (e) { /* 既にある */ } };
+      rq.onsuccess = () => { collDB.db = rq.result; res(collDB.db); };
+      rq.onerror = () => res(null);
+    });
+  },
+  async getAll(){
+    const db = await collDB.open();
+    if (!db) return [];
+    return new Promise(res => {
+      const out = [];
+      try {
+        const cur = db.transaction('collection').objectStore('collection').openCursor();
+        cur.onsuccess = e => { const c = e.target.result; if (c){ out.push(c.value); c.continue(); } else res(out); };
+        cur.onerror = () => res(out);
+      } catch (e) { res(out); }
+    });
+  },
+  async put(rec){
+    const db = await collDB.open();
+    if (!db) return;
+    return new Promise(res => {
+      try {
+        const tx = db.transaction('collection', 'readwrite');
+        tx.objectStore('collection').put(rec);
+        tx.oncomplete = () => res();
+        tx.onerror = () => res();
+      } catch (e) { res(); }
+    });
+  }
+};
+/* 記録は「初回固定」: 最初に咲いた時のカードを残し、咲かせた回数だけ数える */
+async function recordCollection(){
+  try {
+    if (!flowerInfo || !flowerInfo.sp) return;
+    const sp = flowerInfo.sp;
+    const all = await collDB.getAll();
+    const ex = all.find(r => r.id === sp.id);
+    if (ex){ await collDB.put({ ...ex, count: (ex.count || 1) + 1 }); return; }
+    const full = await renderExport();
+    const th = document.createElement('canvas'); th.width = 540; th.height = 800;
+    th.getContext('2d').drawImage(full, 0, 0, 540, 800);
+    let img = '';
+    try { img = th.toDataURL('image/webp', 0.85); } catch (e) { img = ''; }
+    if (!img || img.length > 500000){ try { img = th.toDataURL('image/jpeg', 0.85); } catch (e) { img = ''; } }
+    if (!img) return;
+    await collDB.put({ id: sp.id, img, count: 1, bloomNo, ts: Date.now() });
+  } catch (e) { /* 記録できなくてもアプリは止めない */ }
+}
+async function openCollection(){
+  $('collectionPage').style.display = 'block';
+  const all = await collDB.getAll();
+  const map = {};
+  for (const r of all) map[r.id] = r;
+  $('collCount').textContent = `これまでにあなたが咲かせた花種⋯${SPECIES.filter(sp => map[sp.id]).length}／${SPECIES.length}種`;
+  const grid = $('collGrid');
+  grid.innerHTML = '';
+  for (const sp of SPECIES){
+    const rec = map[sp.id];
+    const cell = document.createElement('div');
+    cell.style.textAlign = 'center';
+    if (rec){
+      const wrap = document.createElement('div');
+      wrap.style.position = 'relative';
+      const im = document.createElement('img');
+      im.src = rec.img;
+      im.alt = sp.jp;
+      im.style.cssText = 'width:100%; border-radius:10px; box-shadow:0 4px 14px rgba(60,45,20,.25); display:block;';
+      wrap.appendChild(im);
+      if ((rec.count || 1) === 1){
+        const bd = document.createElement('span');
+        bd.textContent = '初';
+        bd.style.cssText = 'position:absolute; top:6px; left:6px; background:#e2543e; color:#fff; font-weight:700; font-size:13px; padding:2px 9px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
+        wrap.appendChild(bd);
+      }
+      cell.appendChild(wrap);
+      const nm = document.createElement('div');
+      nm.textContent = sp.jp;
+      nm.style.cssText = 'margin-top:5px; font-size:13.5px; font-weight:600; color:#4c463c;';
+      cell.appendChild(nm);
+      cell.style.cursor = 'pointer';
+      cell.onclick = () => { $('zoomImg').src = rec.img; $('zoomName').textContent = sp.jp; zoomOpen = true; $('zoomModal').style.display = 'flex'; };
+    } else {
+      const im = document.createElement('img');
+      im.src = (sp.cluster || !sp.stemFam) ? A4 + sp.base + '-full.webp' : A5 + (sp.headBase || sp.base) + '-full.webp';
+      im.alt = 'まだ咲かせていない花';
+      im.style.cssText = 'width:100%; height:110px; object-fit:contain; filter:brightness(0); opacity:.26; display:block;';
+      cell.appendChild(im);
+      const nm = document.createElement('div');
+      nm.textContent = '？？？';
+      nm.style.cssText = 'margin-top:5px; font-size:13.5px; font-weight:600; color:#a79c86;';
+      cell.appendChild(nm);
+    }
+    grid.appendChild(cell);
+  }
+}
+$('btn-coll-open').onclick = openCollection;
+$('btn-coll-back').onclick = () => { $('collectionPage').style.display = 'none'; };
+
 /* リズム補正: オルゴールに揺らぎは要らない（先生の指定）。歌の音の間隔から拍の格子を推定し、
    音の頭をいちばん近い格子へ完全に寄せる。拍が読み取れる歌にだけ掛け、拍のない歌はそのままにする */
 function quantizeOnsets(list){
@@ -2045,6 +2188,48 @@ function quantizeOnsets(list){
   for (let i = 0; i < list.length - 1; i++) list[i].dur = Math.max(0.12, list[i + 1].start - list[i].start);
   return list;
 }
+/* 改良オルゴール（SR特典の音色）: 本体のオルゴールに1オクターブ上の薄い音を重ねる */
+function orgelNotePlus(freq, tAbs, vol){ orgelNote(freq, tAbs, vol); orgelNote(freq * 2, tAbs, vol * 0.34); }
+/* 薄いリバーブ（SR特典）: 残響はその場で生成したインパルス応答を使う。外部ファイル不要 */
+function attachReverb(){
+  try {
+    const conv = AC.createConvolver();
+    const durS = 1.4, len = Math.floor(AC.sampleRate * durS);
+    const ir = AC.createBuffer(2, len, AC.sampleRate);
+    for (let ch = 0; ch < 2; ch++){
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-3.2 * (i / AC.sampleRate) / durS);
+      /* 高域を少し丸める（単純移動平均） */
+      const raw = Float32Array.from(d);
+      let run = 0;
+      for (let i = 0; i < len; i++){ run += raw[i]; if (i >= 24) run -= raw[i - 24]; d[i] = run / Math.min(i + 1, 24); }
+    }
+    conv.buffer = ir;
+    const wet = AC.createGain(); wet.gain.value = 0.20;
+    orgelBus.connect(conv); conv.connect(wet); wet.connect(AC.destination);
+    orgelFx = { conv, wet };
+  } catch (e) { /* リバーブが作れない環境ではドライのまま */ }
+}
+/* 調の推定（SR特典の音程補正・和音用）: 自信がある時だけ使う。フレーズ毎の調を長さで重み付けして決める */
+function orgelKeyInfo(){
+  if (!analysis || !analysis.feat || !analysis.feat.keyIdentifiable) return null;
+  const votes = {};
+  for (const p of (analysis.phrases || [])) if (p.scaleKey) votes[p.scaleKey] = (votes[p.scaleKey] || 0) + (p.durSec || 1);
+  let best = null, bs = -1;
+  for (const k in votes) if (votes[k] > bs){ bs = votes[k]; best = k; }
+  if (!best) return null;
+  const root = parseInt(best, 10) % 12;
+  const pcs = (best.endsWith('min') ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11]).map(x => (x + root) % 12);
+  return { root, pcs };
+}
+function snapToScale(m, pcs){
+  const set = new Set(pcs);
+  for (let d = 0; d <= 2; d++){
+    if (set.has(((m - d) % 12 + 12) % 12)) return m - d;
+    if (set.has(((m + d) % 12 + 12) % 12)) return m + d;
+  }
+  return m;
+}
 function playOrgel(){
   stopOrgel();
   if (!AC || !analysis) return;
@@ -2053,9 +2238,29 @@ function playOrgel(){
   if (AC.state !== 'running') { try { AC.resume(); } catch (e) { /* 再開できない環境では無音のまま */ } }
   orgelBus = AC.createGain(); orgelBus.gain.value = 1; orgelBus.connect(AC.destination);
   orgelOn = true; orgelBadge(true);
+  /* SR特典（隠し仕様）: レアな花の時だけ、改良音色＋薄いリバーブ。
+     調が自信を持って分かる時は、音階に吸着させて音程を整え、フレーズの頭に薄く和音を添える */
+  const sp = flowerInfo && flowerInfo.sp;
+  const isSR = !!(sp && (SR_SET.has(sp.id) || SSR_SET.has(sp.id)));
+  const key = isSR ? orgelKeyInfo() : null;
+  if (key) for (const n of notes) n.midi = snapToScale(n.midi, key.pcs);
+  if (isSR) attachReverb();
+  const noteFn = isSR ? orgelNotePlus : orgelNote;
   const t0 = notes[0].start || 0;
   const base = AC.currentTime + 0.06;
-  for (const n of notes) orgelNote(440 * Math.pow(2, ((n.midi - 69) / 12)), base + Math.max(0, (n.start || 0) - t0), n.dur < 0.25 ? 0.11 : 0.16);
+  for (const n of notes) noteFn(440 * Math.pow(2, ((n.midi - 69) / 12)), base + Math.max(0, (n.start || 0) - t0), n.dur < 0.25 ? 0.11 : 0.16);
+  if (key){
+    for (const n of notes){
+      if (!n.head) continue;
+      let rootM = n.midi - (((n.midi - key.root) % 12) + 12) % 12;
+      if (rootM > n.midi - 5) rootM -= 12;
+      if (rootM >= n.midi - 16){
+        const headT = base + Math.max(0, (n.start || 0) - t0);
+        noteFn(440 * Math.pow(2, ((rootM - 69) / 12)), headT, 0.05);
+        noteFn(440 * Math.pow(2, ((rootM + 7 - 69) / 12)), headT, 0.038);
+      }
+    }
+  }
   const last = notes[notes.length - 1];
   const endMs = (Math.max(0, (last.start || 0) - t0 + (last.dur || 0.3)) + 1.4) * 1000;
   orgelEndTimer = setTimeout(() => stopOrgel(), endMs);
