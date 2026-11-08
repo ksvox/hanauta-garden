@@ -191,7 +191,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v38'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v39'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -2296,8 +2296,10 @@ function stopOrgel(){
 }
 /* オルゴールの音色: 金属の爪（くし歯）の振動モードに近い倍音構成。
    高い倍音ほど速く消えるのが「オルゴールらしさ」で、全部同じ長さで鳴らすと鐘のようにぼやける */
-function orgelNote(freq, tAbs, vol){
-  const partials = [ [1, 0.55, 2.2], [2.0, 0.20, 0.9], [6.27, 0.30, 0.45], [17.55, 0.10, 0.13] ];
+function orgelNote(freq, tAbs, vol, lite){
+  /* lite（オクターブ重ね専用）: 高い倍音（6.27倍・17.55倍）を出さない。
+     重ねた側でそれらが鳴ると基音の35倍に達し、耳障りな成分になるため（v39・先生の指示） */
+  const partials = lite ? [ [1, 0.55, 2.2], [2.0, 0.20, 0.9] ] : [ [1, 0.55, 2.2], [2.0, 0.20, 0.9], [6.27, 0.30, 0.45], [17.55, 0.10, 0.13] ];
   for (const [mult, g0, dec] of partials){
     const o = AC.createOscillator(), g = AC.createGain();
     o.type = 'sine'; o.frequency.value = freq * mult;
@@ -2584,7 +2586,7 @@ function quantizeOnsets(list, relax){
   return list;
 }
 /* 改良オルゴール（SR特典の音色）: 本体のオルゴールに1オクターブ上の薄い音を重ねる */
-function orgelNotePlus(freq, tAbs, vol){ orgelNote(freq, tAbs, vol); orgelNote(freq * 2, tAbs, vol * 0.34); }
+function orgelNotePlus(freq, tAbs, vol){ orgelNote(freq, tAbs, vol); orgelNote(freq * 2, tAbs, vol * 0.34, true); }
 /* v35 SR特典: シェイカーを4分音符の拍に薄く刻む（格子が確定した時だけ。グルーヴの土台） */
 function orgelShaker(tAbs){
   try {
@@ -2610,21 +2612,25 @@ function attachReverb(){
     const conv = AC.createConvolver();
     const durS = 1.0, len = Math.floor(AC.sampleRate * durS);
     const ir = AC.createBuffer(2, len, AC.sampleRate);
+    /* v39: 残響の応答は「減衰する正弦波の重なり」で作る。従来はランダムノイズから作っていたため、
+       どれだけ滑らかにしても音のたびに薄いノイズの尾が鳴った（SRでだけノイズが残る原因）。
+       ノイズ成分を含まない応答に替える。立ち上がりの30msフェードはクリック防止に残す */
+    const parts = [ [392.0, 1.00, 3.2], [587.33, 0.72, 2.7], [880.0, 0.52, 2.2], [1318.5, 0.34, 1.7], [1975.5, 0.20, 1.25] ];
     for (let ch = 0; ch < 2; ch++){
       const d = ir.getChannelData(ch);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-4.2 * (i / AC.sampleRate) / durS);
-      /* v35: 「ジジっ」という音頭のノイズ対策。(1) 応答の立ち上がりを約30msかけて滑らかに
-         （各音のアタックがノイズの頭を叩いて飛び散るのを防ぐ）。(2) 高域をしっかり落とす
-         （24点移動平均を3回重ね＋1次ローパス）。残響そのものは短め・薄めに */
+      const det = ch === 0 ? 1 : 1.003; /* 左右でわずかにずらして広がりを出す */
+      let peak = 0;
+      for (let i = 0; i < len; i++){
+        const t = i / AC.sampleRate;
+        let v = 0;
+        for (const [fq, amp, dec] of parts) v += amp * Math.sin(2 * Math.PI * fq * det * t + ch * 1.7 + fq * 0.01) * Math.exp(-dec * t / durS * 2.2);
+        d[i] = v;
+        if (Math.abs(v) > peak) peak = Math.abs(v);
+      }
       const fadeIn = Math.floor(AC.sampleRate * 0.03);
       for (let i = 0; i < fadeIn; i++) d[i] *= (i / fadeIn) * (i / fadeIn);
-      for (let pass = 0; pass < 3; pass++){
-        const raw = Float32Array.from(d);
-        let run = 0;
-        for (let i = 0; i < len; i++){ run += raw[i]; if (i >= 24) run -= raw[i - 24]; d[i] = run / Math.min(i + 1, 24); }
-      }
-      let lp = 0;
-      for (let i = 0; i < len; i++){ lp += 0.24 * (d[i] - lp); d[i] = lp; }
+      const g = peak > 0 ? 0.85 / peak : 1;
+      for (let i = 0; i < len; i++) d[i] *= g;
     }
     conv.buffer = ir;
     const wet = AC.createGain(); wet.gain.value = 0.16;
@@ -2634,7 +2640,12 @@ function attachReverb(){
 }
 /* 調の推定（SR特典の音程補正・和音用）: 自信がある時だけ使う。フレーズ毎の調を長さで重み付けして決める */
 function orgelKeyInfo(){
-  if (!analysis || !analysis.feat || !analysis.feat.keyIdentifiable) return null;
+  if (!analysis || !analysis.feat) return null;
+  /* v39: キーの受け入れ基準を、花側のSRゲート（v37）と揃える。従来は旧基準（keyCov 0.87以上）の
+     ままだったため、新基準でSRが咲いてもオルゴール側はキーを掴めず、音階寄せもコードも止まっていた */
+  const f39 = analysis.feat;
+  const keyOK = (f39.keyCov || 0) >= 0.78 || ((f39.keyCov || 0) >= 0.70 && (f39.keyVoteShare || 0) >= 0.65);
+  if (!keyOK) return null;
   const votes = {};
   for (const p of (analysis.phrases || [])) if (p.scaleKey) votes[p.scaleKey] = (votes[p.scaleKey] || 0) + (p.durSec || 1);
   let best = null, bs = -1;
