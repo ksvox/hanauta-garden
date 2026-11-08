@@ -96,12 +96,19 @@
   <h2 class="sec">1️⃣ 場所を選ぶ</h2>
   <div class="bgs" id="bgs"></div>
 
-  <!-- 花が咲く画面 -->
+<!-- うたう -->
+  <h2 class="sec" id="sec-sing">2️⃣ 花を育てる</h2>
+  <div class="howto">
+    スマホを口の前15cmくらいに持ってください。<br>
+    好きな歌でも、即興でもOK。30秒たつと自動で終わります。
+  </div>
+
+<!-- 花が咲く画面 -->
   <div class="stage-wrap" id="stagewrap"><canvas id="stage" width="900" height="1125"></canvas></div>
   <p class="timer" id="timer"></p>
   <button class="btn btn-main" id="btn-finish" style="display:none;">⏸ 一時中断する</button>
 
-  <!-- 結果 -->
+<!-- 結果 -->
   <div id="result" style="display:none;">
     <div class="card">
       <p class="fname" id="f-name"></p>
@@ -121,18 +128,11 @@
     <p class="note">「もう一度育てる」か「終了する」を押すと、花は枯れて土に還ります。</p>
   </div>
 
+  <button class="btn btn-main btn-big" id="btn-start">🎤鼻歌をうたう (30秒)</button>
 
-  <div style="text-align:center; margin:18px 0 4px;">
+<div style="text-align:center; margin:18px 0 4px;">
     <button class="btn btn-sub" id="btn-coll-open" style="padding:11px 22px; font-size:15px;">📖 マイ図鑑コレクション</button>
   </div>
-
-  <!-- うたう -->
-  <h2 class="sec" id="sec-sing">2️⃣ 花を育てる</h2>
-  <div class="howto">
-    スマホを口の前15cmくらいに持ってください。<br>
-    好きな歌でも、即興でもOK。30秒たつと自動で終わります。
-  </div>
-  <button class="btn btn-main btn-big" id="btn-start">♬鼻歌を歌う(30秒)</button>
 
   <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
 
@@ -1686,7 +1686,7 @@ $('btn-start').onclick = async () => {
   recTick = tick;
   tick();
 };
-function resetStartBtn(){ const b = $('btn-start'); b.disabled = false; b.textContent = '♬鼻歌を歌う(30秒)'; }
+function resetStartBtn(){ const b = $('btn-start'); b.disabled = false; b.textContent = '🎤鼻歌をうたう (30秒)'; }
 function finishRecording(){
   recording = false; recPaused = false; recTick = null;
   liveClosed = true; /* この瞬間の花種・色で確定。以後のライブ処理は株を書き換えない */
