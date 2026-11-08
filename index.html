@@ -2061,6 +2061,7 @@ function makeFlowerInfo(an, stock){
    再生は音声時計（AudioContext）上に全音符を予約する方式: JSタイマー任せだと端末側の
    タイマー絞りで音が歯抜けになる（v25の実機報告）。止める時はバスごと切断する */
 let orgelBus = null, orgelEndTimer = null, orgelOn = false, orgelFx = null;
+let orgelGrid = null, orgelNoiseBuf = null; /* v35: 直近の量子化で確定した拍格子（シェイカー用）と共有ノイズバッファ */
 function orgelBadge(show){ const b = $('fmsgOrgel'); if (b) b.style.display = show ? 'block' : 'none'; }
 function stopOrgel(){
   if (orgelBus){ try { orgelBus.disconnect(); } catch (e) { /* 既に切断済み */ } orgelBus = null; }
@@ -2280,7 +2281,8 @@ $('btn-coll-back').onclick = () => { $('collectionPage').style.display = 'none';
 
 /* リズム補正: オルゴールに揺らぎは要らない（先生の指定）。歌の音の間隔から拍の格子を推定し、
    音の頭をいちばん近い格子へ完全に寄せる。拍が読み取れる歌にだけ掛け、拍のない歌はそのままにする */
-function quantizeOnsets(list){
+function quantizeOnsets(list, relax){
+  orgelGrid = null;
   if (list.length < 4) return list;
   const s0 = list[0].start;
   const S = list.map(n => n.start - s0);
@@ -2300,7 +2302,7 @@ function quantizeOnsets(list){
       let sum = 0;
       for (const s of S){ let d = Math.abs(((s - ph) % u + u) % u); d = Math.min(d, u - d); sum += d; }
       const meanRel = (sum / S.length) / u;
-      if (meanRel <= 0.17) fits.push({ u, ph, meanRel });
+      if (meanRel <= (relax ? 0.21 : 0.17)) fits.push({ u, ph, meanRel });
     }
   }
   if (!fits.length) return list;
@@ -2310,6 +2312,7 @@ function quantizeOnsets(list){
   family.sort((a, b) => a.meanRel - b.meanRel || b.u - a.u);
   const best = family[0];
   const { u, ph } = best;
+  orgelGrid = { u, ph, s0 }; /* v35: 確定した格子を覚えておく（SRのシェイカーを拍に置くため） */
   let prev = -Infinity;
   list.forEach((n, i) => {
     let ns = s0 + ph + Math.round((S[i] - ph) / u) * u;
@@ -2321,22 +2324,49 @@ function quantizeOnsets(list){
 }
 /* 改良オルゴール（SR特典の音色）: 本体のオルゴールに1オクターブ上の薄い音を重ねる */
 function orgelNotePlus(freq, tAbs, vol){ orgelNote(freq, tAbs, vol); orgelNote(freq * 2, tAbs, vol * 0.34); }
+/* v35 SR特典: シェイカーを4分音符の拍に薄く刻む（格子が確定した時だけ。グルーヴの土台） */
+function orgelShaker(tAbs){
+  try {
+    if (!orgelNoiseBuf){
+      const len = Math.floor(AC.sampleRate * 0.1);
+      orgelNoiseBuf = AC.createBuffer(1, len, AC.sampleRate);
+      const d = orgelNoiseBuf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const src = AC.createBufferSource(); src.buffer = orgelNoiseBuf;
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 6800; bp.Q.value = 0.9;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0, tAbs);
+    g.gain.linearRampToValueAtTime(0.030, tAbs + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, tAbs + 0.075);
+    src.connect(bp); bp.connect(g); g.connect(orgelBus);
+    src.start(tAbs); src.stop(tAbs + 0.1);
+  } catch (e) { /* シェイカーが作れない環境では無音 */ }
+}
 /* 薄いリバーブ（SR特典）: 残響はその場で生成したインパルス応答を使う。外部ファイル不要 */
 function attachReverb(){
   try {
     const conv = AC.createConvolver();
-    const durS = 1.4, len = Math.floor(AC.sampleRate * durS);
+    const durS = 1.0, len = Math.floor(AC.sampleRate * durS);
     const ir = AC.createBuffer(2, len, AC.sampleRate);
     for (let ch = 0; ch < 2; ch++){
       const d = ir.getChannelData(ch);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-3.2 * (i / AC.sampleRate) / durS);
-      /* 高域を少し丸める（単純移動平均） */
-      const raw = Float32Array.from(d);
-      let run = 0;
-      for (let i = 0; i < len; i++){ run += raw[i]; if (i >= 24) run -= raw[i - 24]; d[i] = run / Math.min(i + 1, 24); }
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-4.2 * (i / AC.sampleRate) / durS);
+      /* v35: 「ジジっ」という音頭のノイズ対策。(1) 応答の立ち上がりを約30msかけて滑らかに
+         （各音のアタックがノイズの頭を叩いて飛び散るのを防ぐ）。(2) 高域をしっかり落とす
+         （24点移動平均を3回重ね＋1次ローパス）。残響そのものは短め・薄めに */
+      const fadeIn = Math.floor(AC.sampleRate * 0.03);
+      for (let i = 0; i < fadeIn; i++) d[i] *= (i / fadeIn) * (i / fadeIn);
+      for (let pass = 0; pass < 3; pass++){
+        const raw = Float32Array.from(d);
+        let run = 0;
+        for (let i = 0; i < len; i++){ run += raw[i]; if (i >= 24) run -= raw[i - 24]; d[i] = run / Math.min(i + 1, 24); }
+      }
+      let lp = 0;
+      for (let i = 0; i < len; i++){ lp += 0.24 * (d[i] - lp); d[i] = lp; }
     }
     conv.buffer = ir;
-    const wet = AC.createGain(); wet.gain.value = 0.20;
+    const wet = AC.createGain(); wet.gain.value = 0.16;
     orgelBus.connect(conv); conv.connect(wet); wet.connect(AC.destination);
     orgelFx = { conv, wet };
   } catch (e) { /* リバーブが作れない環境ではドライのまま */ }
@@ -2364,15 +2394,18 @@ function snapToScale(m, pcs){
 function playOrgel(){
   stopOrgel();
   if (!AC || !analysis) return;
-  const notes = quantizeOnsets(orgelMelody());
+  const sp0 = flowerInfo && flowerInfo.sp;
+  const isSR0 = !!(sp0 && (SR_SET.has(sp0.id) || SSR_SET.has(sp0.id)));
+  /* v35: SRの時は格子の当てはめを少し緩めてでも拍を確定させ、テンポを均す（補正の土台） */
+  const notes = quantizeOnsets(orgelMelody(), isSR0);
   if (!notes.length) return;
   if (AC.state !== 'running') { try { AC.resume(); } catch (e) { /* 再開できない環境では無音のまま */ } }
   orgelBus = AC.createGain(); orgelBus.gain.value = 1; orgelBus.connect(AC.destination);
   orgelOn = true; orgelBadge(true);
   /* SR特典（隠し仕様）: レアな花の時だけ、改良音色＋薄いリバーブ。
      調が自信を持って分かる時は、音階に吸着させて音程を整え、フレーズの頭に薄く和音を添える */
-  const sp = flowerInfo && flowerInfo.sp;
-  const isSR = !!(sp && (SR_SET.has(sp.id) || SSR_SET.has(sp.id)));
+  const sp = sp0;
+  const isSR = isSR0;
   const key = isSR ? orgelKeyInfo() : null;
   if (key) for (const n of notes) n.midi = snapToScale(n.midi, key.pcs);
   if (isSR) attachReverb();
@@ -2390,6 +2423,17 @@ function playOrgel(){
         noteFn(440 * Math.pow(2, ((rootM - 69) / 12)), headT, 0.05);
         noteFn(440 * Math.pow(2, ((rootM + 7 - 69) / 12)), headT, 0.038);
       }
+    }
+  }
+  /* v35 SR特典: 格子が確定していれば、4分音符の拍にシェイカーを薄く入れる */
+  if (isSR && orgelGrid){
+    const k = Math.max(1, Math.min(6, Math.round(0.5 / orgelGrid.u)));
+    const B = orgelGrid.u * k;
+    const lastN = notes[notes.length - 1];
+    const endT = (lastN.start || 0) + (lastN.dur || 0.3);
+    for (let bt = orgelGrid.s0 + orgelGrid.ph; bt <= endT + 0.001; bt += B){
+      if (bt < t0 - 0.001) continue;
+      orgelShaker(base + Math.max(0, bt - t0));
     }
   }
   const last = notes[notes.length - 1];
