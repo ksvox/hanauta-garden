@@ -385,14 +385,66 @@ function analyzeFrames(fr){
       notes.push({ midi: med, start: p.frames[a].t, dur: p.frames[b - 1].t - p.frames[a].t + 0.05, dev: midis.slice(a, b).reduce((sm, v) => sm + Math.abs(v - med), 0) / Math.max(1, b - a) });
       segs.push({ midis: raw.slice(a, b), t0: p.frames[a].t, t1: p.frames[b - 1].t });
     };
-    let a0 = 0;
+    const spans = []; let a0 = 0;
     for (let i = 1; i < midis.length; i++){
       const med = medOf(a0, i);
-      if (Math.abs(midis[i] - med) > 0.8 && i + 1 < midis.length && Math.abs(midis[i + 1] - med) > 0.8){ flush(a0, i); a0 = i; }
+      if (Math.abs(midis[i] - med) > 0.8 && i + 1 < midis.length && Math.abs(midis[i + 1] - med) > 0.8){ spans.push([a0, i]); a0 = i; }
     }
-    flush(a0, midis.length);
-    const good = notes.filter(n => n.dur >= 0.12);
-    return { start:p.start, end:p.end, durSec: p.end - p.start, notes: good.length ? good : notes, segs,
+    spans.push([a0, midis.length]);
+    /* BPM120の16分音符=0.125秒に満たない区間は独立した音として扱わず、長い方の隣の音へ吸収する。
+       速いしゃくりや一瞬の誤検出を「音」にしないため（捨てるのではなく、時間ごと隣に渡す） */
+    const spanDur = s => p.frames[s[1] - 1].t - p.frames[s[0]].t + 0.05;
+    let mGuard = 0;
+    while (spans.length > 1 && mGuard++ < 300){
+      let si = -1;
+      for (let i = 0; i < spans.length; i++) if (spanDur(spans[i]) < 0.125){ si = i; break; }
+      if (si < 0) break;
+      const pv = si > 0 ? si - 1 : -1, nx = si < spans.length - 1 ? si + 1 : -1;
+      const into = pv < 0 ? nx : nx < 0 ? pv : (spanDur(spans[pv]) >= spanDur(spans[nx]) ? pv : nx);
+      const lo = Math.min(si, into), hi = Math.max(si, into);
+      spans.splice(lo, hi - lo + 1, [spans[lo][0], spans[hi][1]]);
+    }
+    for (const s of spans) flush(s[0], s[1]);
+    /* 同音の区切り検出（オルゴール専用。花の選定には使わない）: 同じ音の中のタンギング等は
+       音量の深い谷／浅い谷＋音色（明るさ）の落ち込みとして現れる。その時刻を arts に残す */
+    for (const n of notes){
+      n.arts = [];
+      if (n.dur < 0.34) continue;
+      const nEnd = n.start + n.dur;
+      const win = fr.filter(x => x.t >= n.start - 0.001 && x.t <= nEnd + 0.001);
+      if (win.length < 6) continue;
+      const sm = win.map((x, i) => { let s = 0, c = 0; for (let j = Math.max(0, i - 1); j <= Math.min(win.length - 1, i + 1); j++){ s += win[j].rms; c++; } return s / c; });
+      const cand = [];
+      for (let i = 0; i < win.length; i++){
+        const x = win[i];
+        if (x.f > 0 && x.rms > 0.008) continue;
+        let j = i; while (j + 1 < win.length && !(win[j + 1].f > 0 && win[j + 1].rms > 0.008)) j++;
+        const gap = win[j].t - x.t + 0.05;
+        if (gap >= 0.05 && gap <= 0.32 && x.t > n.start + 0.04 && win[j].t < nEnd - 0.04 && j + 1 < win.length) cand.push(win[j + 1].t);
+        i = j;
+      }
+      const locMax = i => { let m = 0; for (let j = 0; j < win.length; j++) if (Math.abs(win[j].t - win[i].t) <= 0.3) m = Math.max(m, sm[j]); return m; };
+      const locCent = i => { const v = []; for (let j = 0; j < win.length; j++) if (Math.abs(win[j].t - win[i].t) <= 0.3 && win[j].f > 0) v.push(win[j].cent || 0); v.sort((a, b) => a - b); return v.length ? v[v.length >> 1] : 0; };
+      let dipStart = -1;
+      for (let i = 0; i <= win.length; i++){
+        let isDip = false;
+        if (i < win.length && win[i].f > 0 && win[i].rms > 0.008){
+          const M = locMax(i), C = locCent(i), dv = Math.min(sm[i], win[i].rms);
+          if (M > 0.02 && dv <= 0.5 * M) isDip = true;
+          else if (M > 0.02 && dv <= 0.72 * M && C > 0 && (win[i].cent || 0) <= 0.82 * C) isDip = true;
+        }
+        if (isDip && dipStart < 0) dipStart = i;
+        if (!isDip && dipStart >= 0){
+          const w = win[i - 1].t - win[dipStart].t + 0.05;
+          if (w <= 0.28 && win[dipStart].t > n.start + 0.04 && i < win.length) cand.push(win[i].t);
+          dipStart = -1;
+        }
+      }
+      cand.sort((a, b) => a - b);
+      let lastCut = n.start;
+      for (const t of cand){ if (t - lastCut >= 0.125 && nEnd - t >= 0.125){ n.arts.push(t); lastCut = t; } }
+    }
+    return { start:p.start, end:p.end, durSec: p.end - p.start, notes, segs,
       meanRms: p.frames.reduce((s,x)=>s+x.rms,0)/p.frames.length,
       meanCent: p.frames.reduce((s,x)=>s+(x.cent||0),0)/p.frames.length,
       scaleKey: scaleFit(midis) };
@@ -2035,7 +2087,7 @@ function orgelNote(freq, tAbs, vol){
 function orgelMelody(){
   const phrases = analysis.phrases || (analysis.groups && analysis.groups[0]) || [];
   const raw = [];
-  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) raw.push({ midi: Math.round(n.midi), start: n.start || 0, dur: n.dur || 0.2, dev: n.dev || 0 });
+  for (const g of phrases) for (const n of (g.notes || [])) if (n.midi > 0) raw.push({ midi: Math.round(n.midi), start: n.start || 0, dur: n.dur || 0.2, dev: n.dev || 0, arts: n.arts || [] });
   raw.sort((a, b) => a.start - b.start);
   /* 前後とも同じ音の長い音に挟まれた、オクターブだけ違う短い音は検出ミスとして前後の音に戻す */
   for (let i = 1; i < raw.length - 1; i++){
@@ -2046,7 +2098,7 @@ function orgelMelody(){
   const merged = [];
   for (const n of raw){
     const last = merged[merged.length - 1];
-    if (last && n.midi === last.midi && n.start - (last.start + last.dur) < 0.55){ last.dur = Math.max(last.dur, n.start + n.dur - last.start); continue; }
+    if (last && n.midi === last.midi && n.start - (last.start + last.dur) < 0.55){ last.dur = Math.max(last.dur, n.start + n.dur - last.start); if (n.arts && n.arts.length) last.arts = (last.arts || []).concat(n.arts); continue; }
     merged.push({ ...n });
   }
   /* 前後の長い音の間にある短い移行音（なだらかな移行の破片）は落とす */
@@ -2071,7 +2123,18 @@ function orgelMelody(){
   });
   /* フレーズの頭に印を付ける（和音用）。リズム補正で dur が伸びると間隔から頭を判定できなくなるため、ここで確定させる */
   kept.forEach((n, i) => { n.head = i === 0 || (n.start - (kept[i - 1].start + kept[i - 1].dur)) >= 0.35; });
-  return kept;
+  /* 同音の区切り（arts）で音を割る: タンギングされた同音反復を、オルゴールでも別々の音として鳴らす。
+     割った断片もBPM120の16分音符=0.125秒を最小とする */
+  const expanded = [];
+  for (const n of kept){
+    const cuts = (n.arts || []).filter(t => t > n.start + 0.001 && t < n.start + n.dur - 0.001).sort((a, b) => a - b);
+    if (!cuts.length){ expanded.push(n); continue; }
+    const pts = [n.start];
+    for (const t of cuts){ if (t - pts[pts.length - 1] >= 0.125 && (n.start + n.dur) - t >= 0.125) pts.push(t); }
+    pts.push(n.start + n.dur);
+    for (let i = 0; i < pts.length - 1; i++) expanded.push({ ...n, start: pts[i], dur: pts[i + 1] - pts[i], head: i === 0 ? n.head : false });
+  }
+  return expanded;
 }
 /* ========= マイ図鑑コレクション（端末内 IndexedDB に記録。サーバー・ログインなし） ========= */
 const collDB = {
