@@ -191,7 +191,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v36'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v38'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -476,7 +476,7 @@ function analyzeFrames(fr){
         const M = locMax(i), C = locCent(i), dv = Math.min(sm[i], win[i].rms);
         if (!(M > 0.02)) continue;
         if (dv <= 0.5 * M){ dipFlag[i] = true; continue; }
-        if (dv <= 0.75 * M && C > 0 && (win[i].cent || 0) <= 0.85 * C){
+        if (dv <= 0.72 * M && C > 0 && (win[i].cent || 0) <= 0.82 * C){
           let lo = null, hi = null, cnt = 0;
           for (let j = Math.max(0, i - 2); j <= Math.min(win.length - 1, i + 2); j++){
             if (winMidi[j] == null) continue;
@@ -654,11 +654,8 @@ function analyzeFrames(fr){
   /* v36: テンポの安定（SR共通ゲート用）。音の出だしが一定の拍格子にどれだけ合うかで測る
      （曲自体のリズムの多様さではなく、格子からのズレの小ささ＝テンポの揺れなさ）。
      物差しはオルゴールの量子化と同じ全域走査。格子残差（平均ズレ÷拍の長さ）が小さいほど安定 */
-  let tempoGridRel = 1;
-  if (allNotes.length >= 8){
-    const S = allNotes.map(n2 => n2.start - allNotes[0].start);
-    /* 安定の物差しは「どこかに合う格子があるか」なので、全候補の中の最小残差を取る
-       （オルゴールの量子化と違い、拍の大小の家族ルールは使わない） */
+  const gridFitRel = (S) => {
+    let best = 1;
     for (let u = 0.12; u <= 0.6501; u += 0.004){
       const uu = Math.round(u / 0.004) * 0.004;
       const phases = new Set([0]);
@@ -667,11 +664,34 @@ function analyzeFrames(fr){
         let sum = 0;
         for (const s of S){ let d = Math.abs(((s - ph) % uu + uu) % uu); d = Math.min(d, uu - d); sum += d; }
         const meanRel = (sum / S.length) / uu;
-        if (meanRel < tempoGridRel) tempoGridRel = meanRel;
+        if (meanRel < best) best = meanRel;
+      }
+    }
+    return best;
+  };
+  let tempoGridRel = 1;
+  if (allNotes.length >= 8){
+    const S = allNotes.map(n2 => n2.start - allNotes[0].start);
+    /* 安定の物差しは「どこかに合う格子があるか」なので、全候補の中の最小残差を取る
+       （オルゴールの量子化と違い、拍の大小の家族ルールは使わない） */
+    tempoGridRel = gridFitRel(S);
+    /* v37: 前半・後半に分けた当てはめも併用する。アカペラの鼻歌でゆっくり速くなる・
+       遅くなるのは自然な流れなので、それは吸収し、「拍の軸そのものがない」歌だけを落とす */
+    if (S.length >= 12){
+      const tMid = S[S.length - 1] / 2;
+      const A = S.filter(s => s <= tMid), B0 = S.filter(s => s > tMid);
+      if (A.length >= 5 && B0.length >= 5){
+        const B = B0.map(s => s - B0[0]);
+        const relH = (gridFitRel(A) * A.length + gridFitRel(B) * B.length) / (A.length + B.length);
+        if (relH < tempoGridRel) tempoGridRel = relH;
       }
     }
   }
-  const tempoStable = allNotes.length >= 8 && tempoGridRel <= 0.15;
+  const tempoStable = allNotes.length >= 8 && tempoGridRel <= 0.16;
+  /* キーの多数決（SRゲートの補助線）: フレーズごとのキー判定を長さで重みづけした最大シェア */
+  const keyVotes = {}; let keyVoteTot = 0;
+  P.forEach(p => { if (p.scaleKey){ keyVotes[p.scaleKey] = (keyVotes[p.scaleKey] || 0) + (p.durSec || 1); keyVoteTot += (p.durSec || 1); } });
+  const keyVoteShare = keyVoteTot > 0 ? Math.max(...Object.values(keyVotes)) / keyVoteTot : 0;
   /* 声の太さ = 倍音の豊かさ（とりあえずの指標。関門には使わない） */
   const richVals = voiced.map(x => x.rich || 0);
   const thickness = richVals.length ? clamp(richVals.reduce((s,v)=>s+v,0)/richVals.length / 0.75, 0, 1) : 0;
@@ -719,7 +739,7 @@ function analyzeFrames(fr){
     clear: keyIdentifiable ? (keyCov >= 0.93 ? 3 : 2) : 0,
   };
   Object.assign(feat, { tessitura, changesPer4s, segMedianSec, segFeat: Math.min(segMedianSec, 9), break70, longToneSec, longToneRatio,
-    keyCov, keyIdentifiable, vibratoDepth, vibratoPresent, vibNotes, vibSec, tempoGridRel, tempoStable, pacingScore, pacingPresent,
+    keyCov, keyIdentifiable, keyVoteShare, vibratoDepth, vibratoPresent, vibNotes, vibSec, tempoGridRel, tempoStable, pacingScore, pacingPresent,
     thickness, pat, oscEvents, midMoves, octaveLeaps, maxSameRun });
   feat.topMoves = Object.entries(feat.moveScores).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0).map(x=>x[0]);
   if (!feat.topMoves.length) feat.topMoves = ['smooth'];
@@ -801,7 +821,11 @@ const PROTO2 = {
 const SR_SET = new Set(['galaxy','crystal','tulilily','bubble','noirrose']);
 const SSR_SET = new Set(['rainbow']);
 function srCommonOK(f){
-  return !!((f.keyCov || 0) >= 0.82 && (f.noteCount || 0) >= 8 && f.tempoStable);
+  /* v37 再調整（先生の実機報告: 厳しすぎて咲かない）: キーは全体の当てはまり 0.78 以上、
+     または「フレーズごとのキー判定の多数決が 65% 以上＋全体 0.70 以上」でもよい
+     （アカペラの鼻歌では途中の半音ドリフトは自然なものとして扱う） */
+  const keyOK = (f.keyCov || 0) >= 0.78 || ((f.keyCov || 0) >= 0.70 && (f.keyVoteShare || 0) >= 0.65);
+  return !!(keyOK && (f.noteCount || 0) >= 8 && f.tempoStable);
 }
 /* ビブラートの必要秒数（長い音の後半で検出された合計）。順序と値は有名曲10曲の
    ロングトーン量から設定（銀河=入口、ノワール、水晶、虹=最長） */
@@ -847,7 +871,7 @@ function gatedOut(sp, f){
       /* 銀河: 広い音域＋大きな跳躍（7半音以上） */
       case 'galaxy': if (!(f.rangeSemis >= 10 && (f.bigLeaps || 0) >= 1)) return true; break;
       /* 水晶: 音程のブレが小さい＋ロングトーン多め */
-      case 'crystal': if (!((f.stabCents == null ? 20 : f.stabCents) <= 35 && (f.longToneRatio || 0) >= 0.20)) return true; break;
+      case 'crystal': if (!((f.stabCents == null ? 20 : f.stabCents) <= 45 && (f.longToneRatio || 0) >= 0.20)) return true; break;
       /* ノワールローズ: 太い声＋ロングトーン＋中低めの声域 */
       case 'noirrose': if (!((f.thickness || 0) >= 0.55 && (f.longToneRatio || 0) >= 0.25 && (f.tessitura || 60) <= 62)) return true; break;
       /* チューリリー: なめらかな動き＋長いフレーズ */
@@ -884,6 +908,9 @@ function scoreSpecies(f, sp){
      v19: 加点の原点を精度0.5に移し、(精度-0.5)×2.0 とする。精度が高い歌では最大+1.0の後押し、
      明らかに不安定な歌（精度0.5未満）では②が退き、①（実在花）が出やすくなる */
   if (TIER2_SET.has(sp.id)) s += (precisionScore(f) - 0.5) * 2.0;
+  /* v37: SR/SSRは、関門と個別条件を通った歌には加点する。通るだけでは優勝できないと、
+     実質いつまでも咲かない（先生の実機報告を受けた調整） */
+  if (SR_SET.has(sp.id) || SSR_SET.has(sp.id)) s += 0.8;
   return s;
 }
 /* スコア最大の種類（僅差の分散をしない素の判定）。変身・覚醒の判定はこちらを使う:
@@ -1108,8 +1135,11 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
         for (const st of stock.stems){
           const fa = ANCH[st.ind === 'fullb' ? sp.base + '-fullb' : sp.base + '-full'] || ANCH[sp.base + '-full'];
           if (!fa || !fa.hb) continue;
-          let imgH = (st.headH / Math.max(0.12, fa.hb[1])) * 1.45;
+          /* v37: 配置の見積もりを実際の描画式（満開時）に一致させる（従来は描画より小さく見積もっていた） */
+          let imgH = Math.max(st.headH / Math.max(0.12, fa.hb[1]), st.headH * 2.6) * 1.45;
           const maxW2 = W * 0.58; if (imgH * fa.w / fa.h > maxW2) imgH = maxW2 * fa.h / fa.w;
+          if (fa.root && fa.head){ const needF2 = (fa.root[1] - fa.head[1]) + fa.hb[1] * 0.5; if (needF2 > 0.2) imgH = Math.min(imgH, (groundY - 26) / needF2); }
+          if (sp.id === 'lantern') imgH = Math.min(imgH, 760);
           const th = st.rot * Math.PI / 180;
           const hxs = (st.flip ? -1 : 1) * (fa.head[0] - fa.root[0]) * imgH * (fa.w / fa.h);
           const hy = (fa.head[1] - fa.root[1]) * imgH;
@@ -1498,6 +1528,9 @@ function drawStock(x, stock, progOf, now, opts){
       const needF = (fa.root[1] - fa.head[1]) + fa.hb[1] * 0.5;
       if (needF > 0.2) imgH = Math.min(imgH, (gy - 26) / needF);
     }
+    /* v37: ランタンは一輪の花。花の帯の割合で割り戻すと株だけが巨大化するので、高さに上限を設ける
+       （上限760px＝先生の選択。なお一輪の大きさは約215pxで、全種の中でも大きいまま） */
+    if (sp.id === 'lantern') imgH = Math.min(imgH, 760);
     for (const layer of sf){
       let img = imgs[layer.k], name = imgs[layer.k + 'Name'];
       if (layer.k === 'full'){
@@ -1576,6 +1609,7 @@ let liveClosed = false;
 let xform = null, xformCand = null, xformCandSince = 0, awakenUsed = false, henshinUsed = false;
 /* v36 ①: 25秒までは「確定候補」を貯めるだけにし、26秒で種類・色・株を一度だけ確定する */
 let pendingFinal = null, finalised26 = false, settleT0 = null;
+let ceremonyXform = null; /* v38: 26秒確定の反映が終わり際になった時、完成演出の中で見せる覚醒/変身 */
 async function refreshLive(t){
   if (liveClosed) return;
   if (liveBusy){ livePending = true; return; }
@@ -1612,25 +1646,38 @@ async function refreshLiveInner(t){
     const prevSp = liveSpecies;
     const target = (pendingFinal && pendingFinal.id !== prevSp.id) ? pendingFinal : prevSp;
     const changed = target.id !== prevSp.id;
-    const color = pickColor(an.feat, target, hashStr(an.fingerprint + (changed ? 'x' : '')));
-    const nb = buildStock(an.groups[0], target, color, W / 2, gy, an.fingerprint + (changed ? 'x' : ''), volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
+    const nowT = frames.length ? frames[frames.length - 1].t : t; /* 実際に画面へ反映される時刻 */
+    if (!changed){
+      /* 種類が同じなら株は作り直さない（花の数や配置が最後の瞬間に跳ねるのを防ぐ）。
+         色だけを歌全体の特徴で決め直し、ベールの中で静かに落ち着かせる */
+      liveStocks[0].color = pickColor(an.feat, prevSp, hashStr(an.fingerprint));
+      pendingFinal = null;
+      settleT0 = nowT;
+      return;
+    }
+    const color = pickColor(an.feat, target, hashStr(an.fingerprint + 'x'));
+    const nb = buildStock(an.groups[0], target, color, W / 2, gy, an.fingerprint + 'x', volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
     nb.imgs = await loadSpeciesImages(target);
     if (liveClosed) return; /* 確定処理が終了を跨いだら、完成側の株を邪魔しない */
+    const landT = frames.length ? frames[frames.length - 1].t : nowT; /* 読み込みを待った分だけ歌が進んでいる */
     liveStocks = [nb]; liveSpecies = target; garden = liveStocks;
     pendingFinal = null;
-    if (changed){
-      const toUpper = SR_SET.has(target.id) || SSR_SET.has(target.id);
-      const fromUpper = SR_SET.has(prevSp.id) || SSR_SET.has(prevSp.id);
-      const type = (toUpper && !fromUpper) ? 'awaken' : 'henshin';
-      const dur = type === 'awaken' ? 2.6 : 1.6;
-      xform = { type, sp: target, startT: t, swapT: t, endT: t + dur, swapped: true, imgs: nb.imgs };
+    const toUpper = SR_SET.has(target.id) || SSR_SET.has(target.id);
+    const fromUpper = SR_SET.has(prevSp.id) || SSR_SET.has(prevSp.id);
+    const type = (toUpper && !fromUpper) ? 'awaken' : 'henshin';
+    const dur = type === 'awaken' ? 2.6 : 1.6;
+    if (type === 'awaken') awakenUsed = true; else henshinUsed = true;
+    if (landT <= 28.2){
+      /* v38: 表示の時計は「26秒」ではなく、入れ替えが実際に反映された瞬間から数える。
+         （従来は画像の読み込み待ちの間にタイマーが切れ、花だけが無言で変わることがあった） */
+      xform = { type, sp: target, startT: landT, swapT: landT, endT: landT + dur, swapped: true, imgs: nb.imgs };
       if (type === 'awaken'){
-        awakenUsed = true;
         const base = SSR_SET.has(target.id) ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [523.25, 659.25, 783.99, 1046.5];
         base.forEach((fq, i) => setTimeout(() => pluck(fq, 0, 0.13), i * 95));
-      } else { henshinUsed = true; pluck(392, 0, 0.10); setTimeout(() => pluck(523.25, 0, 0.10), 130); }
+      } else { pluck(392, 0, 0.10); setTimeout(() => pluck(523.25, 0, 0.10), 130); }
     } else {
-      settleT0 = t;
+      /* 反映が歌の終わり際になったら、無言で差し替えず、完成の演出（暗転）の中で見せる */
+      ceremonyXform = { type, sp: target };
     }
     return;
   }
@@ -1656,7 +1703,7 @@ async function refreshLiveInner(t){
           pendingFinal = cand;
           loadSpeciesImages(cand); /* 26秒の確定で読み込み待ちにならないよう先読み */
           xformCand = null;
-        } else if (xformCand !== cand.id){ xformCand = cand.id; xformCandSince = t; }
+        } else if (xformCand !== cand.id){ xformCand = cand.id; xformCandSince = t; loadSpeciesImages(cand); /* 候補になった時点で先読みを始め、26秒の確定を読み込み待ちにしない */ }
       } else xformCand = null;
     } else xformCand = null;
   }
@@ -1832,7 +1879,7 @@ $('btn-start').onclick = async () => {
   $('result').style.display = 'none'; $('result').classList.remove('gone'); $('stagewrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   stopAll(); liveSpecies = null; liveStocks = null; liveLockedAt = 0; stemR = 0.5; colorSatMul = 1; garden = null; liveDispMap = new Map(); livePrevT = null; liveClosed = false;
   xform = null; xformCand = null; awakenUsed = false; henshinUsed = false;
-  pendingFinal = null; finalised26 = false; settleT0 = null;
+  pendingFinal = null; finalised26 = false; settleT0 = null; ceremonyXform = null;
   const btn = $('btn-start');
   btn.disabled = true;
   /* 3・2・1 カウントイン */
@@ -1909,7 +1956,7 @@ function restartTake(){
   liveSpecies = null; liveStocks = null; liveLockedAt = 0; stemR = 0.5; garden = null;
   liveDispMap = new Map(); livePrevT = null; liveClosed = false;
   xform = null; xformCand = null; awakenUsed = false; henshinUsed = false;
-  pendingFinal = null; finalised26 = false; settleT0 = null;
+  pendingFinal = null; finalised26 = false; settleT0 = null; ceremonyXform = null;
   frames = [];
   $('btn-finish').style.display = 'none';
   resetStartBtn();
@@ -1953,6 +2000,13 @@ async function startCeremony(){
   flowerInfo = makeFlowerInfo(an, stocks[0]);
   recordCollection(); /* マイ図鑑コレクションへ記録（失敗しても本体は止めない） */
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
+  /* v38: 終わり際に確定した覚醒/変身は、暗転（第2幕）に合わせて音もここで鳴らす */
+  if (ceremonyXform){
+    if (ceremonyXform.type === 'awaken'){
+      const base = SSR_SET.has(ceremonyXform.sp.id) ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [523.25, 659.25, 783.99, 1046.5];
+      base.forEach((fq, i) => setTimeout(() => pluck(fq, 0, 0.13), 850 + i * 95));
+    } else { setTimeout(() => pluck(392, 0, 0.10), 850); setTimeout(() => pluck(523.25, 0, 0.10), 980); }
+  }
   $('timer').textContent = '花が咲きました 🌸';
   phase = 'ceremony'; const t0 = performance.now();
   let sceneCv = null; /* 第3幕用: 完成画（背景込み）を一度だけ裏で描いておく */
@@ -2016,6 +2070,33 @@ async function startCeremony(){
         ctx.font = '44px sans-serif';
         ctx.fillText('🌸', W / 2, H * 0.42 - 86);
         ctx.restore();
+        /* v38: 終わり際に確定した覚醒/変身は、無言で差し替えず暗転の中で見せる */
+        if (ceremonyXform){
+          ctx.save();
+          ctx.globalAlpha = clamp(ta, 0, 1);
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          if (ceremonyXform.type === 'awaken'){
+            const ssr = SSR_SET.has(ceremonyXform.sp.id);
+            const grd = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0);
+            if (ssr){ grd.addColorStop(0, '#ff5f6d'); grd.addColorStop(0.25, '#ffc371'); grd.addColorStop(0.5, '#f9f871'); grd.addColorStop(0.75, '#7be495'); grd.addColorStop(1, '#6db3f2'); }
+            else { grd.addColorStop(0, '#ffe9a8'); grd.addColorStop(0.55, '#ffd34d'); grd.addColorStop(1, '#ff9d2e'); }
+            ctx.font = '800 84px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+            ctx.shadowColor = ssr ? 'rgba(255,120,180,0.85)' : 'rgba(255,170,40,0.8)'; ctx.shadowBlur = 30;
+            ctx.fillStyle = grd;
+            ctx.fillText('覚醒✨', W / 2, H * 0.55);
+          } else {
+            ctx.font = '700 46px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+            const label = '変身⁉';
+            const tw3 = ctx.measureText(label).width + 40;
+            ctx.fillStyle = 'rgba(30,24,16,0.55)';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(W / 2 - tw3 / 2, H * 0.55 - 31, tw3, 62, 31); else ctx.rect(W / 2 - tw3 / 2, H * 0.55 - 31, tw3, 62);
+            ctx.fill();
+            ctx.fillStyle = '#fff7e6';
+            ctx.fillText(label, W / 2, H * 0.55 + 2);
+          }
+          ctx.restore();
+        }
       }
     });
     if (el < 4.7) rafId = requestAnimationFrame(step);
@@ -2244,6 +2325,14 @@ function orgelMelody(){
   for (const n of raw){
     const last = merged[merged.length - 1];
     if (last && n.midi === last.midi && n.start - (last.start + last.dur) < 0.55){ last.dur = Math.max(last.dur, n.start + n.dur - last.start); if (n.arts && n.arts.length) last.arts = (last.arts || []).concat(n.arts); continue; }
+    /* v37: 長い音がピッチの下がり（ドリフト）で半音下の音に割れた場合は、元の音に戻す。
+       条件: 隙間なく隣接・半音違い・2つで0.6秒以上・両断片とも音程が落ち着いていない（dev大）。
+       落ち着いた本物の半音ステップは dev が小さいので残る。オルゴール専用の守り */
+    if (last && Math.abs(n.midi - last.midi) === 1 && n.start - (last.start + last.dur) <= 0.06 && (last.dur + n.dur) >= 0.6 && ((last.dev || 0) + (n.dev || 0)) / 2 >= 0.16){
+      last.dur = Math.max(last.dur, n.start + n.dur - last.start);
+      if (n.arts && n.arts.length) last.arts = (last.arts || []).concat(n.arts);
+      continue;
+    }
     merged.push({ ...n });
   }
   /* 前後の長い音の間にある短い移行音（なだらかな移行の破片）は落とす */
@@ -2615,7 +2704,8 @@ function playOrgel(){
       if (rootM > anchor - 5) rootM -= 12;
       if (rootM < anchor - 16) continue;
       const up = pc => rootM + (((pc - rootPc) % 12) + 12) % 12;
-      const tAbs = base + Math.max(0, bt - t0);
+      /* コードは小節の頭ではなく、その小節の最初の音の時刻に寄せる（休符の途中では鳴らさない） */
+      const tAbs = base + Math.max(0, Math.max(bt, barNotes[0].start || bt) - t0);
       orgelNote(440 * Math.pow(2, ((rootM - 69) / 12)), tAbs, 0.042);
       orgelNote(440 * Math.pow(2, ((up(pcs[(bestD + 2) % 7]) - 69) / 12)), tAbs, 0.030);
       orgelNote(440 * Math.pow(2, ((up(pcs[(bestD + 4) % 7]) - 69) / 12)), tAbs, 0.030);
