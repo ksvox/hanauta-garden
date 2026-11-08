@@ -191,7 +191,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v39'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v40'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -2669,57 +2669,55 @@ function playOrgel(){
   const sp0 = flowerInfo && flowerInfo.sp;
   const isSR0 = !!(sp0 && (SR_SET.has(sp0.id) || SSR_SET.has(sp0.id)));
   /* v35: SRの時は格子の当てはめを少し緩めてでも拍を確定させ、テンポを均す（補正の土台） */
-  const notes = quantizeOnsets(orgelMelody(), isSR0);
+  const mel0 = orgelMelody();
+  /* v40: 「不鮮明な音」の印は、リズム補正で dur が書き換わる前に付けておく */
+  for (const n of mel0) n.unclear = (n.dev || 0) >= 0.22 || (n.dur || 0) < 0.18;
+  const notes = quantizeOnsets(mel0, isSR0);
   if (!notes.length) return;
   if (AC.state !== 'running') { try { AC.resume(); } catch (e) { /* 再開できない環境では無音のまま */ } }
   orgelBus = AC.createGain(); orgelBus.gain.value = 1; orgelBus.connect(AC.destination);
   orgelOn = true; orgelBadge(true);
   /* SR特典（隠し仕様）: レアな花の時だけ、改良音色＋薄いリバーブ。
-     調が自信を持って分かる時は、音階に吸着させて音程を整え、フレーズの頭に薄く和音を添える */
+     調が分かる時は、不鮮明な音だけ音階に寄せ、フレーズの頭に和音を添える */
   const sp = sp0;
   const isSR = isSR0;
   const key = isSR ? orgelKeyInfo() : null;
-  if (key) for (const n of notes) n.midi = snapToScale(n.midi, key.pcs);
+  /* v40: 音階への寄せは「不鮮明な音だけ」に限る。安定して歌えた音は、音階の外でも
+     メロディの一部として動かさない（全音を寄せると原型が消える、という先生の指摘） */
+  if (key) for (const n of notes) if (n.unclear) n.midi = snapToScale(n.midi, key.pcs);
   if (isSR) attachReverb();
   const noteFn = isSR ? orgelNotePlus : orgelNote;
   const t0 = notes[0].start || 0;
   const base = AC.currentTime + 0.06;
   for (const n of notes) noteFn(440 * Math.pow(2, ((n.midi - 69) / 12)), base + Math.max(0, (n.start || 0) - t0), n.dur < 0.25 ? 0.11 : 0.16);
-  /* v36 SR特典: フレーズ頭の2音和音は廃止し、キーが分かり拍格子が確定している時は
-     「その小節のメロディに合うダイアトニックコード」を薄く伴奏として鳴らす。
-     原曲の進行とは違ってよい（その花だけの特別な伴奏）。コードは基本形の三和音、
-     音量はメロディより十分に小さく、通常のオルゴール音で重ねすぎない */
-  if (key && orgelGrid){
+  /* v40 SR特典: コードは小節ごとではなくフレーズごとに、そのフレーズで長く鳴った音に合う
+     ダイアトニックコードを1つ選び、フレーズの頭で薄く鳴らす（メロディの進行に合わせる）。
+     原曲の進行とは違ってよい（その花だけの特別な伴奏）。拍格子は不要 */
+  if (key){
     const pcs = key.pcs;
-    const kB = Math.max(1, Math.min(6, Math.round(0.5 / orgelGrid.u)));
-    const barLen = orgelGrid.u * kB * 4;
-    const lastN2 = notes[notes.length - 1];
-    const tEnd = (lastN2.start || 0) + (lastN2.dur || 0.3);
-    let barIdx = 0;
-    for (let bt = orgelGrid.s0 + orgelGrid.ph; bt < tEnd - 0.05; bt += barLen, barIdx++){
-      if (bt < t0 - 0.001) continue;
-      const barNotes = notes.filter(n => (n.start || 0) >= bt - 0.001 && (n.start || 0) < bt + barLen - 0.001);
-      if (!barNotes.length) continue;
+    const phrases2 = [];
+    for (const n of notes){ if (n.head || !phrases2.length) phrases2.push([]); phrases2[phrases2.length - 1].push(n); }
+    for (const ph2 of phrases2){
+      if (!ph2.length) continue;
       let bestD = 0, bestScore = -1;
       for (let d = 0; d < 7; d++){
         const tones = new Set([pcs[d], pcs[(d + 2) % 7], pcs[(d + 4) % 7]]);
         let sc = 0;
-        for (const n of barNotes) if (tones.has(((n.midi % 12) + 12) % 12)) sc += Math.min(n.dur || 0.3, barLen);
-        if (tones.has(((barNotes[0].midi % 12) + 12) % 12)) sc += 0.35; /* 小節の頭の音を含むコードを優遇 */
-        if (d === 0) sc += barIdx === 0 ? 0.3 : 0.08; /* 主和音への小さなバイアス */
+        for (const n of ph2) if (tones.has(((n.midi % 12) + 12) % 12)) sc += Math.min(n.dur || 0.3, 1.5);
+        if (tones.has(((ph2[0].midi % 12) + 12) % 12)) sc += 0.35; /* フレーズの頭の音を含むコードを優遇 */
+        if (d === 0) sc += 0.10; /* 主和音への小さなバイアス */
         if (sc > bestScore){ bestScore = sc; bestD = d; }
       }
       const rootPc = pcs[bestD];
-      const anchor = barNotes[0].midi;
+      const anchor = ph2[0].midi;
       let rootM = anchor - (((anchor - rootPc) % 12) + 12) % 12;
       if (rootM > anchor - 5) rootM -= 12;
       if (rootM < anchor - 16) continue;
       const up = pc => rootM + (((pc - rootPc) % 12) + 12) % 12;
-      /* コードは小節の頭ではなく、その小節の最初の音の時刻に寄せる（休符の途中では鳴らさない） */
-      const tAbs = base + Math.max(0, Math.max(bt, barNotes[0].start || bt) - t0);
-      orgelNote(440 * Math.pow(2, ((rootM - 69) / 12)), tAbs, 0.042);
-      orgelNote(440 * Math.pow(2, ((up(pcs[(bestD + 2) % 7]) - 69) / 12)), tAbs, 0.030);
-      orgelNote(440 * Math.pow(2, ((up(pcs[(bestD + 4) % 7]) - 69) / 12)), tAbs, 0.030);
+      const tAbs = base + Math.max(0, (ph2[0].start || 0) - t0);
+      orgelNote(440 * Math.pow(2, ((rootM - 69) / 12)), tAbs, 0.030);
+      orgelNote(440 * Math.pow(2, ((up(pcs[(bestD + 2) % 7]) - 69) / 12)), tAbs, 0.021);
+      orgelNote(440 * Math.pow(2, ((up(pcs[(bestD + 4) % 7]) - 69) / 12)), tAbs, 0.021);
     }
   }
   /* v35 SR特典: 格子が確定していれば、4分音符の拍にシェイカーを薄く入れる */
