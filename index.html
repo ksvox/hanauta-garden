@@ -191,7 +191,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v40'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v41'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -2555,25 +2555,32 @@ function quantizeOnsets(list, relax){
   /* 候補は間隔そのものから作ると、ブレた間隔ばかりで本当の拍が候補に入らない。全域を細かく走査する */
   const cand = new Set();
   for (let u = 0.12; u <= 0.6501; u += 0.004) cand.add(Math.round(u / 0.004) * 0.004);
-  /* 格子選び: 「いちばん残差の小さい格子」を選ぶと、ブレに蛇行する細かい格子が勝ってしまう。
-     十分に合う格子の中でいちばん粗い（＝音楽として素直な）ものを選ぶ */
+  /* 格子選び: v41で方針変更（下記の fits 判定）。一番細かい音の並びにも合う格子を採る */
   const fits = [];
   for (const u of cand){
     const phases = new Set([0]);
     for (const s of S) phases.add(Math.round((((s % u) + u) % u) / 0.004) * 0.004);
+    /* v41: 位相は音の位置だけでなく全体を細かく走査する。ブレが左右対称だと、本当の格子の
+       位相が「どの音の位置」とも一致せず、候補から漏れて格子ごと落ちてしまうため */
+    for (let p = 0; p < u; p += 0.008) phases.add(Math.round(p / 0.004) * 0.004);
     for (const ph of phases){
-      let sum = 0;
-      for (const s of S){ let d = Math.abs(((s - ph) % u + u) % u); d = Math.min(d, u - d); sum += d; }
+      let sum = 0, onLine = 0;
+      for (const s of S){ let d = Math.abs(((s - ph) % u + u) % u); d = Math.min(d, u - d); sum += d; if (d <= u * 0.18) onLine++; }
       const meanRel = (sum / S.length) / u;
-      if (meanRel <= (relax ? 0.21 : 0.17)) fits.push({ u, ph, meanRel });
+      /* v41: 格子は「一番細かい音の並びにも合うもの」を選ぶ。従来の「粗い格子を優先する」方式は、
+         8分音符を4分の位置へ折りたたんで譜割を別物にしていた（先生の実機指摘）。
+         音の9割以上が線の近くにある格子だけを通し、その中で一番細かいものを採る */
+      if (meanRel <= (relax ? 0.21 : 0.17) && onLine >= S.length * 0.9) fits.push({ u, ph, meanRel });
     }
   }
   if (!fits.length) return list;
-  /* 粗い格子の仲間（最大の94%以上）の中から、いちばん残差の小さいものを採る */
-  const maxU = Math.max(...fits.map(f => f.u));
-  const family = fits.filter(f => f.u >= maxU * 0.94);
-  family.sort((a, b) => a.meanRel - b.meanRel || b.u - a.u);
-  const best = family[0];
+  /* 選び方: 細かい格子が「本当にぴったり」合う時（残差がごく小さい時）だけ細かい方を採る。
+     それ以外は粗い方を採る。細かい格子は線が多い分だけ緩い歌にも偶然合ってしまうため、
+     残差の小ささで「その細かさが本物か」を判定する（3:2の偶然の一致に引きずられない） */
+  fits.sort((a, b) => a.u - b.u || a.meanRel - b.meanRel);
+  const fine = fits[0];
+  const coarse = fits.slice().sort((a, b) => b.u - a.u || a.meanRel - b.meanRel)[0];
+  const best = fine.meanRel <= 0.055 ? fine : coarse;
   const { u, ph } = best;
   orgelGrid = { u, ph, s0 }; /* v35: 確定した格子を覚えておく（SRのシェイカーを拍に置くため） */
   let prev = -Infinity;
