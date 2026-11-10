@@ -191,7 +191,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v45'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v46'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -1839,6 +1839,11 @@ async function refreshLiveInner(t){
     } else { pluck(392, 0, 0.10); setTimeout(() => pluck(523.25, 0, 0.10), 130); }
     return;
   }
+  /* v46: 26秒の確定が済んだ後は株を作り直さない。確定後も下の汎用リビルドが約0.45秒ごとに
+     buildStock を最新解析で走らせると、本数・配置が再計算されて確定した花が27〜29秒に
+     もう一度跳び、「ギリギリで花が2回変わる」ように見えた（変化は最大1回が先生の設計ルール）。
+     種・色・本数・配置は確定時点のまま固定し、成長の進み具合（prog）は描画側が時刻で進める */
+  if (finalised26) return;
   /* 歌が進むたびに株を作り直し、成長カーブを最新の歌へ追随させる（配置・色・画像は維持） */
   const keep0 = liveStocks[0];
   const nb0 = buildStock(an.groups[0], liveSpecies, keep0.color, W / 2, gy, keep0.seedStr || 'live', volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
@@ -2784,37 +2789,6 @@ function orgelShaker(tAbs){
     src.start(tAbs); src.stop(tAbs + 0.1);
   } catch (e) { /* シェイカーが作れない環境では無音 */ }
 }
-/* v45 SR特典: コードはオルゴールで打たず、ストリングス風の持続音で薄く敷く（先生の指示）。
-   オルゴールの単発音で和音を鳴らすと、減衰の速い倍音同士がぶつかって部分的に不穏に聞こえた。
-   合成レシピ: 和音の各音を「わずかにデチューンした鋸波のペア」で出し、ローパスで角を落とし、
-   ゆっくり立ち上がってゆっくり消えるエンベロープで区間いっぱいに持続させる。±5セントの
-   ビブラート（5.1Hz）を全音に薄く掛けると、弓で弾く弦の「そよぎ」になる。
-   音量はメロディ（基音ピーク約0.09）より十分に低く、ピーク0.036を和音全体の上限とする */
-function orgelPad(midis, tAbs, durS, peak){
-  try {
-    const dur = Math.max(0.6, durS);
-    const atk = Math.min(0.45, dur * 0.3), rel = Math.min(0.5, dur * 0.35);
-    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1350; lp.Q.value = 0.4;
-    const g = AC.createGain();
-    g.gain.setValueAtTime(0, tAbs);
-    g.gain.linearRampToValueAtTime(peak, tAbs + atk);
-    g.gain.setValueAtTime(peak, tAbs + dur - rel);
-    g.gain.linearRampToValueAtTime(0, tAbs + dur);
-    lp.connect(g); g.connect(orgelBus);
-    const lfo = AC.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 5.1;
-    const lfoG = AC.createGain(); lfoG.gain.value = 5;
-    lfo.connect(lfoG);
-    for (const m of midis){
-      const f0 = 440 * Math.pow(2, ((m - 69) / 12));
-      for (const det of [-5, 5]){
-        const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f0; o.detune.value = det;
-        lfoG.connect(o.detune);
-        o.connect(lp); o.start(tAbs); o.stop(tAbs + dur + 0.05);
-      }
-    }
-    lfo.start(tAbs); lfo.stop(tAbs + dur + 0.05);
-  } catch (e) { /* パッドが作れない環境では無音（メロディだけは鳴る） */ }
-}
 /* 薄いリバーブ（SR特典）: 残響はその場で生成したインパルス応答を使う。外部ファイル不要 */
 function attachReverb(){
   try {
@@ -2847,11 +2821,11 @@ function attachReverb(){
     orgelFx = { conv, wet };
   } catch (e) { /* リバーブが作れない環境ではドライのまま */ }
 }
-/* 調の推定（SR特典の音程補正・和音用）: 自信がある時だけ使う。フレーズ毎の調を長さで重み付けして決める */
+/* 調の推定（SR特典の音程補正用）: 自信がある時だけ使う。フレーズ毎の調を長さで重み付けして決める */
 function orgelKeyInfo(){
   if (!analysis || !analysis.feat) return null;
   /* v39: キーの受け入れ基準を、花側のSRゲート（v37）と揃える。従来は旧基準（keyCov 0.87以上）の
-     ままだったため、新基準でSRが咲いてもオルゴール側はキーを掴めず、音階寄せもコードも止まっていた */
+     ままだったため、新基準でSRが咲いてもオルゴール側はキーを掴めず、音階寄せも止まっていた */
   const f39 = analysis.feat;
   const keyOK = (f39.keyCov || 0) >= 0.78 || ((f39.keyCov || 0) >= 0.70 && (f39.keyVoteShare || 0) >= 0.65);
   if (!keyOK) return null;
@@ -2865,7 +2839,7 @@ function orgelKeyInfo(){
   return { root, pcs };
 }
 /* v42: 予備判定。カバー率の基準に届かなくても、SRの花ならフレーズのキー投票だけでキーを決める
-   （コード伴奏が「キー判定の成否」で丸ごと消えるのを防ぐ） */
+   （音程補正が「キー判定の成否」で丸ごと消えるのを防ぐ） */
 function orgelKeyVoteOnly(){
   if (!analysis || !analysis.phrases) return null;
   const votes = {};
@@ -2906,8 +2880,9 @@ function playOrgel(){
   /* v42: SR/SSR の花の時は、バッジの文言を「アレンジ」版に替える（通常種は従来の文言） */
   { const bEl = $('fmsgOrgel'); if (bEl) bEl.textContent = isSR0 ? 'あなたの歌を素敵にアレンジしたよ' : '今、流れているのはあなたのハナウタです♫'; }
   /* SR特典（隠し仕様）: レアな花の時だけ、改良音色＋薄いリバーブ。
-     v45: 調が分かる時は全音を音階に寄せ、判定テンポの格子に全音を乗せ、
-     コードはストリングス風の持続音でフレーズごとに進行させる（先生の指示） */
+     v45: 調が分かる時は全音を音階に寄せ、判定テンポの格子に全音を乗せる。
+     v46: コード伴奏は先生の決定で全廃止（v40 のフレーズ三和音も v45 のストリングス風
+     パッドも「不穏なノイズに聞こえる」ため）。SR演奏はテンポ＆音程補正＋シェイカーだけ */
   const sp = sp0;
   const isSR = isSR0;
   const key = isSR ? (orgelKeyInfo() || orgelKeyVoteOnly()) : null; /* v42: 投票のみの予備判定に落とす */
@@ -2921,42 +2896,6 @@ function playOrgel(){
   const t0 = notes[0].start || 0;
   const base = AC.currentTime + 0.06;
   for (const n of notes) noteFn(440 * Math.pow(2, ((n.midi - 69) / 12)), base + Math.max(0, (n.start || 0) - t0), n.dur < 0.25 ? 0.11 : 0.16);
-  /* v40 SR特典: コードは小節ごとではなくフレーズごとに、そのフレーズで長く鳴った音に合う
-     ダイアトニックコードを1つ選び、フレーズの頭で薄く鳴らす（メロディの進行に合わせる）。
-     原曲の進行とは違ってよい（その花だけの特別な伴奏）。拍格子は不要
-     v45: 鳴らし方だけを変える。選定（フレーズ単位・上のロジック）はそのままに、
-     オルゴールの単発音で打つのをやめ、次のフレーズの頭まで（最後は曲尾＋少し）持続する
-     ストリングス風の薄いパッドにする（先生の指示「コード進行をバックで持続音で」） */
-  if (key){
-    const pcs = key.pcs;
-    const phrases2 = [];
-    for (const n of notes){ if (n.head || !phrases2.length) phrases2.push([]); phrases2[phrases2.length - 1].push(n); }
-    const lastN2 = notes[notes.length - 1];
-    const melEndAbs = base + Math.max(0, (lastN2.start || 0) - t0 + (lastN2.dur || 0.3));
-    for (let phi = 0; phi < phrases2.length; phi++){
-      const ph2 = phrases2[phi];
-      if (!ph2.length) continue;
-      let bestD = 0, bestScore = -1;
-      for (let d = 0; d < 7; d++){
-        const tones = new Set([pcs[d], pcs[(d + 2) % 7], pcs[(d + 4) % 7]]);
-        let sc = 0;
-        for (const n of ph2) if (tones.has(((n.midi % 12) + 12) % 12)) sc += Math.min(n.dur || 0.3, 1.5);
-        if (tones.has(((ph2[0].midi % 12) + 12) % 12)) sc += 0.35; /* フレーズの頭の音を含むコードを優遇 */
-        if (d === 0) sc += 0.10; /* 主和音への小さなバイアス */
-        if (sc > bestScore){ bestScore = sc; bestD = d; }
-      }
-      const rootPc = pcs[bestD];
-      const anchor = ph2[0].midi;
-      let rootM = anchor - (((anchor - rootPc) % 12) + 12) % 12;
-      if (rootM > anchor - 5) rootM -= 12;
-      if (rootM < anchor - 16) continue;
-      const up = pc => rootM + (((pc - rootPc) % 12) + 12) % 12;
-      const tAbs = base + Math.max(0, (ph2[0].start || 0) - t0);
-      const nextPh = phrases2[phi + 1];
-      const tEnd = nextPh && nextPh.length ? base + Math.max(0, (nextPh[0].start || 0) - t0) : melEndAbs + 0.9;
-      orgelPad([rootM, up(pcs[(bestD + 2) % 7]), up(pcs[(bestD + 4) % 7])], tAbs, tEnd - tAbs, 0.036);
-    }
-  }
   /* v35 SR特典: 4分音符の拍にシェイカーを薄く入れる。
      v45: シェイカーは「メロディが乗っている格子」からだけ刻む。v42 の中央値フォールバック
      （音符間隔の中央値で別に拍を作る）は、格子に量子化されたメロディと周期も位相も
