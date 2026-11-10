@@ -134,6 +134,11 @@
     <button class="btn btn-sub" id="btn-coll-open" style="padding:11px 22px; font-size:15px;">📖 マイ図鑑コレクション</button>
   </div>
 
+  <!-- v47 マイガーデン: 最初の種を獲得するまで出さない -->
+  <div id="gardenBtnWrap" style="text-align:center; margin:10px 0 4px; display:none;">
+    <button class="btn btn-sub" id="btn-garden-open" style="padding:11px 22px; font-size:15px;">🌷 マイガーデンに行く</button>
+  </div>
+
   <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
 
 </div>
@@ -157,6 +162,63 @@
   </div>
   <div style="text-align:center; margin-top:26px;">
     <button class="btn btn-sub" id="btn-coll-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
+  </div>
+</div>
+
+<!-- v47 マイガーデン -->
+<div id="gardenPage" style="display:none; position:fixed; inset:0; z-index:55; background:#f7f1e3; overflow-y:auto; padding:24px 16px 44px;">
+  <h2 style="text-align:center; font-size:23px; margin:4px 0 6px; color:#4c3a22;">マイガーデン</h2>
+  <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">特別な種を植えて、10秒の鼻歌で育てる小さな花壇です。<br>歌を聴かせると、株が少しずつ育ちます。</p>
+  <div id="gardenWilt" style="display:none; max-width:520px; margin:10px auto 4px;">
+    <div class="bubble" style="box-shadow:0 6px 18px rgba(60,45,20,.18); font-size:14.5px;">
+      <p style="margin:0;">ハナウタが足りなくて枯れてしまいました…</p>
+    </div>
+    <img src="assets5/fairy-4.webp" alt="花の妖精" style="height:110px; display:block; margin:14px auto 0;">
+  </div>
+  <h3 style="font-size:16.5px; color:#4c3a22; margin:18px 2px 8px;">種を選ぶ</h3>
+  <div id="gardenSeeds" style="display:flex; flex-wrap:wrap; gap:10px; margin:0 2px;"></div>
+  <p id="gardenSeedMsg" style="font-size:13px; color:#8a7a5c; margin:8px 2px 0;"></p>
+  <div style="max-width:560px; margin:16px auto 0;">
+    <canvas id="gardenStage" width="900" height="1125" style="width:100%; border-radius:16px; box-shadow:0 10px 30px rgba(60,40,20,.25); display:block; background:#20351f;"></canvas>
+  </div>
+  <div style="text-align:center; margin-top:16px;">
+    <div style="font-size:15.5px; font-weight:700; color:#4c3a22; margin-bottom:8px;">どこに植える？</div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-sub" id="btn-plant-left" style="padding:10px 20px;">左側</button>
+      <button class="btn btn-sub" id="btn-plant-center" style="padding:10px 20px;">中央</button>
+      <button class="btn btn-sub" id="btn-plant-right" style="padding:10px 20px;">右側</button>
+    </div>
+    <p id="gardenPlantMsg" style="font-size:13px; color:#8a7a5c; margin:8px 2px 0; min-height:18px;"></p>
+  </div>
+  <div style="text-align:center; margin-top:20px;">
+    <button class="btn btn-main" id="btn-garden-sing" style="padding:13px 26px; font-size:16.5px;">🎤 10秒の鼻歌をうたう</button>
+    <button class="btn btn-sub" id="btn-garden-stop" style="display:none; padding:13px 26px; font-size:16.5px;">⏹ やめる</button>
+    <p id="gardenDayInfo" style="font-size:13px; color:#8a7a5c; margin:9px 2px 0;"></p>
+    <p id="gardenMsg" style="font-size:13.5px; color:#6b6151; margin:5px 2px 0; min-height:18px;"></p>
+  </div>
+  <div style="background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.75; color:#6b6151; margin:22px 2px 0;">
+    ⚠ご注意ください！<br>
+    機種変更やブラウザのデータ消去で記録は消えます。<br>
+    ※iPhoneをご利用の方は、長く開かないでいると記録が消えてしまうことがあります。ホーム画面に追加しておくと安心です。
+  </div>
+  <div style="text-align:center; margin-top:26px;">
+    <button class="btn btn-sub" id="btn-garden-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
+  </div>
+</div>
+
+<!-- v47 種イベントのモーダル -->
+<div id="seedModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:65; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
+  <div class="bubble">
+    <p class="btitle">🎁 特別なプレゼント</p>
+    <p>あなたに特別なプレゼント！この種を育てて綺麗な花壇を作ってね♫</p>
+    <p id="seedModalWhat" style="font-weight:700; color:#7a5c2e;"></p>
+  </div>
+  <img src="assets5/fairy-4.webp" alt="花の妖精" style="height:170px; margin-top:20px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));">
+  <img id="seedModalIcon" src="assets5/seed-icon.webp" alt="種" style="height:74px; margin-top:8px; filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));">
+  <div id="seedSwap" style="display:none; margin-top:14px; width:100%; max-width:520px;"></div>
+  <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-sub" id="btn-seed-ok">🎁 受け取る</button>
+    <button class="btn btn-sub" id="btn-seed-garden" style="display:none;">🌷 マイガーデンに行く</button>
   </div>
 </div>
 
@@ -191,7 +253,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v46'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v47'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -236,7 +298,7 @@ function drawSoilMound(x, cx, gy, rx, ry, rgb){
   gr.addColorStop(1, 'rgba(' + r + ',' + g + ',' + b + ',0)');
   x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.29); x.fill(); x.restore();
 }
-const ANCH = {"tulip-full":{"w":957,"h":1964,"root":[0.535,0.996],"head":[0.497,0.074],"hb":[0.005,0.182]},"tulip-bud":{"w":953,"h":1952,"root":[0.535,0.996],"head":[0.528,0.07],"hb":[0.005,0.159]},"tulip-half":{"w":956,"h":1962,"root":[0.535,0.996],"head":[0.515,0.08],"hb":[0.005,0.178]},"tulilily-full":{"w":880,"h":1220,"root":[0.397,0.992],"head":[0.636,0.274],"hb":[0.007,0.316]},"tulilily-fullb":{"w":880,"h":1150,"root":[0.695,0.991],"head":[0.451,0.294],"hb":[0.009,0.323]},"tulilily-bud":{"w":664,"h":1647,"root":[0.483,0.991],"head":[0.632,0.223],"hb":[0.009,0.25]},"tulilily-half":{"w":880,"h":1172,"root":[0.4,0.991],"head":[0.622,0.267],"hb":[0.008,0.311]},"mobius-full":{"w":880,"h":1086,"root":[0.197,0.996],"head":[0.489,0.312],"hb":[0.008,0.378]},"mobius-fullb":{"w":880,"h":981,"root":[0.755,0.991],"head":[0.458,0.308],"hb":[0.009,0.361]},"mobius-bud":{"w":628,"h":1732,"root":[0.28,0.996],"head":[0.508,0.181],"hb":[0.008,0.185]},"mobius-half":{"w":880,"h":1318,"root":[0.252,0.998],"head":[0.486,0.295],"hb":[0.008,0.324]},"candy-full":{"w":880,"h":999,"root":[0.269,0.991],"head":[0.505,0.3],"hb":[0.008,0.352]},"candy-fullb":{"w":880,"h":1010,"root":[0.764,0.998],"head":[0.458,0.298],"hb":[0.008,0.352]},"candy-bud":{"w":880,"h":1394,"root":[0.39,0.991],"head":[0.503,0.255],"hb":[0.009,0.26]},"candy-half":{"w":880,"h":938,"root":[0.274,0.99],"head":[0.559,0.299],"hb":[0.009,0.342]},"cotton-full":{"w":880,"h":1306,"root":[0.43,0.993],"head":[0.503,0.255],"hb":[0.008,0.276]},"cotton-fullb":{"w":880,"h":1481,"root":[0.684,0.999],"head":[0.438,0.245],"hb":[0.006,0.252]},"cotton-bud":{"w":615,"h":2537,"root":[0.253,0.994],"head":[0.539,0.15],"hb":[0.007,0.131]},"cotton-half":{"w":880,"h":1239,"root":[0.397,0.994],"head":[0.558,0.231],"hb":[0.012,0.248]},"bubble-full":{"w":880,"h":1901,"root":[0.527,0.999],"head":[0.514,0.251],"hb":[0.005,0.258]},"bubble-bud":{"w":443,"h":3019,"root":[0.42,0.995],"head":[0.668,0.241],"hb":[0.004,0.329]},"goldbell-full":{"w":880,"h":750,"root":[0.558,0.984],"head":[0.433,0.245],"hb":[0.008,0.631]},"goldbell-bud":{"w":880,"h":991,"root":[0.611,0.99],"head":[0.433,0.197],"hb":[0.01,0.654]},"goldbell-half":{"w":880,"h":703,"root":[0.647,0.989],"head":[0.422,0.276],"hb":[0.01,0.622]},"firefly-full":{"w":880,"h":728,"root":[0.626,0.967],"head":[0.394,0.232],"hb":[0.01,0.607]},"firefly-bud":{"w":880,"h":1169,"root":[0.648,0.981],"head":[0.479,0.227],"hb":[0.009,0.498]},"firefly-half":{"w":880,"h":707,"root":[0.564,0.986],"head":[0.422,0.243],"hb":[0.008,0.614]},"feather-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"feather-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"feather-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"moonring-full":{"w":880,"h":904,"root":[0.406,0.989],"head":[0.41,0.304],"hb":[0.01,0.459]},"moonring-bud":{"w":880,"h":885,"root":[0.384,0.988],"head":[0.388,0.289],"hb":[0.011,0.437]},"moonring-half":{"w":880,"h":851,"root":[0.365,0.989],"head":[0.418,0.309],"hb":[0.009,0.418]},"dahlia-full":{"w":880,"h":985,"root":[0.301,0.991],"head":[0.517,0.307],"hb":[0.009,0.37]},"rose-full":{"w":880,"h":807,"root":[0.297,0.99],"head":[0.614,0.297],"hb":[0.01,0.362]},"lily-full":{"w":880,"h":1283,"root":[0.29,0.993],"head":[0.612,0.304],"hb":[0.007,0.341]},"gerbera-full":{"w":880,"h":1100,"root":[0.3,0.991],"head":[0.526,0.243],"hb":[0.008,0.266]},"sunflower-full":{"w":880,"h":859,"root":[0.553,0.999],"head":[0.556,0.314],"hb":[0.01,0.444]},"anemone-full":{"w":880,"h":1358,"root":[0.365,0.995],"head":[0.505,0.265],"hb":[0.008,0.275]},"ranunculus-full":{"w":880,"h":1003,"root":[0.251,0.99],"head":[0.5,0.29],"hb":[0.01,0.323]},"marguerite-full":{"w":880,"h":877,"root":[0.263,0.99],"head":[0.52,0.236],"hb":[0.009,0.25]},"sprig-tulilily":{"w":880,"h":639,"root":[0.545,0.998],"head":[0.536,0.329],"hb":[0.016,0.08]},"sprig-mobius":{"w":880,"h":660,"root":[0.505,0.998],"head":[0.521,0.324],"hb":[0.017,0.08]},"sprig-rose":{"w":880,"h":608,"root":[0.49,0.998],"head":[0.471,0.338],"hb":[0.026,0.08]},"sprig-carnation":{"w":880,"h":890,"root":[0.49,0.998],"head":[0.471,0.32],"hb":[0.016,0.08]},"sprout-round":{"w":880,"h":474,"root":[0.499,0.998],"head":[0.591,0.288],"hb":[0.015,0.382]},"sprout-slender":{"w":880,"h":690,"root":[0.499,0.999],"head":[0.571,0.217],"hb":[0.041,0.08]},"sprout-red":{"w":880,"h":539,"root":[0.499,0.998],"head":[0.491,0.201],"hb":[0.017,0.241]},"sprout-leaves":{"w":880,"h":438,"root":[0.501,0.998],"head":[0.526,0.302],"hb":[0.014,0.08]},"galaxy-full":{"w":880,"h":1854,"root":[0.495,0.999],"head":[0.49,0.233],"hb":[0.005,0.296]},"galaxy-bud":{"w":880,"h":2245,"root":[0.316,0.995],"head":[0.46,0.185],"hb":[0.005,0.164]},"lantern-full":{"w":880,"h":1709,"root":[0.235,0.992],"head":[0.475,0.253],"hb":[0.007,0.283]},"lantern-bud":{"w":668,"h":1392,"root":[0.4,0.991],"head":[0.522,0.249],"hb":[0.009,0.248]},"crystal-full":{"w":880,"h":1204,"root":[0.462,0.999],"head":[0.53,0.298],"hb":[0.007,0.356]},"featherflower-full":{"w":880,"h":1227,"root":[0.321,0.993],"head":[0.48,0.289],"hb":[0.007,0.339]},"sakura-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"sakura-fullb":{"a":0.371,"b":0.98,"ar":0.914},"sakura-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"sakura-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"swirl-full":{"w":880,"h":1230,"root":[0.251,0.998],"head":[0.549,0.288],"hb":[0.007,0.313]},"rainbow-full":{"w":880,"h":746,"root":[0.189,0.989],"head":[0.611,0.302],"hb":[0.009,0.429]},"dahlia-bud":{"w":880,"h":1488,"root":[0.307,0.991],"head":[0.526,0.226],"hb":[0.009,0.226]},"rose-bud":{"w":688,"h":1081,"root":[0.4,0.988],"head":[0.505,0.296],"hb":[0.016,0.34]},"lily-bud":{"w":880,"h":1655,"root":[0.362,0.992],"head":[0.594,0.223],"hb":[0.008,0.253]},"gerbera-bud":{"w":738,"h":1517,"root":[0.513,0.991],"head":[0.666,0.192],"hb":[0.009,0.225]},"sunflower-bud":{"w":816,"h":1417,"root":[0.271,0.991],"head":[0.57,0.222],"hb":[0.009,0.241]},"anemone-bud":{"w":708,"h":1731,"root":[0.398,0.992],"head":[0.54,0.266],"hb":[0.008,0.28]},"ranunculus-bud":{"w":749,"h":1367,"root":[0.245,0.99],"head":[0.459,0.216],"hb":[0.01,0.252]},"marguerite-bud":{"w":639,"h":1365,"root":[0.356,0.99],"head":[0.71,0.234],"hb":[0.01,0.325]},"dahlia-half":{"w":880,"h":1191,"root":[0.313,0.991],"head":[0.574,0.258],"hb":[0.009,0.281]},"rose-half":{"w":880,"h":810,"root":[0.285,0.99],"head":[0.608,0.28],"hb":[0.01,0.351]},"lily-half":{"w":880,"h":1287,"root":[0.324,0.992],"head":[0.607,0.263],"hb":[0.007,0.291]},"gerbera-half":{"w":880,"h":1363,"root":[0.395,0.991],"head":[0.607,0.209],"hb":[0.009,0.255]},"sunflower-half":{"w":880,"h":963,"root":[0.305,0.991],"head":[0.584,0.298],"hb":[0.009,0.34]},"anemone-half":{"w":850,"h":1866,"root":[0.431,0.994],"head":[0.55,0.286],"hb":[0.008,0.364]},"ranunculus-half":{"w":880,"h":1126,"root":[0.252,0.99],"head":[0.502,0.283],"hb":[0.01,0.298]},"marguerite-half":{"w":880,"h":1012,"root":[0.272,0.99],"head":[0.551,0.221],"hb":[0.01,0.239]},"galaxy-half":{"w":880,"h":1771,"root":[0.227,0.994],"head":[0.548,0.224],"hb":[0.006,0.228]},"lantern-half":{"w":880,"h":950,"root":[0.421,0.992],"head":[0.638,0.279],"hb":[0.008,0.318]},"crystal-bud":{"w":533,"h":1989,"root":[0.489,0.993],"head":[0.631,0.252],"hb":[0.007,0.263]},"crystal-half":{"w":880,"h":1010,"root":[0.327,0.991],"head":[0.624,0.286],"hb":[0.009,0.328]},"featherflower-bud":{"w":650,"h":1842,"root":[0.398,0.992],"head":[0.494,0.181],"hb":[0.008,0.172]},"featherflower-half":{"w":880,"h":936,"root":[0.342,0.991],"head":[0.551,0.275],"hb":[0.009,0.299]},"swirl-bud":{"w":880,"h":1317,"root":[0.199,0.991],"head":[0.388,0.228],"hb":[0.008,0.222]},"swirl-half":{"w":880,"h":863,"root":[0.172,0.991],"head":[0.566,0.302],"hb":[0.009,0.379]},"rainbow-bud":{"w":535,"h":1829,"root":[0.343,0.992],"head":[0.504,0.173],"hb":[0.007,0.15]},"rainbow-half":{"w":880,"h":1166,"root":[0.214,0.991],"head":[0.534,0.284],"hb":[0.008,0.314]},"sweetpea-full":{"w":880,"h":1872,"root":[0.52,0.993],"head":[0.501,0.139],"hb":[0.442,0.287]},"marigold-full":{"w":880,"h":2166,"root":[0.499,0.993],"head":[0.5,0.118],"hb":[0.835,0.369]},"sakura2-full":{"w":880,"h":1308,"root":[0.508,0.993],"head":[0.505,0.458],"hb":[0.991,0.794]}};
+const ANCH = {"tulip-full":{"w":957,"h":1964,"root":[0.535,0.996],"head":[0.497,0.074],"hb":[0.005,0.182]},"tulip-bud":{"w":953,"h":1952,"root":[0.535,0.996],"head":[0.528,0.07],"hb":[0.005,0.159]},"tulip-half":{"w":956,"h":1962,"root":[0.535,0.996],"head":[0.515,0.08],"hb":[0.005,0.178]},"tulilily-full":{"w":880,"h":1220,"root":[0.397,0.992],"head":[0.636,0.274],"hb":[0.007,0.316]},"tulilily-fullb":{"w":880,"h":1150,"root":[0.695,0.991],"head":[0.451,0.294],"hb":[0.009,0.323]},"tulilily-bud":{"w":664,"h":1647,"root":[0.483,0.991],"head":[0.632,0.223],"hb":[0.009,0.25]},"tulilily-half":{"w":880,"h":1172,"root":[0.4,0.991],"head":[0.622,0.267],"hb":[0.008,0.311]},"mobius-full":{"w":880,"h":1086,"root":[0.197,0.996],"head":[0.489,0.312],"hb":[0.008,0.378]},"mobius-fullb":{"w":880,"h":981,"root":[0.755,0.991],"head":[0.458,0.308],"hb":[0.009,0.361]},"mobius-bud":{"w":628,"h":1732,"root":[0.28,0.996],"head":[0.508,0.181],"hb":[0.008,0.185]},"mobius-half":{"w":880,"h":1318,"root":[0.252,0.998],"head":[0.486,0.295],"hb":[0.008,0.324]},"candy-full":{"w":880,"h":999,"root":[0.269,0.991],"head":[0.505,0.3],"hb":[0.008,0.352]},"candy-fullb":{"w":880,"h":1010,"root":[0.764,0.998],"head":[0.458,0.298],"hb":[0.008,0.352]},"candy-bud":{"w":880,"h":1394,"root":[0.39,0.991],"head":[0.503,0.255],"hb":[0.009,0.26]},"candy-half":{"w":880,"h":938,"root":[0.274,0.99],"head":[0.559,0.299],"hb":[0.009,0.342]},"cotton-full":{"w":880,"h":1306,"root":[0.43,0.993],"head":[0.503,0.255],"hb":[0.008,0.276]},"cotton-fullb":{"w":880,"h":1481,"root":[0.684,0.999],"head":[0.438,0.245],"hb":[0.006,0.252]},"cotton-bud":{"w":615,"h":2537,"root":[0.253,0.994],"head":[0.539,0.15],"hb":[0.007,0.131]},"cotton-half":{"w":880,"h":1239,"root":[0.397,0.994],"head":[0.558,0.231],"hb":[0.012,0.248]},"bubble-full":{"w":880,"h":1901,"root":[0.527,0.999],"head":[0.514,0.251],"hb":[0.005,0.258]},"bubble-bud":{"w":443,"h":3019,"root":[0.42,0.995],"head":[0.668,0.241],"hb":[0.004,0.329]},"goldbell-full":{"w":880,"h":750,"root":[0.558,0.984],"head":[0.433,0.245],"hb":[0.008,0.631]},"goldbell-bud":{"w":880,"h":991,"root":[0.611,0.99],"head":[0.433,0.197],"hb":[0.01,0.654]},"goldbell-half":{"w":880,"h":703,"root":[0.647,0.989],"head":[0.422,0.276],"hb":[0.01,0.622]},"firefly-full":{"w":880,"h":728,"root":[0.626,0.967],"head":[0.394,0.232],"hb":[0.01,0.607]},"firefly-bud":{"w":880,"h":1169,"root":[0.648,0.981],"head":[0.479,0.227],"hb":[0.009,0.498]},"firefly-half":{"w":880,"h":707,"root":[0.564,0.986],"head":[0.422,0.243],"hb":[0.008,0.614]},"feather-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"feather-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"feather-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"moonring-full":{"w":880,"h":904,"root":[0.476,0.989],"head":[0.48,0.304],"hb":[0.01,0.459]},"moonring-bud":{"w":880,"h":885,"root":[0.454,0.988],"head":[0.458,0.289],"hb":[0.011,0.437]},"moonring-half":{"w":880,"h":851,"root":[0.435,0.989],"head":[0.488,0.309],"hb":[0.009,0.418]},"dahlia-full":{"w":880,"h":985,"root":[0.301,0.991],"head":[0.517,0.307],"hb":[0.009,0.37]},"rose-full":{"w":880,"h":807,"root":[0.297,0.99],"head":[0.614,0.297],"hb":[0.01,0.362]},"lily-full":{"w":880,"h":1283,"root":[0.29,0.993],"head":[0.612,0.304],"hb":[0.007,0.341]},"gerbera-full":{"w":880,"h":1100,"root":[0.3,0.991],"head":[0.526,0.243],"hb":[0.008,0.266]},"sunflower-full":{"w":880,"h":859,"root":[0.553,0.999],"head":[0.556,0.314],"hb":[0.01,0.444]},"anemone-full":{"w":880,"h":1358,"root":[0.365,0.995],"head":[0.505,0.265],"hb":[0.008,0.275]},"ranunculus-full":{"w":880,"h":1003,"root":[0.251,0.99],"head":[0.5,0.29],"hb":[0.01,0.323]},"marguerite-full":{"w":880,"h":877,"root":[0.263,0.99],"head":[0.52,0.236],"hb":[0.009,0.25]},"sprig-tulilily":{"w":880,"h":639,"root":[0.545,0.998],"head":[0.536,0.329],"hb":[0.016,0.08]},"sprig-mobius":{"w":880,"h":660,"root":[0.505,0.998],"head":[0.521,0.324],"hb":[0.017,0.08]},"sprig-rose":{"w":880,"h":608,"root":[0.49,0.998],"head":[0.471,0.338],"hb":[0.026,0.08]},"sprig-carnation":{"w":880,"h":890,"root":[0.49,0.998],"head":[0.471,0.32],"hb":[0.016,0.08]},"sprout-round":{"w":880,"h":474,"root":[0.499,0.998],"head":[0.591,0.288],"hb":[0.015,0.382]},"sprout-slender":{"w":880,"h":690,"root":[0.499,0.999],"head":[0.571,0.217],"hb":[0.041,0.08]},"sprout-red":{"w":880,"h":539,"root":[0.499,0.998],"head":[0.491,0.201],"hb":[0.017,0.241]},"sprout-leaves":{"w":880,"h":438,"root":[0.501,0.998],"head":[0.526,0.302],"hb":[0.014,0.08]},"galaxy-full":{"w":880,"h":1854,"root":[0.495,0.999],"head":[0.49,0.233],"hb":[0.005,0.296]},"galaxy-bud":{"w":880,"h":2245,"root":[0.316,0.995],"head":[0.46,0.185],"hb":[0.005,0.164]},"lantern-full":{"w":880,"h":1709,"root":[0.235,0.992],"head":[0.475,0.253],"hb":[0.007,0.283]},"lantern-bud":{"w":668,"h":1392,"root":[0.4,0.991],"head":[0.522,0.249],"hb":[0.009,0.248]},"crystal-full":{"w":880,"h":1204,"root":[0.462,0.999],"head":[0.53,0.298],"hb":[0.007,0.356]},"featherflower-full":{"w":880,"h":1227,"root":[0.321,0.993],"head":[0.48,0.289],"hb":[0.007,0.339]},"sakura-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"sakura-fullb":{"a":0.371,"b":0.98,"ar":0.914},"sakura-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"sakura-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"swirl-full":{"w":880,"h":1230,"root":[0.251,0.998],"head":[0.549,0.288],"hb":[0.007,0.313]},"rainbow-full":{"w":880,"h":746,"root":[0.189,0.989],"head":[0.611,0.302],"hb":[0.009,0.429]},"dahlia-bud":{"w":880,"h":1488,"root":[0.307,0.991],"head":[0.526,0.226],"hb":[0.009,0.226]},"rose-bud":{"w":688,"h":1081,"root":[0.4,0.988],"head":[0.505,0.296],"hb":[0.016,0.34]},"lily-bud":{"w":880,"h":1655,"root":[0.362,0.992],"head":[0.594,0.223],"hb":[0.008,0.253]},"gerbera-bud":{"w":738,"h":1517,"root":[0.513,0.991],"head":[0.666,0.192],"hb":[0.009,0.225]},"sunflower-bud":{"w":816,"h":1417,"root":[0.271,0.991],"head":[0.57,0.222],"hb":[0.009,0.241]},"anemone-bud":{"w":708,"h":1731,"root":[0.398,0.992],"head":[0.54,0.266],"hb":[0.008,0.28]},"ranunculus-bud":{"w":749,"h":1367,"root":[0.245,0.99],"head":[0.459,0.216],"hb":[0.01,0.252]},"marguerite-bud":{"w":639,"h":1365,"root":[0.356,0.99],"head":[0.71,0.234],"hb":[0.01,0.325]},"dahlia-half":{"w":880,"h":1191,"root":[0.313,0.991],"head":[0.574,0.258],"hb":[0.009,0.281]},"rose-half":{"w":880,"h":810,"root":[0.285,0.99],"head":[0.608,0.28],"hb":[0.01,0.351]},"lily-half":{"w":880,"h":1287,"root":[0.324,0.992],"head":[0.607,0.263],"hb":[0.007,0.291]},"gerbera-half":{"w":880,"h":1363,"root":[0.395,0.991],"head":[0.607,0.209],"hb":[0.009,0.255]},"sunflower-half":{"w":880,"h":963,"root":[0.305,0.991],"head":[0.584,0.298],"hb":[0.009,0.34]},"anemone-half":{"w":850,"h":1866,"root":[0.431,0.994],"head":[0.55,0.286],"hb":[0.008,0.364]},"ranunculus-half":{"w":880,"h":1126,"root":[0.252,0.99],"head":[0.502,0.283],"hb":[0.01,0.298]},"marguerite-half":{"w":880,"h":1012,"root":[0.272,0.99],"head":[0.551,0.221],"hb":[0.01,0.239]},"galaxy-half":{"w":880,"h":1771,"root":[0.227,0.994],"head":[0.548,0.224],"hb":[0.006,0.228]},"lantern-half":{"w":880,"h":950,"root":[0.421,0.992],"head":[0.638,0.279],"hb":[0.008,0.318]},"crystal-bud":{"w":533,"h":1989,"root":[0.489,0.993],"head":[0.631,0.252],"hb":[0.007,0.263]},"crystal-half":{"w":880,"h":1010,"root":[0.327,0.991],"head":[0.624,0.286],"hb":[0.009,0.328]},"featherflower-bud":{"w":650,"h":1842,"root":[0.398,0.992],"head":[0.494,0.181],"hb":[0.008,0.172]},"featherflower-half":{"w":880,"h":936,"root":[0.342,0.991],"head":[0.551,0.275],"hb":[0.009,0.299]},"swirl-bud":{"w":880,"h":1317,"root":[0.199,0.991],"head":[0.388,0.228],"hb":[0.008,0.222]},"swirl-half":{"w":880,"h":863,"root":[0.172,0.991],"head":[0.566,0.302],"hb":[0.009,0.379]},"rainbow-bud":{"w":535,"h":1829,"root":[0.343,0.992],"head":[0.504,0.173],"hb":[0.007,0.15]},"rainbow-half":{"w":880,"h":1166,"root":[0.214,0.991],"head":[0.534,0.284],"hb":[0.008,0.314]},"sweetpea-full":{"w":880,"h":1872,"root":[0.52,0.993],"head":[0.501,0.139],"hb":[0.442,0.287]},"marigold-full":{"w":880,"h":2166,"root":[0.499,0.993],"head":[0.5,0.118],"hb":[0.835,0.369]},"sakura2-full":{"w":880,"h":1308,"root":[0.508,0.993],"head":[0.505,0.458],"hb":[0.991,0.794]}};
 const P5 = {"noirrose-full":{"a":0.409,"b":0.986,"ar":1.067},"noirrose-fullb":{"a":0.498,"b":0.92,"ar":1.453},"noirrose-bud":{"a":0.359,"b":0.962,"ar":0.889},"noirrose-half":{"a":0.47,"b":0.992,"ar":1.35},"stem-rose":{"rx":0.529,"tx":0.514,"ar":0.217},"branch-rose":{"rx":0.553,"tx":0.634,"ar":0.371},"stem-lily":{"rx":0.503,"tx":0.493,"ar":0.48},"branch-lily":{"rx":0.478,"tx":0.497,"ar":1.068},"stem-dahlia":{"rx":0.471,"tx":0.422,"ar":0.188},"branch-dahlia":{"rx":0.241,"tx":0.637,"ar":0.132},"stem-carnation":{"rx":0.496,"tx":0.496,"ar":0.259},"branch-carnation":{"rx":0.657,"tx":0.382,"ar":0.283},"stem-gerbera":{"rx":0.499,"tx":0.5,"ar":0.462},"branch-gerbera":{"rx":0.392,"tx":0.5,"ar":1.026},"stem-sunflower":{"rx":0.462,"tx":0.447,"ar":0.43},"branch-sunflower":{"rx":0.218,"tx":0.412,"ar":0.258},"stem-iris":{"rx":0.555,"tx":0.567,"ar":0.179},"branch-iris":{"rx":0.538,"tx":0.567,"ar":0.399},"stem-cherry":{"rx":0.45,"tx":0.429,"ar":0.366},"branch-cherry":{"rx":0.457,"tx":0.429,"ar":0.814},"stem-anemone":{"rx":0.483,"tx":0.498,"ar":0.526},"branch-anemone":{"rx":0.462,"tx":0.426,"ar":0.395},"tulilily-full":{"a":0.44,"b":0.62,"ar":0.965},"tulilily-fullb":{"a":0.52,"b":0.6,"ar":1.39},"tulilily-bud":{"a":0.386,"b":0.993,"ar":0.799},"tulilily-half":{"a":0.49,"b":0.82,"ar":1.094},"mobius-full":{"a":0.46,"b":0.82,"ar":1.011},"mobius-fullb":{"a":0.565,"b":0.86,"ar":0.89},"mobius-bud":{"a":0.505,"b":0.992,"ar":0.974},"mobius-half":{"a":0.493,"b":0.87,"ar":0.964},"carnation-full":{"a":0.50,"b":0.97,"ar":1.114},"carnation-fullb":{"a":0.07,"b":0.50,"ar":1.540},"carnation-bud":{"a":0.18,"b":0.97,"ar":0.626},"carnation-half":{"a":0.26,"b":0.97,"ar":1.031},"candy-full":{"a":0.47,"b":0.972,"ar":1.007},"candy-fullb":{"a":0.494,"b":0.976,"ar":1.036},"candy-bud":{"a":0.514,"b":0.993,"ar":0.994},"candy-half":{"a":0.467,"b":0.993,"ar":0.949},"cotton-full":{"a":0.483,"b":0.994,"ar":1.001},"cotton-fullb":{"a":0.494,"b":0.868,"ar":1.013},"cotton-bud":{"a":0.606,"b":0.993,"ar":0.981},"cotton-half":{"a":0.51,"b":0.987,"ar":1.018},"bubble-full":{"a":0.36,"b":0.99,"ar":0.911},"bubble-bud":{"a":0.5,"b":0.994,"ar":0.567},"dahlia-full":{"a":0.469,"b":0.899,"ar":0.887},"rose-full":{"a":0.449,"b":0.994,"ar":1.042},"lily-full":{"a":0.5,"b":0.62,"ar":0.992},"gerbera-full":{"a":0.49,"b":0.86,"ar":0.907},"sunflower-full":{"a":0.483,"b":0.909,"ar":0.811},"anemone-full":{"a":0.542,"b":0.994,"ar":0.942},"ranunculus-full":{"a":0.535,"b":0.993,"ar":1.008},"marguerite-full":{"a":0.47,"b":0.82,"ar":0.867},"galaxy-full":{"a":0.594,"b":0.983,"ar":0.988},"galaxy-bud":{"a":0.484,"b":0.993,"ar":0.846},"crystal-full":{"a":0.578,"b":0.99,"ar":1.017},"featherflower-full":{"a":0.524,"b":0.891,"ar":0.971},"sakura-full":{"a":0.513,"b":0.988,"ar":1.542},"sakura-fullb":{"a":0.509,"b":0.990,"ar":1.569},"sakura-half":{"a":0.559,"b":0.98,"ar":0.662},"sakura-bud":{"a":0.609,"b":0.98,"ar":0.364},"swirl-full":{"a":0.513,"b":0.988,"ar":0.939},"rainbow-full":{"a":0.563,"b":0.892,"ar":0.999},"dahlia-bud":{"a":0.485,"b":0.993,"ar":0.887},"rose-bud":{"a":0.489,"b":0.993,"ar":0.921},"lily-bud":{"a":0.284,"b":0.988,"ar":0.969},"gerbera-bud":{"a":0.5,"b":0.991,"ar":1.083},"sunflower-bud":{"a":0.629,"b":0.993,"ar":0.933},"anemone-bud":{"a":0.54,"b":0.99,"ar":1.02},"ranunculus-bud":{"a":0.409,"b":0.992,"ar":0.975},"marguerite-bud":{"a":0.54,"b":0.991,"ar":1.043},"dahlia-half":{"a":0.48,"b":0.68,"ar":0.9},"rose-half":{"a":0.48,"b":0.8,"ar":0.982},"lily-half":{"a":0.52,"b":0.6,"ar":0.946},"gerbera-half":{"a":0.48,"b":0.85,"ar":0.893},"sunflower-half":{"a":0.49,"b":0.82,"ar":0.828},"anemone-half":{"a":0.556,"b":0.993,"ar":0.874},"ranunculus-half":{"a":0.5,"b":0.75,"ar":1.026},"marguerite-half":{"a":0.504,"b":0.899,"ar":0.986},"galaxy-half":{"a":0.46,"b":0.85,"ar":1.116},"crystal-bud":{"a":0.307,"b":0.99,"ar":0.575},"crystal-half":{"a":0.621,"b":0.99,"ar":1.057},"featherflower-bud":{"a":0.386,"b":0.99,"ar":0.921},"featherflower-half":{"a":0.471,"b":0.981,"ar":1.141},"swirl-bud":{"a":0.483,"b":0.992,"ar":0.883},"swirl-half":{"a":0.46,"b":0.78,"ar":0.95},"rainbow-bud":{"a":0.495,"b":0.992,"ar":0.954},"rainbow-half":{"a":0.486,"b":0.994,"ar":0.949},"anemone-fullb":{"a":0.48,"b":0.75,"ar":1.043},"bubble-fullb":{"a":0.297,"b":0.993,"ar":0.751},"crystal-fullb":{"a":0.564,"b":0.99,"ar":0.825},"dahlia-fullb":{"a":0.493,"b":0.82,"ar":1.067},"featherflower-fullb":{"a":0.44,"b":0.74,"ar":0.792},"galaxy-fullb":{"a":0.47,"b":0.82,"ar":1.106},"gerbera-fullb":{"a":0.45,"b":0.8,"ar":0.747},"lily-fullb":{"a":0.48,"b":0.58,"ar":0.976},"lily-fullc":{"a":0.84,"b":0.44,"ar":1.042},"marguerite-fullb":{"a":0.488,"b":0.868,"ar":0.933},"rainbow-fullb":{"a":0.37,"b":0.58,"ar":0.856},"ranunculus-fullb":{"a":0.48,"b":0.7,"ar":0.885},"rose-fullb":{"a":0.46,"b":0.78,"ar":1.026},"sunflower-fullb":{"a":0.47,"b":0.84,"ar":0.86},"swirl-fullb":{"a":0.494,"b":0.971,"ar":0.857}};
 for (const k of ['full','fullb','half','bud']) if (P5['crystal-' + k]) P5['crystalx-' + k] = P5['crystal-' + k]; /* 水晶ヘッドは改名してキャッシュを切り替える */
 
@@ -386,9 +448,12 @@ function analyzeFrames(fr){
     /* 実マイクの音高追跡は、ビブラート・音同士の滑り・一瞬の誤検出でフレーム単位に飛ぶ。
        そのまま数えると「細切れの音」が量産され、変化回数が実態の何倍にも膨らむ（v11の偏りの主因）。
        (1) 前後2フレームの中央値フィルタで単発の飛びを消す
-       (2) 新しい音は「区間の中心から0.65半音以上外れた状態が2フレーム続いた時」だけ認める
+       (2) 新しい音は「区間の中心から0.65半音以上外れた状態が2フレーム続き、3フレーム目も
+        同じ側に残っている時」だけ認める
        （v36: 中心は到達部の中央値＝滑走部分を除いた値に改め、境界も0.8→0.65へ。
         曲線でつなぐ歌い方では区間全体の中央値が到達点より低めに引っ張られるため）
+       （v47: 先生の指定で「人間が鼻歌で音高を変えられる限界」をテンポ100想定の0.15秒に置き直した。
+        詳細は境界ループ側のコメント参照）
        segsはビブラート測定用に生の音高列をそのまま残す */
     const midis = raw.map((v, i) => { const w = raw.slice(Math.max(0, i - 2), Math.min(raw.length, i + 3)).slice().sort((a, b) => a - b); return w[w.length >> 1]; });
     const medOf = (a, b) => { const w = midis.slice(a, b).sort((p2, q2) => p2 - q2); return w[w.length >> 1]; };
@@ -414,11 +479,16 @@ function analyzeFrames(fr){
     const spans = []; let a0 = 0;
     for (let i = 1; i < midis.length; i++){
       const med = medOf(a0, i);
-      if (Math.abs(midis[i] - med) > 0.65 && i + 1 < midis.length && Math.abs(midis[i + 1] - med) > 0.65){ spans.push([a0, i]); a0 = i; }
+      /* v47: 0.15秒ルールの境界側の実装。逸脱が2フレームはっきり続き（>0.65半音）、3フレーム目も
+         同じ側に残っている（>0.35半音）時だけ境界にする。3フレーム目に反対側へ戻り切る逸脱は
+         一瞬の揺れ・誤検出として音符にしない。3フレーム目に0.65を課さないのは、中央値フィルタが
+         速い音の縁を引っ張るため、本物の0.15秒の音まで食ってしまう副作用（検証プロトタイプで実測）を避けるため */
+      if (Math.abs(midis[i] - med) > 0.65 && i + 1 < midis.length && Math.abs(midis[i + 1] - med) > 0.65 && (i + 2 >= midis.length || Math.abs(midis[i + 2] - med) > 0.35)){ spans.push([a0, i]); a0 = i; }
     }
     spans.push([a0, midis.length]);
-    /* BPM120の16分音符=0.125秒に満たない区間は独立した音として扱わず、長い方の隣の音へ吸収する。
-       速いしゃくりや一瞬の誤検出を「音」にしないため（捨てるのではなく、時間ごと隣に渡す） */
+    /* v47: 0.15秒（テンポ100想定で人間が音高を変えられる限界）に満たない区間は独立した音として
+       扱わず、長い方の隣の音へ吸収する。速いしゃくりや一瞬の誤検出を「音」にしないため
+       （捨てるのではなく、時間ごと隣に渡す）。旧基準はBPM120の16分音符=0.125秒だった */
     const spanDur = s => p.frames[s[1] - 1].t - p.frames[s[0]].t + 0.05;
     /* v36: 滑走（しゃくり・ポルタメント）の断片を独立した音にしない。
        短い区間（0.3秒未満）で、音高が一方向に動き続け（単調）、幅0.45半音以上あり、
@@ -443,9 +513,21 @@ function analyzeFrames(fr){
       else spans.splice(gi - 1, 2, [spans[gi - 1][0], spans[gi][1]]);
     }
     let mGuard = 0;
+    const spanPitch = sp => midis[Math.min(midis.length - 1, Math.max(0, (sp[0] + sp[1] - 1) >> 1))];
     while (spans.length > 1 && mGuard++ < 300){
       let si = -1;
-      for (let i = 0; i < spans.length; i++) if (spanDur(spans[i]) < 0.125){ si = i; break; }
+      for (let i = 0; i < spans.length; i++){
+        if (spanDur(spans[i]) >= 0.15) continue;
+        /* v47 精密化: 速いパッセージの真ん中の短い音は本物（0.15秒ちょうどの16分音符などは
+           標本化で実測0.10〜0.14秒に縮む）。「両隣も短く、両側とも0.8〜3半音の実移動で
+           つながっている」短いスパンだけは潰さない。片側だけの緩い保護だと、揺れで割れた
+           断片まで残って微小音が増える（実測で確認済み）。孤立した短いスパン
+           （前後が長い音＝揺れ・誤読）は先生の 0.15秒ルールで潰す */
+        const pvS = i > 0 ? spans[i - 1] : null, nxS = i < spans.length - 1 ? spans[i + 1] : null;
+        const stepOk = (a, b) => { const d = Math.abs(spanPitch(a) - spanPitch(b)); return d >= 0.8 && d <= 3; };
+        const inFast = pvS && nxS && spanDur(pvS) < 0.20 && spanDur(nxS) < 0.20 && stepOk(spans[i], pvS) && stepOk(spans[i], nxS);
+        if (!inFast){ si = i; break; }
+      }
       if (si < 0) break;
       const pv = si > 0 ? si - 1 : -1, nx = si < spans.length - 1 ? si + 1 : -1;
       const into = pv < 0 ? nx : nx < 0 ? pv : (spanDur(spans[pv]) >= spanDur(spans[nx]) ? pv : nx);
@@ -523,6 +605,36 @@ function analyzeFrames(fr){
       meanCent: p.frames.reduce((s,x)=>s+(x.cent||0),0)/p.frames.length,
       scaleKey: scaleFit(midis) };
   });
+  /* v47 抽出クリーニング（検証プロトタイプの知見: オルゴールの乱れとイベント不発の主犯は、
+     音高の揺れではなく倍音誤読による「孤立した短い跳躍音」だった。1テイクに平均4〜6個入り、
+     生き残った音の音高は9割以上正しい）。選定・オルゴール・イベントの全てが使う音符列そのものを、
+     特徴量計算の前にここで綺麗にする（再生段だけの対処では選定とイベントが直らないため）。
+     (1) オクターブ誤読の修復: 前後同士が3半音以内に近く、その音だけが前後から10半音以上
+         離れている短い音（0.45秒以下）は、オクターブずらしで前後の線に戻す。長く保たれた音は
+         本物のメロディ（例: きよしこの夜の頂点の音）なので直さない（実測で確認した誤発動）。
+     (2) 挿入ゴミ音の除去: 長さ0.32秒以下、前後から7半音以上跳び、前後同士は2半音以内に近い音は、
+         持続音の途中で倍音へ飛んだ誤読とみなして取り除き、時間は前の音へ渡す（同音の繰り返しは残る）。
+     本物の速い音や大きな跳躍は、前後の関係がこの形にならないため残る */
+  for (const p of P){
+    const ns = p.notes;
+    for (let i = 1; i < ns.length - 1; i++){
+      const pv = ns[i - 1].midi, cu = ns[i].midi, nx = ns[i + 1].midi;
+      if (ns[i].dur <= 0.45 && Math.abs(pv - nx) <= 3 && Math.abs(cu - pv) >= 10 && Math.abs(cu - nx) >= 10) ns[i].midi = cu + (cu > pv ? -12 : 12);
+    }
+    if (ns.length >= 2){
+      const f0 = ns[0], f1 = ns[1];
+      if (f0.dur <= 0.32 && Math.abs(f0.midi - f1.midi) >= 10) f0.midi = f0.midi + (f0.midi > f1.midi ? -12 : 12);
+      const l0 = ns[ns.length - 1], l1 = ns[ns.length - 2];
+      if (l0.dur <= 0.32 && Math.abs(l0.midi - l1.midi) >= 10) l0.midi = l0.midi + (l0.midi > l1.midi ? -12 : 12);
+    }
+    for (let i = ns.length - 2; i >= 1; i--){
+      const pv = ns[i - 1], cu = ns[i], nx = ns[i + 1];
+      if (cu.dur <= 0.32 && Math.abs(cu.midi - pv.midi) >= 7 && Math.abs(nx.midi - cu.midi) >= 7 && Math.abs(pv.midi - nx.midi) <= 2){
+        pv.dur = Math.max(pv.dur, (cu.start + cu.dur) - pv.start);
+        ns.splice(i, 1);
+      }
+    }
+  }
   if (!P.length) return null;
   const allNotes = P.flatMap(p => p.notes);
   const allMidis = allNotes.map(n => n.midi);
@@ -813,7 +925,7 @@ const TIER2_SET = new Set(['lantern','goldbell','firefly','moonring','candy','co
 function skillA(f){ return (f.keyCov || 0) >= 0.78 || ((f.keyCov || 0) >= 0.70 && (f.keyVoteShare || 0) >= 0.65); }
 function skillB(f){ return (f.noteCount || 0) >= 8 && !!f.tempoStable; }
 /* ビブラート要件（秒）。銀河は T8 のロングトーン予算では 1.5 に届かないため 1.2（DESIGN.md §7） */
-const VIB_NEED = { galaxy: 1.2, crystal: 4.0, noirrose: 2.5 };
+const VIB_NEED = { galaxy: 1.2, crystal: 4.0, noirrose: 2.5, rainbow: 6.0 };
 /* T2 の分け方（先生の方式）: 物差しは「同じ音の繰り返し回数」（音程0の個数）の一本のみ。
    9回以下はマーガレット、10回以上はホタルスズラン。スキルは関与しない。
    較正（v44で再較正）: キラキラ星はクリーンで18回だが、少し荒い歌い方では完全な同音が崩れて
@@ -895,7 +1007,29 @@ function extraFeatOf(notes){
     const tot = ns.reduce((s, n) => s + n.dur, 0);
     if (tot > 0 && medDur > 0) ltRel15 = ns.filter(n => n.dur >= 1.5 * medDur).reduce((s, n) => s + n.dur, 0) / tot;
   }
-  return { stepShare, thirdShare, sameRep, turns, turnAmp, peakPos, medDur, maxDur, nNotes: ns.length, neff, ceffN, revShare, ltRel15 };
+  /* v47: 上行ステップ連続 ascRun / ascRuns5（先生の提案によるガーベラの肯定条件と、T4 の繰り返しに強い門）。
+     フレーズの切れ目を跨がず、+1〜+2半音の上行が連続する区間の「音の数」の最大値。
+     例: ドレミファソと5音つながれば ascRun = 5 */
+  let ascRun = 0, ascRuns5 = 0, ascRuns4 = 0, ascRuns3 = 0, stepRun = 0;
+  {
+    let cur = 0, curD = 0, runLen = 0, runDir = 0;
+    const closeAsc = () => { const L = cur + 1; if (L >= 5) ascRuns5++; if (L >= 4) ascRuns4++; if (L >= 3) ascRuns3++; };
+    for (const v of ivs){
+      const up = v !== null && Math.round(v) >= 1 && Math.round(v) <= 2 && v > 0.4;
+      const dn = v !== null && Math.round(v) <= -1 && Math.round(v) >= -2 && v < -0.4;
+      if (up){ cur++; if (cur + 1 > ascRun) ascRun = cur + 1; } else { closeAsc(); cur = 0; }
+      /* 下行も含めた段階連続（ガーベラの定義: 上下どちらの向きでも5音以上が一度）。
+         向きが変わったら連続は数え直す（上行と下行を混ぜた継ぎ接ぎは数えない） */
+      if (up || dn){
+        const d = up ? 1 : -1;
+        if (runDir === d) runLen++;
+        else { if (runLen + 1 > stepRun) stepRun = runLen + 1; runDir = d; runLen = 1; }
+      } else { if (runLen + 1 > stepRun) stepRun = runLen + 1; runDir = 0; runLen = 0; }
+    }
+    closeAsc();
+    if (runLen + 1 > stepRun) stepRun = runLen + 1;
+  }
+  return { stepShare, thirdShare, sameRep, turns, turnAmp, peakPos, medDur, maxDur, nNotes: ns.length, neff, ceffN, revShare, ltRel15, ascRun, ascRuns5, ascRuns4, ascRuns3, stepRun };
 }
 /* orgelMelody はグローバルの analysis を読むため、一時的に差し替えて音符列を得る */
 function orgelNotesOf(an){
@@ -935,13 +1069,23 @@ function typeDist(v, c){
    候補ゲート: T11 は音域14以上、T10 はロングトーン率0.50以上、T6 は跳躍2以上かつ3度動き0.15以上
    でなければ候補に入らない（揺れで特徴が潰れた歌が流れ込むのを防ぐ。外しても他の型が必ず受ける） */
 function classifyType(f, x){
-  if (((f.pat && f.pat.rise) || 0) >= 2 && x.neff >= 36) return 'T4';  /* 上行音階: 上昇＋実効音数の多さ */
+  /* 上行音階: (a) 上昇パターン＋実効音数の多さ、または (b) 上行ステップ連続6音以上＋5音以上の連続が1回。
+     v47: ドレミの歌のように同じ音階を繰り返す歌い方では、繰り返し割引（Neff）が門を割って
+     T4 に届かずマーガレットに落ちていた（先生の実機）。繰り返しても潰れない物差し (b) を併設する。
+     較正: 「4音以上の連続が2回」だけの物差しは、段階移動の多い他曲を大量に奪って型分布が
+     崩れた（チューリリーが 21→78/520）。長さ（6音）を核に残した (b) が両立する形。
+     検証: 繰り返し歌唱の模擬で T4 到達 0/21 → 21/21、キラキラ星の漏れ 0、出現分布は不変 */
+  if ((((f.pat && f.pat.rise) || 0) >= 2 && x.neff >= 36) || (x.ascRun >= 6 && x.ascRuns5 >= 1)) return 'T4';
   if (x.turns >= 16 && (f.segFeat || 0) >= 8) return 'T8';                        /* 半音往復（従来路）: 折り返し最多＋細かさ上限 */
   if ((f.rangeSemis || 0) >= 11.5 && (f.rangeSemis || 0) <= 13.7 && x.revShare >= 0.42 && x.peakPos <= 0.30) return 'T8'; /* 半音往復（v44新路）: 中くらいの音域で小さい反復（往復）の割合が高い。割合ベースなので荒い歌い方でも崩れにくい */
   if (x.sameRep >= 8) return 'T2';                                                /* 反復と5度: 同音反復が桁違い */
   if ((f.longToneRatio || 0) >= 0.58 && (f.leaps || 0) === 0 && (f.rangeSemis || 0) <= 10 && (f.changesPer4s || 0) <= 3.0) return 'T10'; /* ロングトーン・バラード */
   if (((f.longToneRatio || 0) >= 0.50 || x.ltRel15 >= 0.48) && (f.leaps || 0) >= 4) return 'T7';         /* ロングトーン賛美歌（v44: 相対ロングトーンの救済路を追加。速く歌って絶対LTが崩れても残る） */
   if ((f.rangeSemis || 0) >= 15 && (f.changesPer4s || 0) <= 3.2 && (f.longToneRatio || 0) >= 0.30 && (f.noteCount || 0) <= 22) return 'T11'; /* 広音域クライマックス */
+  /* v47 T11 拡張路: 音域12〜15未満でもロングトーン率0.30以上なら T11 の素顔に近い（T5 の LT 重心
+     0.124 とはロングトーン率で切り分け、T7 は上のマーカーが先に取る）。ダリアの出現経路を広げる。
+     検証（ファズ520）: T11 到達 57→62件、サイレント・ナイトの T7 は不変（8/20） */
+  if ((f.rangeSemis || 0) >= 12 && (f.rangeSemis || 0) < 15 && (f.longToneRatio || 0) >= 0.30 && (f.changesPer4s || 0) <= 3.2 && (f.noteCount || 0) <= 22) return 'T11';
   if (x.thirdShare >= 0.20 && (f.leaps || 0) >= 2 && x.neff >= 18 && (f.longToneRatio || 0) < 0.20) return 'T6'; /* 和音行進（v44: 中身ベース。3度動き＋跳躍＋実効音数。忙しいだけでは入らない） */
   const v = typeVec(f, x);
   let best = null, bd = Infinity;
@@ -970,7 +1114,14 @@ function pickSpeciesInType(type, f, x){
     case 'T2': return x.sameRep >= T2_REP_MIN ? 'firefly' : 'marguerite'; /* 繰り返し回数の一本分け（9回以下マーガレット／10回以上ホタルスズラン） */
     case 'T3': return A ? 'candy' : 'anemone';
     case 'T4': return (A && B) ? 'tulilily' : 'sunflower';
-    case 'T5': return A ? 'cotton' : (tess >= 63 ? 'gerbera' : 'rose');
+    /* v47 ガーベラ新条件（先生の提案・定義確定）: 段階移動（1〜2半音）の連続が、上下どちらの
+       向きでも最長5音以上、一度でもあればガーベラ（上行ドレミファソ〜／下行ラソファミレ〜）。
+       旧条件（スキルA不成立＋高声域）は、音程の安定した歌い手ほどワタアメローズに吸収されて
+       実質到達不能だった（検証で出現0）。肯定条件に置き換え、判定順序もガーベラを先にする
+       （ワタアメが先だと吸収が再演する）。声域条件は外した。
+       コーパス実測（両方向）: さくら坂5・マリーゴールド5・赤いスイートピー5（下行）・
+       元気を出して6 が該当し、翼をください は3で該当しない */
+    case 'T5': return x.stepRun >= 5 ? 'gerbera' : (A ? 'cotton' : 'rose');
     case 'T6': return (x.thirdShare >= 0.20 && (f.leaps || 0) >= 2) ? 'goldbell' : 'sakura'; /* v44: 和音行進の中身（3度動き＋跳躍）が満ちていればゴールドベル、T6に入ったが和音性が薄く細かい動き主体ならハネザクラ */
     case 'T7': return (A && vib >= VIB_NEED.crystal) ? 'crystal' : 'lily';
     case 'T8': return (A && vib >= VIB_NEED.galaxy) ? 'galaxy' : (x.turnAmp >= 3.40 ? 'mobius' : 'swirl');
@@ -981,7 +1132,14 @@ function pickSpeciesInType(type, f, x){
       if (tess <= 58) return 'moonring';
       return 'carnation';
     case 'T10': return (B && thick >= 0.55 && vib >= VIB_NEED.noirrose) ? 'noirrose' : 'featherflower';
-    case 'T11': return (A && B) ? 'rainbow' : 'dahlia';
+    /* v47: 虹の花の条件を先生の決定で確定。A＋B だけでは緩すぎて T11 の約9割を虹が取り、
+       基本種のダリアが残り物になっていた（ファズ520: 虹57 vs ダリア0）。
+       虹 = 厳格なスキルA（keyCov 0.78以上のみ。SSR では緩い側の経路を使わない）＋スキルB
+       ＋ビブラート総長 6.0秒以上（名曲10曲の実測から置いた梯子の最上段。回数ではなく長さで
+       測るので、ただ声が震えているだけでは通らない）。音域だけ広い無秩序な歌唱では
+       ダリアは咲いても虹は咲かない。検証（ファズ520）: 型内比率 ダリア40 : 虹22 に反転是正、
+       Everything のスキル模擬では到達可能（9テイク中2）、無秩序歌唱の模擬では虹 0 */
+    case 'T11': return ((f.keyCov || 0) >= 0.78 && B && vib >= VIB_NEED.rainbow) ? 'rainbow' : 'dahlia';
   }
   return 'tulip';
 }
@@ -996,8 +1154,38 @@ function selectSpeciesNew(an){
    歌の同定: 移調に依らない「音程列」の部分列照合（corpus の run-match.js の知見:
    音程列のみで照合し、長さは弱い補助に留める）。同定できたら、タイプ・条件に関係なく
    その曲の花が咲く。参照列はマスター旋律（event-masters）から作る */
-const EVENT_REFS = [{"target": "tulip", "from": "tulip", "seq": [4, 3, -3, -4, 4, 3, -2, 4, 3, -3, -2, -3, -2, 2, 3, -3, -2, -2, 2, 2, -4]}, {"target": "rose", "from": "bara_ga_saku", "seq": [2, 2, -2, -2, 2, 2, -2, -2, 4, 2, 1, -1, -2, -2, 2, -2, -1, -2, 2, 1, 2, -2, -2, 2, 2, -2, -2]}, {"target": "sweetpea", "from": "akai_sweetpea", "seq": [2, 2, 1, -1, -2, -2, -2, 2, 2, -2, -2, -1, -2, 2, 3, 2, 3, 2, -2, -3, 2, -2, -2, 2, -2]}, {"target": "marigold", "from": "marigold", "seq": [2, 2, 1, -1, -2, -2, 0, 2, 2, 1, 2, -2, -1, 1, -1, -2, 2, -2, -2, -2, -1, 1, -1, -2, 2, -4]}, {"target": "sakura2", "from": "sakurazaka", "seq": [2, 3, -1, -2, -2, 2, -2, 2, 2, 1, 2, -2, -1, 1, -1, -2, -2, 2, 2, -2, -2, -2, -1, -2, -2]}, {"target": "sakura2", "from": "sakura_moriyama", "seq": [2, 2, 1, -1, -2, 2, 1, -1, -2, -2, 2, 2, -2, -2, -1, 1, 2, 2, -2, -2, -1, -2, 2, 1, 2, 2, -2, -2]}, {"target": "sakura2", "from": "haru_yo_koi", "seq": [-1, -2, 2, 1, 2, 2, -2, -2, 2, 2, 1, -1, 1, -1, -2, -2, 2, -2, -1, 1, 2, -2, -1, -2, 3, -1, -2]}];
-const EVENT_THRESH = 0.20, EVENT_MARGIN = 0.05; /* 閾値はコーパス実測で決定: 対象のクリーン距離0.00、非対象の最小0.222（Lovers Again）との間に置く */
+/* ========= 花名曲スペシャルイベント（v47: 照合v2） =========
+   先生の指定: 調性が判明できる場合は、抽出した音をキーに合わせて補正・補完
+   （音階へのスナップ等）し、元メロディとの一致が8割以上なら同定する。
+   検証プロトタイプの知見により、二段構えで実装する:
+     第1ゲート = 補正後の音程列で、参照の窓との一致率（編集距離ベース）が 0.80 以上、
+                かつ2位の種との差（マージン）が 0.05 以上。
+     第2ゲート = 従来方式（重み付き編集距離・部分一致）が同じ種を指し、距離 0.20 以下・
+                2位との差 0.05 以上。一致率方式は単独では非対象曲への誤発動が出たため、
+                両ゲートの合意を必須にして誤発動ゼロを維持する。
+     第3の確認 = 輪郭が短い曲（バラ・春よ、来い）だけ、同音反復込みの生列での距離が
+                極端（>0.50）なら別曲として弾く（輪郭が同じ別曲との識別は反復の型で行う）。
+   照合は音程0（同音反復）を除いた「輪郭列」で行う: 反復は legato で歌うと1音に潰れて
+   抽出できず、輪郭は反復を除いても保たれるため（詳細は EVENT_REFS_Z の注記）。
+   マスター音符列の正本は ~/workspace/hanauta-v47-masters/masters.json に恒久保存
+   （2026-11-10、楽譜情報源を複数照合して再書き起こし）:
+   チューリップ=1番全体38音（確度:高）、バラが咲いた=冒頭19音（中）、
+   さくら（森山直太朗）=サビ28音（中〜高）、春よ、来い=サビ9音（中）。
+   赤いスイートピー/マリーゴールド/さくら坂は検証コーパスの音符列（サビ）を使う */
+const EVENT_SONGS = [
+  { key: 'tulip', sp: 'tulip', title: 'チューリップ', notes: [60, 62, 64, 60, 62, 64, 67, 64, 62, 60, 62, 64, 62, 60, 62, 64, 60, 62, 64, 67, 64, 62, 60, 62, 64, 60, 67, 67, 64, 67, 69, 69, 67, 64, 64, 62, 62, 60] },
+  { key: 'bara_ga_saku', sp: 'rose', title: 'バラが咲いた', notes: [60, 60, 60, 60, 60, 62, 64, 64, 64, 64, 64, 65, 67, 67, 69, 67, 65, 64, 67] },
+  { key: 'akai_sweetpea', sp: 'sweetpea', title: '赤いスイートピー', notes: [58, 60, 62, 63, 62, 60, 58, 56, 58, 60, 58, 56, 55, 53, 55, 58, 60, 63, 65, 63, 60, 62, 60, 58, 60, 58] },
+  { key: 'marigold', sp: 'marigold', title: 'マリーゴールド', notes: [58, 60, 62, 63, 62, 60, 58, 58, 60, 62, 63, 65, 63, 62, 63, 62, 60, 62, 60, 58, 56, 55, 56, 55, 53, 55, 51] },
+  { key: 'sakurazaka', sp: 'sakura2', title: 'さくら坂', notes: [58, 60, 63, 62, 60, 58, 60, 58, 60, 62, 63, 65, 63, 62, 63, 62, 60, 58, 60, 62, 60, 58, 56, 55, 53, 51] },
+  { key: 'sakura_moriyama', sp: 'sakura2', title: 'さくら', notes: [60, 63, 63, 60, 63, 63, 60, 58, 56, 68, 68, 70, 67, 65, 63, 61, 63, 65, 67, 68, 63, 56, 63, 61, 60, 58, 56, 58] },
+  { key: 'haru_yo_koi', sp: 'sakura2', title: '春よ、来い', notes: [68, 65, 63, 61, 63, 65, 68, 65, 63] }
+];
+const EVENT_REFS = EVENT_SONGS.map(s => ({ target: s.sp, from: s.key, seq: s.notes.slice(1).map((m, i) => m - s.notes[i]) }));
+/* 照合に使う輪郭列: 音程0（同音の反復）は数えない。同音反復は legato で歌うと1音に
+   潰れて抽出できず、曲の輪郭は反復を除いても保たれるため（例: 『バラが咲いた』は
+   ド×5・ミ×5 の反復が骨格。同音を数えると本物の歌唱ほど一致しなくなる） */
+const EVENT_REFS_Z = EVENT_REFS.map(r => ({ target: r.target, from: r.from, seq: r.seq.filter(v => v !== 0) }));
 /* 編集距離（重み付き）: 音程の置き換えは、ずれが1半音なら 0.5（歌い間違いとして軽い）、
    それ以上は 1。挿入・削除は 1。半音の歌い違いに強く、輪郭の違いには厳しい物差し */
 function levDist(a, b){
@@ -1048,23 +1236,172 @@ function subseqEventDist(q, r){
   return Math.min(d1, d2);
 }
 /* 照合で一致した曲の表示名（フラワーメッセージの専用行に使う） */
-const EVENT_TITLES = { tulip: 'チューリップ', bara_ga_saku: 'バラが咲いた', akai_sweetpea: '赤いスイートピー', marigold: 'マリーゴールド', sakurazaka: 'さくら坂', sakura_moriyama: 'さくら', haru_yo_koi: '春よ、来い' };
+/* 照合で一致した曲の表示名（フラワーメッセージの専用行に使う） */
+const EVENT_TITLES = {}; for (const s of EVENT_SONGS) EVENT_TITLES[s.key] = s.title;
+/* イベント照合専用のキー判定（orgelKeyInfo と同じ基準だが、渡された解析結果だけから決める） */
+function eventKeyOf(an){
+  const f = an && an.feat;
+  if (!f) return null;
+  const votes = {}; let tot = 0;
+  for (const p of (an.phrases || [])) if (p.scaleKey){ votes[p.scaleKey] = (votes[p.scaleKey] || 0) + (p.durSec || 1); tot += (p.durSec || 1); }
+  let best = null, bs = -1;
+  for (const k in votes) if (votes[k] > bs){ bs = votes[k]; best = k; }
+  const strict = (f.keyCov || 0) >= 0.78 || ((f.keyCov || 0) >= 0.70 && (f.keyVoteShare || 0) >= 0.65);
+  if (!best && !strict) return null;
+  if (!strict && !(tot > 0 && bs / tot >= 0.6)) return null;
+  const MAJS = [0, 2, 4, 5, 7, 9, 11], MINS = [0, 2, 3, 5, 7, 8, 10];
+  const parse = (key) => { const root = parseInt(key, 10) % 12; const offs = key.endsWith('min') ? MINS : MAJS; return { root, pcs: offs.map(x => (x + root) % 12) }; };
+  /* 被覆率（全音がその音階に収まる割合）が最大になるキーも候補にし、フレーズ投票の
+     キーより被覆率がはっきり高い場合はそちらを採る。投票だけに頼ると、完璧に抽出できた
+     歌でも別の音階へスナップして壊すことがある（実測: 『春よ、来い』のフックで、
+     投票=E♭長調・被覆率最大=D♭長調となり、正しい音が1つ動いてしまった） */
+  const pcW = new Array(12).fill(0);
+  for (const p of (an.phrases || [])) for (const n of (p.notes || [])) if (n.midi > 0) pcW[Math.round(n.midi) % 12] += (n.dur || 0.3);
+  const covOf = (pcs) => { let hit = 0, all = 0; for (let pc = 0; pc < 12; pc++){ all += pcW[pc]; if (pcs.includes(pc)) hit += pcW[pc]; } return all ? hit / all : 0; };
+  let argKey = null, argCov = -1;
+  for (let root = 0; root < 12; root++) for (const offs of [MAJS, MINS]){
+    const pcs = offs.map(x => (x + root) % 12);
+    const c = covOf(pcs);
+    if (c > argCov){ argCov = c; argKey = { root, pcs }; }
+  }
+  if (best){
+    const voteKey = parse(best);
+    if (argKey && argCov >= covOf(voteKey.pcs) + 0.03) return argKey;
+    return voteKey;
+  }
+  return argKey;
+}
+/* 編集距離（重み付き levDist と同じ物差し）を行の最小値が上限を超えたら打ち切る版（照合の高速化） */
+function levDistCapped(a, b, cap){
+  const n = b.length;
+  let prev = []; for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++){
+    const cur = [i]; let rowMin = i;
+    for (let j = 1; j <= n; j++){
+      const sub = a[i - 1] === b[j - 1] ? 0 : (Math.abs(a[i - 1] - b[j - 1]) === 1 ? 0.5 : 1);
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + sub);
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > cap) return cap + 1;
+    prev = cur;
+  }
+  return prev[n];
+}
+/* 一致率: 参照の連続部分（長さの6割以上）と歌った音程列の連続部分との
+   一致率 = 1 − 編集距離/窓の長さ の最大値。
+   全窓の総当たりは実機では重すぎるため、音程4連の完全一致を「種」にして
+   対応位置（オフセット）の候補を絞り、その周辺の窓だけを評価する。
+   一致率0.8以上の本物の一致には、必ずと言っていいほど正確な4連が含まれるため、
+   種で拾えない一致は実質存在しない（非対象への拾いすぎはむしろ減る方向）。
+   評価回数に上限を設け、確定処理が止まらないようにしている */
+function levRateScore(q, r){
+  const m = r.length;
+  if (!m || q.length < 4) return 0;
+  const minL = Math.max(4, Math.ceil(m * 0.6));
+  let best = 0, budget = 420;
+  const evalWin = (qs, s, L) => {
+    if (L < minL || s + L > m || qs < 0 || qs >= q.length) return;
+    const cap = Math.floor(L * 0.25) + 1;
+    const w = r.slice(s, s + L);
+    const lo = Math.max(6, Math.floor(L * 0.8)), hi = Math.min(q.length - qs, Math.ceil(L * 1.3));
+    for (let qL = lo; qL <= hi && budget > 0; qL++){
+      budget--;
+      const sc = 1 - levDistCapped(q.slice(qs, qs + qL), w, cap) / L;
+      if (sc > best) best = sc;
+    }
+  };
+  const idx = new Map();
+  for (let s = 0; s + 4 <= m; s++){
+    const k = r[s] + ',' + r[s + 1] + ',' + r[s + 2] + ',' + r[s + 3];
+    if (!idx.has(k)) idx.set(k, []);
+    idx.get(k).push(s);
+  }
+  const offs = new Map();
+  for (let qs = 0; qs + 4 <= q.length; qs++){
+    const ss = idx.get(q[qs] + ',' + q[qs + 1] + ',' + q[qs + 2] + ',' + q[qs + 3]);
+    if (!ss) continue;
+    for (const s of ss){
+      const d = qs - s;
+      if (!offs.has(d)) offs.set(d, []);
+      offs.get(d).push([qs, s]);
+    }
+  }
+  if (!offs.size){ evalWin(0, 0, m); return best; }
+  const cand = [...offs.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 6);
+  for (const [d, pairs] of cand){
+    const seen = new Set();
+    for (const [qs0, s0] of pairs.slice(0, 4)){
+      for (const back of [0, 3, 6]){
+        const s = Math.max(0, s0 - back), qs = Math.max(0, qs0 - back);
+        for (const L of [m - s, Math.floor(m * 0.85), Math.floor(m * 0.7)]){
+          const key = qs + ':' + s + ':' + L;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          evalWin(qs, s, L);
+          if (best >= 0.99 || budget <= 0) return best;
+        }
+      }
+    }
+  }
+  return best;
+}
+const EVENT_AGREE = 0.80, EVENT_AGREE_MARGIN = 0.05, EVENT_GATE2 = 0.20, EVENT_GATE2_MARGIN = 0.05;
 function matchEventDetail(an){
   const qs = eventQuerySeq(an);
-  if (qs.n < 12) return null;
-  const q = qs.q;
+  if (qs.n < 8) return null;
+  /* 補正・補完: キーが判明できる場合は音階へスナップしてから音程列を作る
+     （抽出段で孤立した跳躍音は既に除去・修復されている前提で、その音符列を使う） */
+  const rawNotes = [];
+  for (const g of (an.phrases || [])) for (const n of (g.notes || [])) if (n.midi > 0) rawNotes.push({ midi: Math.round(n.midi), start: n.start || 0 });
+  rawNotes.sort((a, b) => a.start - b.start);
+  const ki = eventKeyOf(an);
+  if (ki) for (const n of rawNotes) n.midi = snapToScale(n.midi, ki.pcs);
+  const qc = [];
+  for (let i = 1; i < rawNotes.length; i++) qc.push(rawNotes[i].midi - rawNotes[i - 1].midi);
+  const qz = qc.filter(v => v !== 0); /* 輪郭列（同音反復を除く。EVENT_REFS_Z と対） */
+  if (qz.length < 5) return null;
+  /* 第1ゲート: 一致率 0.80 以上＋マージン 0.05 */
   const per = {}, perFrom = {};
-  for (const ref of EVENT_REFS){
-    const d = subseqEventDist(q, ref.seq);
-    if (d === null) continue;
-    if (per[ref.target] === undefined || d < per[ref.target]){ per[ref.target] = d; perFrom[ref.target] = ref.from; }
+  for (const ref of EVENT_REFS_Z){
+    const sc = levRateScore(qz, ref.seq);
+    if (per[ref.target] === undefined || sc > per[ref.target]){ per[ref.target] = sc; perFrom[ref.target] = ref.from; }
   }
-  const ents = Object.keys(per).map(k => [k, per[k]]).sort((a, b) => a[1] - b[1]);
-  if (!ents.length) return null;
-  if (ents[0][1] > EVENT_THRESH) return null;
-  if (ents.length > 1 && ents[1][1] - ents[0][1] < EVENT_MARGIN) return null; /* 似た曲同士で曖昧な時は発動しない */
-  const sp = SPECIES.find(s => s.id === ents[0][0]) || null;
-  return sp ? { sp, title: EVENT_TITLES[perFrom[sp.id]] || '' } : null;
+  const ents = Object.keys(per).map(k => [k, per[k]]).sort((a, b) => b[1] - a[1]);
+  if (!ents.length || ents[0][1] < EVENT_AGREE) return null;
+  if (ents.length > 1 && ents[0][1] - ents[1][1] < EVENT_AGREE_MARGIN) return null;
+  /* 最も短い参照（春よ、来い=8音程）だけは一致率の床を上げる: 短い輪郭は他の曲の
+     フレーズにも現れるため（実測: 非対象曲が0.83で紛れ込んだ）。本物の歌唱では
+     この曲の一致率は大半が1.00になることを実測で確認済み */
+  const winRefZ0 = EVENT_REFS_Z.find(r => r.from === perFrom[ents[0][0]]);
+  if (winRefZ0 && winRefZ0.seq.length <= 8 && ents[0][1] < 0.90) return null;
+  /* 第2ゲート: 従来方式（編集距離）も同じ種を指すこと */
+  const win = ents[0][0];
+  const per2 = {};
+  for (const ref of EVENT_REFS_Z){
+    const d = subseqEventDist(qz, ref.seq);
+    if (d === null) continue;
+    if (per2[ref.target] === undefined || d < per2[ref.target]) per2[ref.target] = d;
+  }
+  const ents2 = Object.keys(per2).map(k => [k, per2[k]]).sort((a, b) => a[1] - b[1]);
+  if (!ents2.length || ents2[0][0] !== win) return null;
+  if (ents2[0][1] > EVENT_GATE2) return null;
+  if (ents2.length > 1 && ents2[1][1] - ents2[0][1] < EVENT_GATE2_MARGIN) return null;
+  /* 第3の確認（短い輪郭への veto）: 勝った参照の輪郭が短い曲（バラが咲いた・春よ、来い）は、
+     輪郭だけが同じ別曲が存在する（実測: 『いとしさと…』の輪郭はバラと完全一致した）。
+     両曲を分けるのは同音反復の型そのものなので、生列（反復込み）での距離が極端に
+     大きい歌（>0.46）は「似ているだけの別の曲」として弾く。本物の歌唱の生列距離は
+     実測で最大0.45、別曲は最小0.47だった（分離帯が狭いため、閾値は帯の内側に置く） */
+  const winRefZ = EVENT_REFS_Z.find(r => r.from === perFrom[win]);
+  if (winRefZ && winRefZ.seq.length <= 12){
+    let dRaw = null;
+    for (const ref of EVENT_REFS) if (ref.from === perFrom[win]){
+      const d = subseqEventDist(qc, ref.seq);
+      if (d !== null && (dRaw === null || d < dRaw)) dRaw = d;
+    }
+    if (dRaw !== null && dRaw > 0.46) return null;
+  }
+  const sp = SPECIES.find(s => s.id === win) || null;
+  return sp ? { sp, title: EVENT_TITLES[perFrom[win]] || '' } : null;
 }
 function matchEvent(an){ const d = matchEventDetail(an); return d ? d.sp : null; }
 
@@ -1237,15 +1574,20 @@ function flowerProgAt(fl, t){
   }
   return clamp(g / fl.cap, 0, 1);
 }
-function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, soilHalfW){
+/* v47 (先生の追加指示): 株全体のスケール。チューリップとランタンの花を除く全種を1.3倍にする。
+   頭だけでなく茎・枝・葉芽まで株全体に効かせ、既存の個別調整（scaleF・headScale・主花1.2倍・
+   ランタンの高さ上限760等）の上に掛ける。はみ出しは高さガードと既存の幅ガード／描画側キャップで吸収する */
+function stockScaleOf(sp){ return (sp.id === 'tulip' || sp.id === 'lantern') ? 1 : 1.3; }
+function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, soilHalfW, fitTopY){
   const r = rng(hashStr(seedStr));
   const sf = sp.scaleF || 1;
+  const SS = stockScaleOf(sp);
   let phrases = group.slice(0, 6);
   const sprigCount = clamp(Math.round(group.reduce((sm,p)=>sm+p.notes.length,0) / 3.5), 3, 9);
   const sprigs = [];
   for (let i = 0; i < sprigCount; i++){
     const c = sprigCount === 1 ? 0 : (i / (sprigCount - 1)) * 2 - 1;
-    sprigs.push({ rot: c * 34 + (r() * 10 - 5), len: 120 + r() * 130, delay: r() * 0.25, flip: r() < 0.5 });
+    sprigs.push({ rot: c * 34 + (r() * 10 - 5), len: (120 + r() * 130) * SS, delay: r() * 0.25, flip: r() < 0.5 });
   }
   const R = stemR;
   const stock = { sp, color, rootX, groundY, stems: [], sprigs, imgs: null, seedStr, volScale, R };
@@ -1258,7 +1600,7 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
       const c = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
       stock.stems.push({
         rot: c * (sp.tall3 ? 12 : 21) + (r() * 6 - 3), flip: r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb',
-        headH: clamp(140 + p.durSec * 12, 150, 212) * sf * volScale * 0.8 * flowerCurve(R) * [1, 0.85, 0.94, 0.79, 0.9, 0.83][i % 6] * (0.95 + r() * 0.1) * (sp.tall3 ? 1.42 : 1),
+        headH: clamp(140 + p.durSec * 12, 150, 212) * sf * volScale * 0.8 * flowerCurve(R) * [1, 0.85, 0.94, 0.79, 0.9, 0.83][i % 6] * (0.95 + r() * 0.1) * (sp.tall3 ? 1.42 : 1) * SS,
         birth: p.start, hueJ: (r() * 10 - 5), satJ: (r() * 0.1 - 0.05), lightJ: (r() * 0.12 - 0.06), headPos: null,
       });
     }
@@ -1284,19 +1626,66 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
         if (!over) break;
       }
     }
+    /* v47 フィット規則（スズラン系 tall3・先生の指摘）: 株分けで並べた束全体の幅が、背景の
+       土・プランターの幅（soilHalfW×2）を超える場合は、株の大きさと扇の開きを一律に抑えて
+       収める。上の幅ガード（soilHalf+90 まで許容）より厳しい、tall3 専用の規則。
+       1.3倍化で悪化する種・背景ではこちらが優先され、その分 1.3倍は弱まる */
+    if (sp.tall3 && soilHalfW){
+      /* 見積もりは「根元アンカーを中心に回転した画像の四隅」で行う（頭の中心ベースの
+         旧見積もりは、根元から非対称に広がる全体画像の実幅を過小評価していた。
+         実測でプランター超過が残ったため、描画幾何そのものに合わせ直した） */
+      for (let it = 0; it < 40; it++){
+        let ext = 0;
+        for (const st of stock.stems){
+          const fa = ANCH[st.ind === 'fullb' ? sp.base + '-fullb' : sp.base + '-full'] || ANCH[sp.base + '-full'];
+          if (!fa || !fa.hb) continue;
+          /* 見積もりは描画時（満開）の式に合わせる */
+          let imgH = Math.max(st.headH / Math.max(0.12, fa.hb[1]), st.headH * 2.6) * 1.45;
+          const maxW3 = W * 0.58; if (imgH * fa.w / fa.h > maxW3) imgH = maxW3 * fa.h / fa.w;
+          if (fa.root && fa.head){ const needF3 = (fa.root[1] - fa.head[1]) + fa.hb[1] * 0.5; if (needF3 > 0.2) imgH = Math.min(imgH, (groundY - 26) / needF3); }
+          if (sp.id === 'lantern') imgH = Math.min(imgH, 760);
+          const imgW = imgH * fa.w / fa.h;
+          const th = st.rot * Math.PI / 180, cosT = Math.cos(th), sinT = Math.sin(th);
+          const rx = (st.flip ? 1 - fa.root[0] : fa.root[0]) * imgW, ry = fa.root[1] * imgH;
+          const sx = st.flip ? -1 : 1;
+          for (const cxp of [0, imgW]) for (const cyp of [0, imgH]){
+            const qx = sx * (cxp - rx), qy = cyp - ry;
+            const px = qx * cosT - qy * sinT;
+            if (Math.abs(px) > ext) ext = Math.abs(px);
+          }
+        }
+        /* 葉芽（根元の葉）も束の幅に入る。実測では茎より葉芽の方が幅を決めていたため、
+           葉芽も見積もりと縮小の対象に含める（茎だけ縮めると葉芽がはみ出したままになる） */
+        const faS = ANCH[sp.sprig];
+        if (faS) for (const sg of stock.sprigs){
+          const imgH = sg.len, imgW = imgH * faS.w / faS.h;
+          const th = sg.rot * Math.PI / 180, cosT = Math.cos(th), sinT = Math.sin(th);
+          const rx = (sg.flip ? 1 - faS.root[0] : faS.root[0]) * imgW, ry = faS.root[1] * imgH;
+          const sx = sg.flip ? -1 : 1;
+          for (const cxp of [0, imgW]) for (const cyp of [0, imgH]){
+            const qx = sx * (cxp - rx), qy = cyp - ry;
+            const px = qx * cosT - qy * sinT;
+            if (Math.abs(px) > ext) ext = Math.abs(px);
+          }
+        }
+        if (ext <= soilHalfW) break;
+        for (const st of stock.stems){ st.headH *= 0.90; st.rot *= 0.90; }
+        for (const sg of stock.sprigs) sg.len *= 0.90;
+      }
+    }
     return stock;
   }
   /* 組み立て方式：花の数と育ち具合は成長シミュレーションで決まる */
   const flowers = simulateGrowth(group, feat || { stabCents: 20 });
   const MHbase = Math.min(clamp(615 * sf, 545, 745), Math.max(430, groundY - 205));
-  const MH = MHbase * R * (sp.mhScale || 1);
+  let MH = MHbase * R * (sp.mhScale || 1) * SS;
   const nodeFs = [0.32, 0.48, 0.40, 0.58, 0.52], lenFs = [0.40, 0.34, 0.37, 0.30, 0.33];
   let side = r() < 0.5 ? 1 : -1;
   const branches = [];
   flowers.forEach((fl, i) => {
     stock.stems.push({
       rot: 0, flip: r() < 0.5, ind: (sp.inds3 ? ['full', 'fullb', 'fullc'] : ['full', 'fullb'])[i % (sp.inds3 ? 3 : 2)],
-      headH: (MHbase / 5.3) * (0.72 + 0.28 * fl.size) * sf * flowerCurve(R) * (sp.headScale || 1) * (i === 0 ? 1.2 : 1),
+      headH: (MHbase / 5.3) * (0.72 + 0.28 * fl.size) * sf * flowerCurve(R) * (sp.headScale || 1) * (i === 0 ? 1.2 : 1) * SS,
       birth: fl.startT, hueJ: (r() * 10 - 5), satJ: (r() * 0.1 - 0.05), lightJ: (r() * 0.12 - 0.06),
       headPos: null, finalProg: fl.finalProg, flower: fl, kind: i === 0 ? 'main' : 'branch',
     });
@@ -1306,6 +1695,21 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
       side = -side;
     }
   });
+  /* v47 高さガード: 1.3倍で株のてっぺんが舞台の上端（fitTopY、既定26px）より上へ出る場合は、
+     茎・頭・枝・葉芽を同じ比率で縮めて収める（地面位置が高い背景＝パーティー等で頭が切れるのを防ぐ）。
+     マイガーデンは fitTopY に大きな負値を渡してこのガードを無効化し、専用の縮小係数で描く */
+  {
+    const topLim = (fitTopY === undefined ? 26 : fitTopY);
+    const plantH = MH + (stock.stems[0] ? stock.stems[0].headH : 0);
+    const avail = groundY - topLim;
+    if (plantH > avail && plantH > 0){
+      const f = avail / plantH;
+      MH *= f;
+      for (const st of stock.stems) st.headH *= f;
+      for (const br of branches) br.len *= f;
+      for (const sg of sprigs) sg.len *= f;
+    }
+  }
   /* 花どうしの重なりを抑える: 候補手（角度・節・長さ）から最も離れる手を選ぶ局所探索 */
   /* v32: 先端位置は描画時と同じ計算（パーツ内の茎の傾き込み）で求める。
      理想化した直線で配置を決めると、実際に描かれる先端が数十pxずれて隣の花に触れることがあった */
@@ -2161,7 +2565,9 @@ async function startCeremony(){
   bloomNo = makeBloomNo(mainSp);
   flowerInfo = makeFlowerInfo(an, stocks[0]);
   if (flowerInfo) flowerInfo.eventSong = liveEventSong || null; /* イベントの花なら一致した曲名を持たせる（フラワーメッセージ用） */
-  recordCollection(); /* マイ図鑑コレクションへ記録（失敗しても本体は止めない） */
+  /* マイ図鑑コレクションへ記録（失敗しても本体は止めない）。
+     v47: 記録できたら新しい開花回数をマイガーデンの「種」判定へ渡す */
+  recordCollection().then(nc => { if (nc) onBloomSeedCheck(mainSp, nc); }).catch(() => {});
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
   $('timer').textContent = '花が咲きました 🌸';
   phase = 'ceremony'; const t0 = performance.now();
@@ -2509,8 +2915,9 @@ const collDB = {
       if (!('indexedDB' in window)) return res(null);
       if (collDB.db) return res(collDB.db);
       let rq;
-      try { rq = indexedDB.open('hanauta-garden', 1); } catch (e) { return res(null); }
-      rq.onupgradeneeded = () => { try { rq.result.createObjectStore('collection', { keyPath: 'id' }); } catch (e) { /* 既にある */ } };
+      /* v47: DBバージョン2。マイガーデン用の 'garden' ストアを追加する（既存の 'collection' はそのまま温存） */
+      try { rq = indexedDB.open('hanauta-garden', 2); } catch (e) { return res(null); }
+      rq.onupgradeneeded = () => { const d = rq.result; try { if (!d.objectStoreNames.contains('collection')) d.createObjectStore('collection', { keyPath: 'id' }); } catch (e) { /* 既にある */ } try { if (!d.objectStoreNames.contains('garden')) d.createObjectStore('garden', { keyPath: 'key' }); } catch (e) { /* 既にある */ } };
       rq.onsuccess = () => { collDB.db = rq.result; res(collDB.db); };
       rq.onerror = () => res(null);
     });
@@ -2550,25 +2957,50 @@ const collDB = {
         tx.onerror = () => res();
       } catch (e) { res(); }
     });
+  },
+  /* v47: マイガーデンの状態は単一レコード（key='state'）で garden ストアに保存する */
+  async getGarden(){
+    const db = await collDB.open();
+    if (!db) return null;
+    return new Promise(res => {
+      try {
+        const rq = db.transaction('garden').objectStore('garden').get('state');
+        rq.onsuccess = () => res(rq.result || null);
+        rq.onerror = () => res(null);
+      } catch (e) { res(null); }
+    });
+  },
+  async putGarden(state){
+    const db = await collDB.open();
+    if (!db) return;
+    return new Promise(res => {
+      try {
+        const tx = db.transaction('garden', 'readwrite');
+        tx.objectStore('garden').put({ key: 'state', ...state });
+        tx.oncomplete = () => res();
+        tx.onerror = () => res();
+      } catch (e) { res(); }
+    });
   }
 };
 /* 記録は「初回固定」: 最初に咲いた時のカードを残し、咲かせた回数だけ数える */
 async function recordCollection(){
   try {
-    if (!flowerInfo || !flowerInfo.sp) return;
+    if (!flowerInfo || !flowerInfo.sp) return null;
     const sp = flowerInfo.sp;
     const all = await collDB.getAll();
     const ex = all.find(r => r.id === sp.id);
-    if (ex){ await collDB.put({ ...ex, count: (ex.count || 1) + 1 }); return; }
+    if (ex){ const nc = (ex.count || 1) + 1; await collDB.put({ ...ex, count: nc }); return nc; }
     const full = await renderExport();
     const th = document.createElement('canvas'); th.width = 540; th.height = 675;
     th.getContext('2d').drawImage(full, 30, 30, 1020, 1275, 0, 0, 540, 675);
     let img = '';
     try { img = th.toDataURL('image/webp', 0.85); } catch (e) { img = ''; }
     if (!img || img.length > 500000){ try { img = th.toDataURL('image/jpeg', 0.85); } catch (e) { img = ''; } }
-    if (!img) return;
+    if (!img) return null;
     await collDB.put({ id: sp.id, img, count: 1, bloomNo, ts: Date.now() });
-  } catch (e) { /* 記録できなくてもアプリは止めない */ }
+    return 1;
+  } catch (e) { /* 記録できなくてもアプリは止めない */ return null; }
 }
 async function openCollection(){
   $('collectionPage').style.display = 'block';
@@ -2601,6 +3033,13 @@ async function openCollection(){
         bd.style.cssText = 'position:absolute; top:6px; left:6px; background:#e2543e; color:#fff; font-weight:700; font-size:13px; padding:2px 9px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
         wrap.appendChild(bd);
       }
+      /* v47: 2回目以降は「何回咲いたか」の数字を出す（先生の希望。初回は従来どおり「初」バッジのみ） */
+      if ((rec.count || 1) >= 2){
+        const cb = document.createElement('span');
+        cb.textContent = (rec.count || 1) + '回';
+        cb.style.cssText = 'position:absolute; top:6px; right:6px; background:rgba(66,48,20,.85); color:#ffe9a8; font-weight:700; font-size:12.5px; padding:2px 8px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
+        wrap.appendChild(cb);
+      }
       cell.appendChild(wrap);
       const nm = document.createElement('div');
       nm.textContent = sp.jp;
@@ -2628,6 +3067,407 @@ async function openCollection(){
   }
 }
 $('btn-coll-open').onclick = openCollection;
+
+/* ========= v47 マイガーデン（種を植えて10秒の鼻歌で育てる花壇。保存は図鑑と同じ端末内IndexedDB） ========= */
+const GARDEN_AREAS = {
+  left:   { label: '左側', x: 252, gy: 800,  s: 0.52 },
+  center: { label: '中央', x: 450, gy: 1008, s: 0.66 },
+  right:  { label: '右側', x: 648, gy: 800,  s: 0.52 }
+};
+const GARDEN_STALK_OFF = [ { dx: -78, dy: -14, s: 0.92 }, { dx: 0, dy: 8, s: 1 }, { dx: 78, dy: -14, s: 0.92 } ];
+const GARDEN_WILT_MS = 24 * 3600 * 1000;
+const GARDEN_SOIL_RGB = [96, 74, 54];
+
+function gardenDefaultState(){
+  return { seeds: [], giftBase: {}, srSeen: [], everSeed: false, areas: { left: null, center: null, right: null }, lastSungAt: 0, day: { d: '', n: 0 }, wiltNotice: false };
+}
+async function gardenLoad(){
+  const s = await collDB.getGarden();
+  const d = gardenDefaultState();
+  if (!s) return d;
+  const st = { ...d, ...s };
+  st.areas = { ...d.areas, ...(s.areas || {}) };
+  st.day = { ...d.day, ...(s.day || {}) };
+  delete st.key;
+  return st;
+}
+async function gardenSave(st){ await collDB.putGarden(st); }
+function gardenTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+/* 株ごとの累積秒数→成長段階（先生の確定仕様） */
+function gardenStageOf(cum){ return cum < 10 ? 'seed' : cum < 40 ? 'sprout' : cum < 70 ? 'futabaS' : cum < 110 ? 'futabaL' : cum < 140 ? 'bud' : cum < 170 ? 'nanabun' : 'full'; }
+/* 茎+蕾〜満開を本体の株描画の進捗へ写す（0.30=茎が伸びて蕾、0.85=七分咲き、1=満開） */
+function gardenProgOf(cum){
+  if (cum < 140) return 0.30 + 0.18 * clamp((cum - 110) / 30, 0, 1);
+  if (cum < 170) return 0.48 + 0.37 * (cum - 140) / 30;
+  return 1;
+}
+/* 株が「育つ間に聴いた歌の特徴」の蓄積（色・形の決定に使う） */
+function gardenNewAcc(){ return { w: 0, range: 0, tess: 0, thick: 0, rms: 0, pat: { smooth: 0, step: 0, mid: 0, leap: 0, osc: 0, same: 0, rise: 0, clear: 0 } }; }
+function gardenAccAdd(acc, feat, sec){
+  if (!acc || !feat || !(sec > 0)) return;
+  acc.w += sec;
+  acc.range += (feat.rangeSemis || 0) * sec;
+  acc.tess += (feat.tessitura || 60) * sec;
+  acc.thick += (feat.thickness || 0) * sec;
+  acc.rms += (feat.meanRms || 0) * sec;
+  const p = feat.pat || {};
+  for (const k in acc.pat) acc.pat[k] += (p[k] || 0) * sec;
+}
+function gardenAccFeat(acc){
+  const w = Math.max(acc.w, 0.001);
+  const pat = {}; for (const k in acc.pat) pat[k] = acc.pat[k] / w;
+  return { rangeSemis: acc.range / w, tessitura: acc.tess / w, thickness: acc.thick / w, meanRms: acc.rms / w, pat };
+}
+function gardenNewStalk(bornAtAreaSec){
+  return { born: bornAtAreaSec, seed: 'g' + Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36), acc: gardenNewAcc() };
+}
+/* 種の贈呈判定（繰り返し可・図鑑の開花回数を引き継ぐ）。戻り値は贈呈される種idの配列 */
+function gardenEvalGifts(st, sp, count){
+  const gifts = [];
+  /* (a) 種ごと: 贈呈済み基準から10回増えるごとに、その種の種を1つ */
+  const base = st.giftBase[sp.id] || 0;
+  if (count - base >= 10){ gifts.push(sp.id); st.giftBase[sp.id] = base + 10; }
+  /* (b) SR: 前回のSR種贈呈以降に新たに咲いたSR種が5種に達したら、ランダムでSRの種を1つ */
+  if (SR_SET.has(sp.id)){
+    if (!st.srSeen.includes(sp.id)) st.srSeen.push(sp.id);
+    if (st.srSeen.length >= 5){
+      const pool = [...SR_SET];
+      gifts.push(pool[Math.floor(Math.random() * pool.length)]);
+      st.srSeen = [];
+    }
+  }
+  /* (c) SSR: 虹の花の開花が贈呈済み基準から3回増えるごとに、SSRの種を1つ（(a)とは別の基準で数える） */
+  if (sp.id === 'rainbow'){
+    const rb = st.giftBase.__rainbow || 0;
+    if (count - rb >= 3){ gifts.push('rainbow'); st.giftBase.__rainbow = rb + 3; }
+  }
+  return gifts;
+}
+let seedGiftQueue = [], seedModalOpen = false;
+async function onBloomSeedCheck(sp, count){
+  try {
+    const st = await gardenLoad();
+    const gifts = gardenEvalGifts(st, sp, count);
+    if (gifts.length) st.everSeed = true;
+    await gardenSave(st);
+    refreshGardenBtn(st);
+    if (gifts.length){
+      seedGiftQueue.push(...gifts);
+      setTimeout(presentNextSeedGift, 5200); /* 式典（約4.6秒）が終わってから見せる */
+    }
+  } catch (e) { /* 種の判定で本体を止めない */ }
+}
+async function presentNextSeedGift(){
+  if (seedModalOpen || !seedGiftQueue.length) return;
+  const spId = seedGiftQueue[0];
+  const sp = SPECIES.find(s => s.id === spId);
+  if (!sp){ seedGiftQueue.shift(); return presentNextSeedGift(); }
+  seedModalOpen = true;
+  const st = await gardenLoad();
+  const full = st.seeds.length >= 3;
+  const swap = $('seedSwap');
+  swap.innerHTML = '';
+  $('btn-seed-ok').onclick = null;
+  $('btn-seed-garden').onclick = null;
+  if (full){
+    $('seedModalWhat').textContent = '「' + sp.jp + '」の種を手に入れました！でも、種は3つまでしか持てません。';
+    swap.style.display = 'block';
+    const p = document.createElement('p');
+    p.style.cssText = 'color:#f3e6cf; font-size:14px; text-align:center; margin:0 0 6px;';
+    p.textContent = '手持ちの種と入れ替えるか、新しい種をあきらめてください。';
+    swap.appendChild(p);
+    st.seeds.forEach((sd, i) => {
+      const ssp = SPECIES.find(s => s.id === sd.sp);
+      const b = document.createElement('button');
+      b.className = 'btn btn-sub';
+      b.style.cssText = 'display:block; width:100%; margin:6px 0; padding:10px; font-size:14.5px;';
+      b.textContent = '🔁 「' + (ssp ? ssp.jp : sd.sp) + '」の種と入れ替える';
+      b.onclick = async () => {
+        const s2 = await gardenLoad();
+        s2.seeds[i] = { sp: spId, at: Date.now() };
+        s2.everSeed = true;
+        await gardenSave(s2);
+        refreshGardenBtn(s2);
+        closeSeedModal();
+      };
+      swap.appendChild(b);
+    });
+    const bd = document.createElement('button');
+    bd.className = 'btn btn-sub';
+    bd.style.cssText = 'display:block; width:100%; margin:6px 0; padding:10px; font-size:14.5px;';
+    bd.textContent = '🗑 新しい種をあきらめる';
+    bd.onclick = () => closeSeedModal();
+    swap.appendChild(bd);
+    $('btn-seed-ok').style.display = 'none';
+    $('btn-seed-garden').style.display = 'none';
+  } else {
+    $('seedModalWhat').textContent = '「' + sp.jp + '」の種を手に入れました！';
+    swap.style.display = 'none';
+    $('btn-seed-ok').style.display = '';
+    $('btn-seed-garden').style.display = '';
+    const receive = async () => {
+      const s2 = await gardenLoad();
+      if (s2.seeds.length < 3) s2.seeds.push({ sp: spId, at: Date.now() });
+      s2.everSeed = true;
+      await gardenSave(s2);
+      refreshGardenBtn(s2);
+    };
+    $('btn-seed-ok').onclick = async () => { await receive(); closeSeedModal(); };
+    $('btn-seed-garden').onclick = async () => { await receive(); closeSeedModal(); openGarden(); };
+  }
+  $('seedModal').style.display = 'flex';
+}
+function closeSeedModal(){
+  $('seedModal').style.display = 'none';
+  seedModalOpen = false;
+  seedGiftQueue.shift();
+  refreshGardenBtn();
+  if (seedGiftQueue.length) setTimeout(presentNextSeedGift, 700);
+}
+async function refreshGardenBtn(st){
+  const s = st || await gardenLoad();
+  $('gardenBtnWrap').style.display = (s && s.everSeed) ? 'block' : 'none';
+}
+refreshGardenBtn();
+/* 枯れ: 満開の株だけが対象。最後に歌ってから24時間以上で消え、エリアは元の土に戻る */
+function gardenApplyWilt(st){
+  let wilted = false;
+  if (st.lastSungAt && Date.now() - st.lastSungAt >= GARDEN_WILT_MS){
+    for (const k of ['left', 'center', 'right']){
+      const area = st.areas[k];
+      if (!area) continue;
+      const before = area.stocks.length;
+      area.stocks = area.stocks.filter(s2 => (area.areaSec - s2.born) < 170);
+      if (area.stocks.length < before) wilted = true;
+      if (!area.stocks.length) st.areas[k] = null;
+    }
+  }
+  if (wilted) st.wiltNotice = true;
+  return wilted;
+}
+let gardenSelSeed = -1;
+async function openGarden(){
+  $('gardenPage').style.display = 'block';
+  const st = await gardenLoad();
+  if (gardenApplyWilt(st)) await gardenSave(st);
+  if (st.wiltNotice){ $('gardenWilt').style.display = 'block'; st.wiltNotice = false; await gardenSave(st); }
+  else $('gardenWilt').style.display = 'none';
+  gardenSelSeed = -1;
+  $('gardenMsg').textContent = '';
+  $('gardenPlantMsg').textContent = '';
+  await renderGardenPage(st);
+}
+$('btn-garden-open').onclick = openGarden;
+$('btn-garden-back').onclick = () => { if (gardenSinging) finishGardenSing(); $('gardenPage').style.display = 'none'; };
+function gardenDayInfo(st){
+  const today = gardenTodayStr();
+  const n = (st.day && st.day.d === today) ? st.day.n : 0;
+  return '今日の鼻歌は あと ' + Math.max(0, 10 - n) + ' 回うたえます（1日10回まで）';
+}
+function renderGardenSeeds(st){
+  const box = $('gardenSeeds');
+  box.innerHTML = '';
+  if (!st.seeds.length){
+    $('gardenSeedMsg').textContent = '種はまだありません。花をたくさん咲かせると、特別な種がもらえることがあります。';
+    return;
+  }
+  $('gardenSeedMsg').textContent = '植えたい種をタップして選んでください（種は最大3つまで持てます）。';
+  st.seeds.forEach((sd, i) => {
+    const sp = SPECIES.find(s => s.id === sd.sp);
+    const b = document.createElement('button');
+    b.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:12px; border:2px solid ' + (i === gardenSelSeed ? '#c89b4e' : '#ddd0b4') + '; background:' + (i === gardenSelSeed ? '#fdf3d8' : '#fffdf6') + '; cursor:pointer; font-size:14.5px; font-weight:700; color:#4c3a22;';
+    b.innerHTML = '<img src="assets5/seed-icon.webp" style="height:34px;" alt="">' + (sp ? sp.jp : sd.sp) + 'の種';
+    b.onclick = () => { gardenSelSeed = i; renderGardenSeeds(st); updatePlantButtons(st); };
+    box.appendChild(b);
+  });
+}
+function updatePlantButtons(st){
+  for (const k of ['left', 'center', 'right']){
+    const b = $('btn-plant-' + k);
+    const occupied = !!st.areas[k];
+    b.disabled = occupied || gardenSelSeed < 0 || !st.seeds[gardenSelSeed];
+    b.style.opacity = b.disabled ? '.45' : '1';
+    b.textContent = GARDEN_AREAS[k].label + (occupied ? '（植わっています）' : '');
+  }
+  const sel = gardenSelSeed >= 0 ? st.seeds[gardenSelSeed] : null;
+  const ssp = sel ? SPECIES.find(s => s.id === sel.sp) : null;
+  $('gardenPlantMsg').textContent = ssp ? '「' + ssp.jp + '」の種を植える場所を選んでください。植えたら種はなくなります（植え替えはできません）。' : 'まず種を選んでください。';
+}
+async function renderGardenPage(st){
+  st = st || await gardenLoad();
+  renderGardenSeeds(st);
+  updatePlantButtons(st);
+  $('gardenDayInfo').textContent = gardenDayInfo(st);
+  await drawGardenScene(st);
+}
+async function gardenPlant(areaKey){
+  const st = await gardenLoad();
+  if (gardenSelSeed < 0 || !st.seeds[gardenSelSeed] || st.areas[areaKey]) return;
+  const sd = st.seeds[gardenSelSeed];
+  st.seeds.splice(gardenSelSeed, 1);
+  st.areas[areaKey] = { sp: sd.sp, plantedAt: Date.now(), areaSec: 0, stocks: [gardenNewStalk(0)] };
+  gardenSelSeed = -1;
+  await gardenSave(st);
+  await renderGardenPage(st);
+  $('gardenPlantMsg').textContent = '植えました！鼻歌を聴かせて育てましょう。';
+}
+$('btn-plant-left').onclick = () => gardenPlant('left');
+$('btn-plant-center').onclick = () => gardenPlant('center');
+$('btn-plant-right').onclick = () => gardenPlant('right');
+/* ---- ガーデンの舞台描画（本体の株描画を流用し、ガーデン専用の縮小係数で描く） ---- */
+async function drawGardenScene(st){
+  const c = $('gardenStage');
+  if (!c) return;
+  const x = c.getContext('2d');
+  const bg = await loadImg(A3 + 'garden-bg.jpg');
+  x.clearRect(0, 0, 900, 1125);
+  if (bg) x.drawImage(bg, 0, 0, 900, 1125);
+  const seedImg = await loadImg(A5 + 'seed-icon.webp');
+  for (const key of ['left', 'right', 'center']){
+    const area = st.areas[key];
+    if (!area) continue;
+    const sp = SPECIES.find(s => s.id === area.sp);
+    if (!sp) continue;
+    const order = [0, 2, 1].filter(i => i < area.stocks.length);
+    for (const i of order) await drawGardenStalk(x, key, area, sp, area.stocks[i], i, seedImg);
+  }
+}
+async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
+  const pos = GARDEN_AREAS[areaKey], off = GARDEN_STALK_OFF[idx] || GARDEN_STALK_OFF[1];
+  const rootX = pos.x + off.dx, gy = pos.gy + off.dy;
+  const cum = Math.max(0, area.areaSec - stalk.born);
+  const stage = gardenStageOf(cum);
+  if (stage === 'seed'){
+    drawSoilMound(x, rootX, gy, 54, 13, GARDEN_SOIL_RGB);
+    if (seedImg) x.drawImage(seedImg, rootX - 15, gy - 60, 30, 30 * seedImg.height / seedImg.width);
+    return;
+  }
+  if (stage === 'sprout' || stage === 'futabaS' || stage === 'futabaL' || (sp.eventOnly && stage !== 'full')){
+    /* イベント種は段階素材が満開しかないため、満開までは双葉の姿で代用する */
+    const sproutName = sp.sprout || 'sprout-leaves';
+    const img = await loadImg(A4 + sproutName + '.webp');
+    let dh = stage === 'sprout' ? 46 + (cum - 10) * 0.8 : stage === 'futabaS' ? 76 + (cum - 40) * 0.8 : 106 + (cum - 70) * 1.0;
+    dh = clamp(dh, 40, 150) * (pos.s / 0.66);
+    drawSoilMound(x, rootX, gy, Math.max(56, dh * 0.8), 15, GARDEN_SOIL_RGB);
+    if (img) drawAnchored(x, img, sproutName, rootX, gy + 3, dh, 0, idx === 2, 1);
+    return;
+  }
+  /* 茎+蕾〜満開: 本体の buildStock / drawStock を流用（種ごとの全体スケール1.3倍も本体側で効く）。
+     高さガードは無効化し（fitTopYに大きな負値）、大きさはガーデン専用係数 sc で調整する */
+  const feat = gardenAccFeat(stalk.acc);
+  const color = pickColor(feat, sp, hashStr(stalk.seed + sp.id + 'col'));
+  const phrase = { start: 0, durSec: 5, meanRms: clamp(feat.meanRms || 0.1, 0.02, 0.4), notes: [] };
+  for (let i = 0; i < 10; i++) phrase.notes.push({ midi: 60, start: i * 0.5, dur: 0.5, dev: 0.05 });
+  const saveR = stemR;
+  stemR = clamp(0.55 + 0.45 * Math.min(1, cum / 170), 0.55, 1);
+  const stock = buildStock([phrase], sp, color, 0, 300, stalk.seed + sp.id, 0.62, { stabCents: 18 }, null, -1e6);
+  stemR = saveR;
+  stock.rootX = rootX;
+  stock.groundY = gy;
+  stock.imgs = await loadSpeciesImages(sp);
+  const prog = sp.eventOnly ? 1 : gardenProgOf(cum);
+  const sc = pos.s * off.s;
+  x.save();
+  x.translate(rootX, gy); x.scale(sc, sc); x.translate(-rootX, -gy);
+  drawStock(x, stock, { global: prog, stem: () => prog }, 0);
+  x.restore();
+}
+/* ---- ガーデン専用の10秒の鼻歌 ---- */
+let gardenSinging = false, gardenSingTimer = null, gardenSingStream = null, gardenSingFrames = null;
+function gardenApplySong(area, sec, feat){
+  const before = area.areaSec, after = before + sec;
+  /* 2本目はエリア累積100秒、3本目は160秒で出現し、出現時点からの累積で育つ */
+  while (area.stocks.length < 3){
+    const need = area.stocks.length === 1 ? 100 : 160;
+    if (after < need) break;
+    area.stocks.push(gardenNewStalk(need));
+  }
+  area.areaSec = after;
+  for (const stk of area.stocks){
+    const eff = Math.max(0, after - Math.max(stk.born, before));
+    if (eff > 0) gardenAccAdd(stk.acc, feat, eff);
+  }
+}
+async function startGardenSing(){
+  if (gardenSinging) return;
+  const st = await gardenLoad();
+  const today = gardenTodayStr();
+  if (!st.day || st.day.d !== today) st.day = { d: today, n: 0 };
+  if (st.day.n >= 10){ $('gardenMsg').textContent = '今日の鼻歌は10回までです。また明日うたってください。'; return; }
+  let gstream;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') await AC.resume();
+    gstream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
+  } catch (e) { $('gardenMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; return; }
+  st.day.n += 1; /* 歌い始めた時点で1回消費（先生の確定仕様）。途中でやめても戻らない */
+  await gardenSave(st);
+  $('gardenDayInfo').textContent = gardenDayInfo(st);
+  gardenSinging = true;
+  gardenSingStream = gstream;
+  $('btn-garden-sing').style.display = 'none';
+  $('btn-garden-stop').style.display = '';
+  const src = AC.createMediaStreamSource(gstream);
+  const an2 = AC.createAnalyser(); an2.fftSize = 2048; src.connect(an2);
+  const buf = new Float32Array(an2.fftSize), fbuf = new Float32Array(an2.frequencyBinCount);
+  const gframes = [];
+  gardenSingFrames = gframes;
+  const t0 = performance.now();
+  const tick = () => {
+    if (!gardenSinging) return;
+    const t = (performance.now() - t0) / 1000;
+    an2.getFloatTimeDomainData(buf);
+    const { f, rms } = autoPitch(buf, AC.sampleRate);
+    an2.getFloatFrequencyData(fbuf);
+    let num = 0, den = 0;
+    for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / an2.fftSize) * m; den += m; }
+    let rich = 0;
+    if (f > 0){
+      const binHz = AC.sampleRate / an2.fftSize;
+      const magAt = hz => { const b = Math.round(hz / binHz); let m = 0; for (let j = Math.max(2, b - 1); j <= Math.min(fbuf.length - 1, b + 1); j++) m = Math.max(m, Math.pow(10, fbuf[j] / 20)); return m; };
+      const F0 = magAt(f); let Hh = 0; for (let k = 2; k <= 5; k++) Hh += magAt(f * k);
+      if (F0 + Hh > 0) rich = Hh / (F0 + Hh);
+    }
+    gframes.push({ t, f, rms, cent: den > 0 ? num / den : 0, rich });
+    $('gardenMsg').textContent = '🌸 うたっています… あと ' + Math.max(0, 10 - Math.floor(t)) + ' 秒';
+    if (t >= 10){ finishGardenSing(); return; }
+    gardenSingTimer = setTimeout(tick, 50);
+  };
+  tick();
+}
+async function finishGardenSing(){
+  if (!gardenSinging) return;
+  gardenSinging = false;
+  clearTimeout(gardenSingTimer);
+  if (gardenSingStream) gardenSingStream.getTracks().forEach(tr => tr.stop());
+  gardenSingStream = null;
+  $('btn-garden-sing').style.display = '';
+  $('btn-garden-stop').style.display = 'none';
+  const gframes = gardenSingFrames || [];
+  gardenSingFrames = null;
+  /* 実際に歌った秒数（フレーズの合計）だけを加算する。途中でやめた場合はその分だけ */
+  let sungSec = 0, feat = null;
+  try {
+    const an = analyzeFrames(gframes);
+    if (an && an.phrases && an.phrases.length){
+      sungSec = Math.min(10, an.phrases.reduce((s, p) => s + (p.durSec || 0), 0));
+      feat = an.feat;
+    }
+  } catch (e) { /* 解析できなくてもアプリは止めない */ }
+  const st = await gardenLoad();
+  st.lastSungAt = Date.now();
+  if (sungSec > 0){
+    for (const k of ['left', 'center', 'right']){
+      const area = st.areas[k];
+      if (area) gardenApplySong(area, sungSec, feat);
+    }
+  }
+  await gardenSave(st);
+  $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + sungSec.toFixed(1) + '秒ぶん育ちました）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
+  await renderGardenPage(st);
+}
+$('btn-garden-sing').onclick = startGardenSing;
+$('btn-garden-stop').onclick = finishGardenSing;
 /* ヒント: 咲かせた花種の数で段階解放。過去のヒントも残して読み返せる（先生の設計） */
 const HINTS = [
   { at: 5, sub: '同じ花ばかり咲く？', items: ['声域を変えてみよう！', '音の動きを変えてみよう！', 'フレーズの長さを変えてみよう！'] },
