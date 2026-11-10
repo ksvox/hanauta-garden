@@ -253,7 +253,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v47'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v49'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -815,6 +815,54 @@ function analyzeFrames(fr){
   /* 声の太さ = 倍音の豊かさ（とりあえずの指標。関門には使わない） */
   const richVals = voiced.map(x => x.rich || 0);
   const thickness = richVals.length ? clamp(richVals.reduce((s,v)=>s+v,0)/richVals.length / 0.75, 0, 1) : 0;
+  /* v48 元気さ vigor（先生の提案: 「ただ元気よく歌っている」を判定する）:
+     声の「明るさ（スペクトル重心）」「張り（倍音の豊かさ）」「押しの持続（自分のピーク音量に
+     対して高い音量を保ち続ける割合）」の複合。音量の絶対値はマイク距離・端末で揺れるため、
+     押しは自分のテイク内のピーク比で測り、絶対音量には依存しない構成にする。
+     物差しの較正と分離検証は検証バッテリー（genki/calm バリアント）で行う */
+  let vigor = 0;
+  if (voiced.length >= 20){
+    const meanCentV = voiced.reduce((s, v) => s + (v.cent || 0), 0) / voiced.length;
+    const brightN = clamp((meanCentV - 900) / 900, 0, 1);
+    const meanRichV = richVals.length ? richVals.reduce((s, v) => s + v, 0) / richVals.length : 0;
+    const richN = clamp((meanRichV - 0.20) / 0.45, 0, 1);
+    const rmsSorted = voiced.map(v => v.rms || 0).sort((a, b) => a - b);
+    const p90 = rmsSorted[Math.min(rmsSorted.length - 1, Math.floor(rmsSorted.length * 0.9))];
+    const pushShare = p90 > 0 ? voiced.filter(v => (v.rms || 0) >= 0.6 * p90).length / voiced.length : 0;
+    const pushN = clamp((pushShare - 0.35) / 0.55, 0, 1);
+    vigor = clamp(0.42 * brightN + 0.30 * richN + 0.28 * pushN, 0, 1);
+  }
+  /* v49 声の暗さ darkTail（先生の提案: ノワールローズの条件を「低い声域＋太い声＋暗い」に）:
+     「暗さ」は、倍音の尾（6倍音以上）がどれだけ速く減衰するかで測る。スペクトル重心を
+     基本周波数で割った値（cent/f）の中央値と、rich（2〜5倍音の比率）から、倍音モデルを
+     逆算して尾の減衰率 r を求める。音高そのものの低さと、太さ（2〜5倍音の量）の影響を
+     割り引いた「響きの暗さ」であり、小さいほど暗い。
+     較正の目安（検証グリッド実測で設計値を復元）: 暗い声 0.50 / 中立 0.68 / 明るい声 0.82。
+     単純な cent/f は太さと強く相関し「太さの変装」になるため、この逆算形を使う。
+     材料が足りない時は 1（暗くない側）に倒す */
+  let darkTail = 1;
+  if (voiced.length >= 20){
+    const ratios = [];
+    for (const v of voiced){ if ((v.cent || 0) > 0 && v.f > 0) ratios.push(v.cent / v.f); }
+    if (ratios.length >= 20){
+      ratios.sort((a, b) => a - b);
+      const Rmed = ratios[ratios.length >> 1];
+      const richM = richVals.length ? richVals.reduce((s, v) => s + v, 0) / richVals.length : 0.42;
+      const richC = clamp(richM, 0.05, 0.9), S = richC / (1 - richC);
+      const w5 = [0.42, 0.27, 0.18, 0.13];
+      const hbar = (r) => {
+        const m = [0, 1];
+        for (let k = 2; k <= 5; k++) m[k] = S * w5[k - 2];
+        for (let k = 6; k <= 16; k++) m[k] = m[5] * Math.pow(r, k - 5);
+        let num = 0, den = 0;
+        for (let k = 1; k <= 16; k++){ num += k * m[k]; den += m[k]; }
+        return num / den;
+      };
+      let lo = 0.05, hi = 0.98;
+      for (let it = 0; it < 24; it++){ const mid = (lo + hi) / 2; if (hbar(mid) < Rmed) lo = mid; else hi = mid; }
+      darkTail = (lo + hi) / 2;
+    }
+  }
   /* 音高の動きの型: つながり（3度まで/4度/5度以上）と、型5種を回数で測る */
   const nIv = Math.max(1, intervals.length);
   const shareLE2 = absI.filter(v => v <= 2.5).length / nIv;
@@ -860,7 +908,7 @@ function analyzeFrames(fr){
   };
   Object.assign(feat, { tessitura, changesPer4s, segMedianSec, segFeat: Math.min(segMedianSec, 9), break70, longToneSec, longToneRatio,
     keyCov, keyIdentifiable, keyVoteShare, vibratoDepth, vibratoPresent, vibNotes, vibSec, tempoGridRel, tempoStable, pacingScore, pacingPresent,
-    thickness, pat, oscEvents, midMoves, octaveLeaps, maxSameRun });
+    thickness, pat, oscEvents, midMoves, octaveLeaps, maxSameRun, vigor, darkTail });
   feat.topMoves = Object.entries(feat.moveScores).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0).map(x=>x[0]);
   if (!feat.topMoves.length) feat.topMoves = ['smooth'];
   /* 株は必ず1つ。2秒以上の「間」は、同スケールで再開した時だけ「意味のある間」として記録する
@@ -926,6 +974,10 @@ function skillA(f){ return (f.keyCov || 0) >= 0.78 || ((f.keyCov || 0) >= 0.70 &
 function skillB(f){ return (f.noteCount || 0) >= 8 && !!f.tempoStable; }
 /* ビブラート要件（秒）。銀河は T8 のロングトーン予算では 1.5 に届かないため 1.2（DESIGN.md §7） */
 const VIB_NEED = { galaxy: 1.2, crystal: 4.0, noirrose: 2.5, rainbow: 6.0 };
+/* v48 元気さの閾値（T4 のヒマワリの肯定経路に使う）。較正: 通常の歌唱（誤差モデルの標準水準）は
+   vigor 0.52〜0.58、穏やかな歌唱は 0.24 以下、元気な歌唱（明るい声・倍音豊か・押しが持続）は
+   0.93 以上と、模擬データで完全に分離した。0.68 は通常水準の上限に余裕を持たせた位置 */
+const VIGOR_HI = 0.68;
 /* T2 の分け方（先生の方式）: 物差しは「同じ音の繰り返し回数」（音程0の個数）の一本のみ。
    9回以下はマーガレット、10回以上はホタルスズラン。スキルは関与しない。
    較正（v44で再較正）: キラキラ星はクリーンで18回だが、少し荒い歌い方では完全な同音が崩れて
@@ -1105,6 +1157,32 @@ function typeRanking(f, x){
     .filter(t => !(t === 'T11' && (f.rangeSemis || 0) < 14) && !(t === 'T10' && (f.longToneRatio || 0) < 0.50))
     .map(t => [typeDist(v, TYPE_CENTROIDS[t]), t]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
 }
+/* v49 ノワールローズの専用ゲート（先生の決定: 条件を「低い声域＋太い声＋暗い」に作り替える）:
+   旧条件（T10の中で テンポB＋太さ＋ビブラート2.5秒）は、型（T10）に届かないことが主因で
+   実質到達不能だった（診断: 例題曲でも T10 到達 25〜50%、型内の条件はモデル内で全充足）。
+   新ゲートは「しっとりしたバラード」の形（ロングトーン率）と声の個性（低さ・太さ・暗さ）の
+   複合で、型を問わない専用ルートとして selectSpeciesNew で適用し、T10 の型内ルールも
+   同じゲートに統一する（旧経路のままだと、高く歌ってもノワールが咲いてしまうため）。
+   閾値の実測アンカー（検証: noir-study）:
+     ロングトーン率 ≥0.58 — 既存の T10 マーカーと同値。実測の分離帯 [Everything 最大 0.517,
+       例題3曲の最小 0.591] の内側。Everything（全体・静かな前半のみ）とも反応しない。
+     声域 ≤58 — 既存の月輪草ラインと同値。原調（≈60）では通らず「低く歌う」ことが必須になる。
+     太さ ≥0.55 — 既存のノワールラインと同値。
+     暗さ darkTail ≤0.583 — 検証グリッドの中立 0.68 と暗い声 0.50 の中点。通過率は
+       暗い音色 100%・中立 0%・明るい音色 0%（グリッド実測）。
+   テンポBとビブラートは、新条件では外す（ノワール様式の歌唱では両方とも常時通過して
+   判別に寄与せず、ビブラートは検出上限が壁になる水晶型の失敗を招くため）。
+   虹（SSR）の保護: 型が T11 で虹が立つテイクは、このルートで上書きしない
+   （SSR からの「格落ち」を作らない）。検証（現実的誤差モデル）: 例題3曲を低く・太く・
+   暗く歌った場合の到達 81.7%（残りは虹の条件を満たしたテイク）、高い・明るい・広音域の
+   バラードでは全て 0%、日常の歌唱では発動 0 件 */
+const NOIR_LT_MIN = 0.58, NOIR_TESS_MAX = 58, NOIR_THICK_MIN = 0.55, NOIR_DARKTAIL_MAX = 0.583;
+function noirGate(f){
+  return (f.longToneRatio || 0) >= NOIR_LT_MIN
+    && (f.tessitura || 60) <= NOIR_TESS_MAX
+    && (f.thickness || 0) >= NOIR_THICK_MIN
+    && (f.darkTail != null ? f.darkTail : 1) <= NOIR_DARKTAIL_MAX;
+}
 /* タイプ内の選定（DESIGN.md §4）。優先順位: ①SR/SSR（スキル） ②Rのスキル種 ③帯 ④基本種（条件なし）。
    タイプ内では条件が重ならないことが一意性の担保（T2 は繰り返し回数の一本分け） */
 function pickSpeciesInType(type, f, x){
@@ -1113,7 +1191,13 @@ function pickSpeciesInType(type, f, x){
     case 'T1': return x.stepShare >= 0.50 ? 'ranunculus' : 'tulip';
     case 'T2': return x.sameRep >= T2_REP_MIN ? 'firefly' : 'marguerite'; /* 繰り返し回数の一本分け（9回以下マーガレット／10回以上ホタルスズラン） */
     case 'T3': return A ? 'candy' : 'anemone';
-    case 'T4': return (A && B) ? 'tulilily' : 'sunflower';
+    /* v48 ヒマワリの肯定経路（先生の提案: 「ただ元気よく歌っている」を判定する）:
+       元気さ vigor が高い歌唱は、スキルA・Bの成否に関わらずヒマワリにする。
+       従来は A&&B が立つ歌唱は全てチューリリーになり、基本種のヒマワリが「残り物」に
+       なっていた（ファズ520で出現0）。元気さは型（T4）の中だけで効かせるため、
+       音階の反復が主体でない歌には広がらない。検証: 元気な歌い方のドレミの歌は
+       ヒマワリに、通常・穏やかな歌い方では従来どおりチューリリー/ヒマワリに分かれる */
+    case 'T4': return (f.vigor || 0) >= VIGOR_HI ? 'sunflower' : ((A && B) ? 'tulilily' : 'sunflower');
     /* v47 ガーベラ新条件（先生の提案・定義確定）: 段階移動（1〜2半音）の連続が、上下どちらの
        向きでも最長5音以上、一度でもあればガーベラ（上行ドレミファソ〜／下行ラソファミレ〜）。
        旧条件（スキルA不成立＋高声域）は、音程の安定した歌い手ほどワタアメローズに吸収されて
@@ -1131,7 +1215,7 @@ function pickSpeciesInType(type, f, x){
       if (x.ltRel15 >= 0.30) return 'lantern'; /* v44: 相対ロングトーン（自分の音長中央値の1.5倍以上の音の時間割合）。絶対LTはテンポで崩れるため置き換え（クリーン判定は不変） */
       if (tess <= 58) return 'moonring';
       return 'carnation';
-    case 'T10': return (B && thick >= 0.55 && vib >= VIB_NEED.noirrose) ? 'noirrose' : 'featherflower';
+    case 'T10': return noirGate(f) ? 'noirrose' : 'featherflower'; /* v49: 専用ゲートに統一（上の注記参照）。旧 B＋太さ＋ビブラート経路は廃止 */
     /* v47: 虹の花の条件を先生の決定で確定。A＋B だけでは緩すぎて T11 の約9割を虹が取り、
        基本種のダリアが残り物になっていた（ファズ520: 虹57 vs ダリア0）。
        虹 = 厳格なスキルA（keyCov 0.78以上のみ。SSR では緩い側の経路を使わない）＋スキルB
@@ -1147,7 +1231,11 @@ const TYPE_MEMBERS = { T1:['ranunculus','tulip'], T2:['firefly','marguerite'], T
 function selectSpeciesNew(an){
   const x = noteFeaturesOf(an);
   const type = classifyType(an.feat, x);
-  const id = pickSpeciesInType(type, an.feat, x);
+  let id = pickSpeciesInType(type, an.feat, x);
+  /* v49 ノワールローズ専用ルート: 型を問わず、ゲート（ロングトーン型の形＋低く・太く・
+     暗い声）が満ちればノワールローズにする。虹（SSR）が立つテイクだけは上書きしない。
+     花名曲イベントの同定は、この後段で別途優先される（従来どおり） */
+  if (id !== 'noirrose' && id !== 'rainbow' && noirGate(an.feat)) id = 'noirrose';
   return { sp: SPECIES.find(s => s.id === id) || SPECIES[0], type, x };
 }
 /* ========= v43 花名曲スペシャルイベント =========
@@ -1186,6 +1274,17 @@ const EVENT_REFS = EVENT_SONGS.map(s => ({ target: s.sp, from: s.key, seq: s.not
    潰れて抽出できず、曲の輪郭は反復を除いても保たれるため（例: 『バラが咲いた』は
    ド×5・ミ×5 の反復が骨格。同音を数えると本物の歌唱ほど一致しなくなる） */
 const EVENT_REFS_Z = EVENT_REFS.map(r => ({ target: r.target, from: r.from, seq: r.seq.filter(v => v !== 0) }));
+/* v48 囮リファレンス（先生の実機: 『ドレミの歌』でチューリップが咲く）:
+   イベント対象ではないが対象曲と輪郭が紛らわしい曲を、照合の競合相手として置く。
+   同定は「対象への近さ」が「囮への近さ」にマージン以上勝った時だけ成立させる。
+   『チューリップ』と『ドレミの歌』は冒頭の音型が同一（ドレミドレミ）で、音階断片だけの
+   歌唱では輪郭が接近しすぎる。実測では本物の2曲は互いに大きく分離できる（距離0.545）
+   ため、囮に勝てない曖昧な一致だけを止められる。将来の紛らわしい曲もここへ足すだけでよい */
+const EVENT_DECOYS = [
+  { key: 'doremi', title: 'ドレミの歌', notes: [55, 57, 59, 55, 59, 55, 57, 59, 60, 60, 59, 57, 60, 59, 60, 62, 59, 62, 59, 60, 62, 64, 64, 62, 60, 64, 62, 67, 64, 60, 59, 55, 57, 64, 60, 66, 62, 64, 66, 67, 55, 57, 59, 60, 62, 64, 66, 67] }
+];
+const EVENT_DECOY_REFS_Z = EVENT_DECOYS.map(s => ({ from: s.key, seq: s.notes.slice(1).map((m, i) => m - s.notes[i]).filter(v => v !== 0) }));
+const EVENT_DECOY_MARGIN = 0.05;
 /* 編集距離（重み付き）: 音程の置き換えは、ずれが1半音なら 0.5（歌い間違いとして軽い）、
    それ以上は 1。挿入・削除は 1。半音の歌い違いに強く、輪郭の違いには厳しい物差し */
 function levDist(a, b){
@@ -1346,6 +1445,9 @@ function levRateScore(q, r){
   return best;
 }
 const EVENT_AGREE = 0.80, EVENT_AGREE_MARGIN = 0.05, EVENT_GATE2 = 0.20, EVENT_GATE2_MARGIN = 0.05;
+/* 囮への近さ（第1ゲート=一致率の最大値／第2ゲート=距離の最小値）。対象の勝ち分と比較する */
+function decoyGate1(qz){ let best = 0; for (const d of EVENT_DECOY_REFS_Z){ const sc = levRateScore(qz, d.seq); if (sc > best) best = sc; } return best; }
+function decoyGate2(qz){ let best = null; for (const d of EVENT_DECOY_REFS_Z){ const dd = subseqEventDist(qz, d.seq); if (dd !== null && (best === null || dd < best)) best = dd; } return best; }
 function matchEventDetail(an){
   const qs = eventQuerySeq(an);
   if (qs.n < 8) return null;
@@ -1369,6 +1471,8 @@ function matchEventDetail(an){
   const ents = Object.keys(per).map(k => [k, per[k]]).sort((a, b) => b[1] - a[1]);
   if (!ents.length || ents[0][1] < EVENT_AGREE) return null;
   if (ents.length > 1 && ents[0][1] - ents[1][1] < EVENT_AGREE_MARGIN) return null;
+  /* v48 囮チェック（第1ゲート側）: 囮の方が同じくらい近い一致は、紛らわしいだけの歌として同定しない */
+  if (EVENT_DECOY_REFS_Z.length && decoyGate1(qz) > ents[0][1] - EVENT_DECOY_MARGIN) return null;
   /* 最も短い参照（春よ、来い=8音程）だけは一致率の床を上げる: 短い輪郭は他の曲の
      フレーズにも現れるため（実測: 非対象曲が0.83で紛れ込んだ）。本物の歌唱では
      この曲の一致率は大半が1.00になることを実測で確認済み */
@@ -1386,6 +1490,8 @@ function matchEventDetail(an){
   if (!ents2.length || ents2[0][0] !== win) return null;
   if (ents2[0][1] > EVENT_GATE2) return null;
   if (ents2.length > 1 && ents2[1][1] - ents2[0][1] < EVENT_GATE2_MARGIN) return null;
+  /* v48 囮チェック（第2ゲート側）: 従来方式の距離でも、囮にマージン以上勝っていること */
+  if (EVENT_DECOY_REFS_Z.length){ const dg2 = decoyGate2(qz); if (dg2 !== null && dg2 < ents2[0][1] + EVENT_DECOY_MARGIN) return null; }
   /* 第3の確認（短い輪郭への veto）: 勝った参照の輪郭が短い曲（バラが咲いた・春よ、来い）は、
      輪郭だけが同じ別曲が存在する（実測: 『いとしさと…』の輪郭はバラと完全一致した）。
      両曲を分けるのは同音反復の型そのものなので、生列（反復込み）での距離が極端に
@@ -1594,12 +1700,14 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
   if (sp.cluster || !sp.stemFam){
     /* 穂型は従来どおり（フレーズ数で本数、大きさ違いで株が並ぶ） */
     let n = sp.single ? 1 : Math.max(2, Math.min(6, phrases.length + (phrases.length === 1 ? 2 : 0)));
-    if (sp.tall3) n = Math.min(n, 3); /* スズラン系: 株を増やさず、大きく背高く（先生の指定） */
+    if (sp.tall3) n = Math.min(n, 2); /* v48 スズラン系: 最大2本まで（先生の決定）。本数を絞る代わりに
+       大きさは今まで通り（lantern ×1.0／他3種 ×1.3）に保ち、傾きも絞って横に広げない。
+       v47 のプランター適合規則（土幅への縮小）は、ランタンがミニサイズ化したため撤去した */
     for (let i = 0; i < n; i++){
       const p = phrases[Math.min(i, phrases.length - 1)];
       const c = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
       stock.stems.push({
-        rot: c * (sp.tall3 ? 12 : 21) + (r() * 6 - 3), flip: r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb',
+        rot: c * (sp.tall3 ? 5 : 21) + (r() * 6 - 3), flip: r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb',
         headH: clamp(140 + p.durSec * 12, 150, 212) * sf * volScale * 0.8 * flowerCurve(R) * [1, 0.85, 0.94, 0.79, 0.9, 0.83][i % 6] * (0.95 + r() * 0.1) * (sp.tall3 ? 1.42 : 1) * SS,
         birth: p.start, hueJ: (r() * 10 - 5), satJ: (r() * 0.1 - 0.05), lightJ: (r() * 0.12 - 0.06), headPos: null,
       });
@@ -1624,53 +1732,6 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
           if (Math.abs(cx) + st.headH * 0.8 > limC){ st.rot *= 0.82; st.headH *= 0.94; over = true; }
         }
         if (!over) break;
-      }
-    }
-    /* v47 フィット規則（スズラン系 tall3・先生の指摘）: 株分けで並べた束全体の幅が、背景の
-       土・プランターの幅（soilHalfW×2）を超える場合は、株の大きさと扇の開きを一律に抑えて
-       収める。上の幅ガード（soilHalf+90 まで許容）より厳しい、tall3 専用の規則。
-       1.3倍化で悪化する種・背景ではこちらが優先され、その分 1.3倍は弱まる */
-    if (sp.tall3 && soilHalfW){
-      /* 見積もりは「根元アンカーを中心に回転した画像の四隅」で行う（頭の中心ベースの
-         旧見積もりは、根元から非対称に広がる全体画像の実幅を過小評価していた。
-         実測でプランター超過が残ったため、描画幾何そのものに合わせ直した） */
-      for (let it = 0; it < 40; it++){
-        let ext = 0;
-        for (const st of stock.stems){
-          const fa = ANCH[st.ind === 'fullb' ? sp.base + '-fullb' : sp.base + '-full'] || ANCH[sp.base + '-full'];
-          if (!fa || !fa.hb) continue;
-          /* 見積もりは描画時（満開）の式に合わせる */
-          let imgH = Math.max(st.headH / Math.max(0.12, fa.hb[1]), st.headH * 2.6) * 1.45;
-          const maxW3 = W * 0.58; if (imgH * fa.w / fa.h > maxW3) imgH = maxW3 * fa.h / fa.w;
-          if (fa.root && fa.head){ const needF3 = (fa.root[1] - fa.head[1]) + fa.hb[1] * 0.5; if (needF3 > 0.2) imgH = Math.min(imgH, (groundY - 26) / needF3); }
-          if (sp.id === 'lantern') imgH = Math.min(imgH, 760);
-          const imgW = imgH * fa.w / fa.h;
-          const th = st.rot * Math.PI / 180, cosT = Math.cos(th), sinT = Math.sin(th);
-          const rx = (st.flip ? 1 - fa.root[0] : fa.root[0]) * imgW, ry = fa.root[1] * imgH;
-          const sx = st.flip ? -1 : 1;
-          for (const cxp of [0, imgW]) for (const cyp of [0, imgH]){
-            const qx = sx * (cxp - rx), qy = cyp - ry;
-            const px = qx * cosT - qy * sinT;
-            if (Math.abs(px) > ext) ext = Math.abs(px);
-          }
-        }
-        /* 葉芽（根元の葉）も束の幅に入る。実測では茎より葉芽の方が幅を決めていたため、
-           葉芽も見積もりと縮小の対象に含める（茎だけ縮めると葉芽がはみ出したままになる） */
-        const faS = ANCH[sp.sprig];
-        if (faS) for (const sg of stock.sprigs){
-          const imgH = sg.len, imgW = imgH * faS.w / faS.h;
-          const th = sg.rot * Math.PI / 180, cosT = Math.cos(th), sinT = Math.sin(th);
-          const rx = (sg.flip ? 1 - faS.root[0] : faS.root[0]) * imgW, ry = faS.root[1] * imgH;
-          const sx = sg.flip ? -1 : 1;
-          for (const cxp of [0, imgW]) for (const cyp of [0, imgH]){
-            const qx = sx * (cxp - rx), qy = cyp - ry;
-            const px = qx * cosT - qy * sinT;
-            if (Math.abs(px) > ext) ext = Math.abs(px);
-          }
-        }
-        if (ext <= soilHalfW) break;
-        for (const st of stock.stems){ st.headH *= 0.90; st.rot *= 0.90; }
-        for (const sg of stock.sprigs) sg.len *= 0.90;
       }
     }
     return stock;
@@ -1699,7 +1760,9 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
      茎・頭・枝・葉芽を同じ比率で縮めて収める（地面位置が高い背景＝パーティー等で頭が切れるのを防ぐ）。
      マイガーデンは fitTopY に大きな負値を渡してこのガードを無効化し、専用の縮小係数で描く */
   {
-    const topLim = (fitTopY === undefined ? 26 : fitTopY);
+    const topLim = (fitTopY === undefined ? 105 : fitTopY); /* v48: 既定の上端余白を 26px → 105px に戻す。
+       v47 の 26px では 1.3倍の主茎だけが全背景で上限に張り付き、天井まで伸びて見えた（先生の実機指摘）。
+       比率を保ったまま株全体を少し抑え、v46 に近い「頭上に空きのある」絵にする */
     const plantH = MH + (stock.stems[0] ? stock.stems[0].headH : 0);
     const avail = groundY - topLim;
     if (plantH > avail && plantH > 0){
@@ -1863,12 +1926,20 @@ function stageFor(prog){
   const t = (prog - 0.75) / 0.25; return [{ k:'half', a:1 - t }, { k:'full', a:t }];
 }
 /* ========= 組み立て描画（茎パーツ＋枝＋頭） ========= */
-function partDraw(x, img, meta, rootX, rootY, dispH, rotDeg, reveal){
+function partDraw(x, img, meta, rootX, rootY, dispH, rotDeg, reveal, boldPx){
   if (!img || reveal <= 0) return null;
   const w = img.width * (dispH / img.height), h = dispH;
   const th = rotDeg * Math.PI / 180;
   x.save(); x.translate(rootX, rootY); x.rotate(th);
   x.beginPath(); x.rect(-w, -h * reveal - 1, w * 2, h * reveal + 2); x.clip();
+  /* v48 茎の補強（boldPx > 0 の時）: 同じパーツ画像を左右に僅かにずらして薄く重ね、
+     シルエットだけを太らせる。色も撓みも元の絵そのままなので描き足し感が出ない */
+  if (boldPx > 0){
+    x.save(); x.globalAlpha *= 0.55;
+    x.drawImage(img, -meta.rx * w - boldPx, -h, w, h);
+    x.drawImage(img, -meta.rx * w + boldPx, -h, w, h);
+    x.restore();
+  }
   x.drawImage(img, -meta.rx * w, -h, w, h);
   x.restore();
   const lx = (meta.tx - meta.rx) * w, ly = -h;
@@ -1965,6 +2036,12 @@ function drawComposite(x, stock, progOf, now){
     drawAnchored(x, imgs.sprig, sp.sprig, RX, gy + 4, lenF, rot, sg.flip, Math.min(1, p * 1.6));
   });
   /* 芽は共通フェーズ＋ベールで受け渡す。ここで小さい芽を描き直さない（双葉の後に芽が戻る事象の対策） */
+  /* v48 茎の補強（先生の実機指摘: ワタアメローズ等の茎が他の花よりひときわ細い）:
+     最細パーツの rose 系・dahlia 系では、partDraw の bold 描画で茎・枝のシルエットを
+     左右合わせて約3px太らせる（満開時の軸 約6.5px → 約9.5px）。当初案の「同系色の芯を
+     直線で敷く」方式は、茶色い茎に緑の帯が浮いて描き足し感が強かったため検証で不採用にし、
+     同じ画像をずらして重ねる方式に替えた */
+  const stemBold = (sp.stemFam === 'rose' || sp.stemFam === 'dahlia') ? (dh) => clamp(dh * 0.0022, 0.8, 1.6) : null;
   /* 枝（主茎より先に描き、付け根を主茎で隠す） */
   const tips = [{ st: stock.stems[0], idx: 0, rot: sway * 0.3, pos: null }];
   for (const br of plan.branches){
@@ -1977,12 +2054,12 @@ function drawComposite(x, stock, progOf, now){
     tips.push(tip);
     if (revealMain < br.nodeF || reveal <= 0) continue;
     const node = { x: RX + sway * br.nodeF * 2, y: gy - plan.MH * br.nodeF * revealMain };
-    tip.pos = partDraw(x, imgs.branchPart, brMeta, node.x, node.y, br.len, br.rot + sway * 0.5, reveal);
+    tip.pos = partDraw(x, imgs.branchPart, brMeta, node.x, node.y, br.len, br.rot + sway * 0.5, reveal, stemBold ? stemBold(br.len) : 0);
     if (tip.pos && reveal < 0.995) tip.pos = { x: tip.pos.vx, y: tip.pos.vy, dx: tip.pos.dx, dy: tip.pos.dy };
     tip.node = node;
   }
   /* 主茎 */
-  const mainTip = partDraw(x, imgs.stemPart, stemMeta, RX, gy + 2, plan.MH, sway * 0.3, revealMain);
+  const mainTip = partDraw(x, imgs.stemPart, stemMeta, RX, gy + 2, plan.MH, sway * 0.3, revealMain, stemBold ? stemBold(plan.MH) : 0);
   tips[0].pos = mainTip && revealMain < 0.995 ? { x: mainTip.vx, y: mainTip.vy, dx: mainTip.dx, dy: mainTip.dy } : mainTip;
   /* 茎に沿った葉（音の数が多いほど多いが、最大4枚まで。重なりすぎると葉の柱になってしまう） */
   stock.sprigs.forEach((sg, i) => {
