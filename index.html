@@ -280,7 +280,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v55'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v56'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -1037,9 +1037,12 @@ const T7_ROB_MIN = 12, T7_PHRASE_END_LT_MIN = 3;
 const GRID_DEV_MAX = 16;
 /* v55 オクターブの壁（先生の階層原則: 「1オクターブ以上の音域で歌われれば N は咲かず、
    R 以上が咲く。さらに歌唱スキルが伴えば SR 以上」）: 着地が N（ダリアは例外 = 音痴の
-   ダイナミックさん用）で頑健音域 ≥12 なら、型ごとの行き先へ転送する。優先順位は
-   イベント同定 → 型内 SR/SSR → ノワール専用ルート → ユリ受け皿 → 壁 → 通常着地 →
-   終端受け皿（hotlips）の順。検証 route58/wall57: 行き場なし 0 件、受け皿発火 0/1066 */
+   ダイナミックさん用）で頑健音域 ≥12 なら、型ごとの行き先へ転送する。
+   v56: 優先順位は先生の憲法（SSR→SR→R→N）の完全実施として再構築した:
+   イベント同定（この関数の外で最優先）→ 型内 → 虹の専用ルート（SSR）→ ノワール専用
+   ルート → SR レスキュールート（水晶・銀河）→ 壁 → ユリ受け皿（最後尾）→ 出力にも壁 →
+   終端受け皿（hotlips）。詳細は selectSpeciesNew と srClaimsOf の注記参照。
+   検証 route58/wall57: 行き場なし 0 件、受け皿発火 0/1066 */
 const WALL_ROB_MIN = 12;
 const N_SET = new Set(['dahlia','rose','lily','gerbera','sunflower','anemone','ranunculus','marguerite','tulip','carnation']);
 function wallDestOf(type, f, x){
@@ -1449,29 +1452,79 @@ function pickSpeciesInType(type, f, x){
   return 'tulip';
 }
 const TYPE_MEMBERS = { T1:['ranunculus','tulip'], T2:['firefly','marguerite'], T3:['candy','anemone'], T4:['tulilily','sunflower'], T5:['cotton','gerbera','rose'], T6:['sakura','goldbell'], T7:['crystal','lily'], T8:['galaxy','mobius','swirl'], T9:['bubble','lantern','moonring','carnation'], T10:['noirrose','featherflower'], T11:['rainbow','dahlia'] };
+/* v56 SR/SSR の「主張」= スキル脚のみ（型は問わない）。型内判定と同じ脚を使う。
+   SR_SET / SSR_SET は既存定義（選択システム冒頭）を使う */
+function srClaimsOf(f, x){
+  const A = skillA(f), B = skillB(f), vib = f.vibSec || 0;
+  return {
+    rainbow: (f.keyCov || 0) >= 0.78 && B && vib >= VIB_NEED.rainbow,
+    crystal: A && vib >= VIB_NEED.crystal,
+    tulilily: A && B && x.gridDev !== null && x.gridDev !== undefined && x.gridDev <= GRID_DEV_MAX,
+    galaxy: A && vib >= VIB_NEED.galaxy,
+    bubble: A && (f.tessitura || 60) >= 63 && (f.thickness || 0) <= 0.50,
+    noir: noirGate(f, x)
+  };
+}
+/* v56 SR専用ルートの「ドメインガード」= その SR の型の形の証拠。スキル脚だけの
+   ルートは上手い歌を全部奪うので、必ず形の証拠と組にする（検証 design56）。
+   虹 = 広音域クライマックス型（T11）のマーカー形そのもの。型判定で T7/T2 等の
+        先行マーカーに奪われて T11 に届かないテイクを救う（ファズA で 7 件救済、
+        うち 6 件はユリ受け皿に盗まれていた広いバラード）
+   水晶 = フレーズ末ロングトーン ≥3 回（賛美歌の形そのもの、先生の T7 定義と同一）。
+        型が T2 に崩壊した『きよしこの夜』テイク（ファズA で 8 件）を救う
+   銀河 = 半音往復型（T8）のマーカー形そのもの（折り返し多発 or 小反復の往復）
+   チューリリーとシャボンアヤメには専用ルートを作らない（型内のまま）:
+     チューリリー — 主張（A∧B∧gridDev≤16）が非特異で「上手く歌えた歌」ほぼ全てに
+       立つ（ファズA 518/520 件、全 26 曲のクリーンにも全部立つ）。マーカーより緩い
+       ガードはポップスを大量に奪い（ascRun≥5: ファズA 44 件・T4 ホーム率 0.28)、
+       マーカーそのもののガードでは救済 0 件（型判定が先に T4 へ届ける）ため、
+       安全なルートは存在しない。
+     シャボンアヤメ — 主張（声域≥63）が、コーパス全曲が声域60へ移調済みの検証材料
+       の中では 1 件も立たない（1,396 テイク中 0 件)。較正も検証もできないルートは
+       作らない。実機での詰まりは型到達ではなく主張そのもの（高音域+細い声）側 */
+function rainbowShape(f){
+  const r = f.rangeSemis || 0;
+  return r >= 12 && (f.longToneRatio || 0) >= 0.30 && (f.changesPer4s || 0) <= 3.2 && (f.noteCount || 0) <= 22;
+}
+function crystalShape(x){ return (x.phraseEndLT || 0) >= T7_PHRASE_END_LT_MIN; }
+function galaxyShape(f, x){
+  return ((x.turns || 0) >= 16 && (f.segFeat || 0) >= 8)
+    || ((f.rangeSemis || 0) >= 11.5 && (f.rangeSemis || 0) <= 13.7 && (x.revShare || 0) >= 0.42 && (x.peakPos || 0) <= 0.30);
+}
 function selectSpeciesNew(an){
+  const f = an.feat;
   const x = noteFeaturesOf(an);
-  const type = classifyType(an.feat, x);
-  let id = pickSpeciesInType(type, an.feat, x);
-  /* ノワールローズ専用ルート（v49で新設、v52でゲートを作り替え）: 型を問わず、ゲート
-     （間＋短調＋低く・太い）が満ちればノワールローズにする。虹（SSR）が立つテイクだけは
-     上書きしない。花名曲イベントの同定は、この後段で別途優先される（従来どおり） */
-  if (id !== 'noirrose' && id !== 'rainbow' && noirGate(an.feat, x)) id = 'noirrose';
-  const rob = (x.robRange !== undefined ? x.robRange : (an.feat.rangeSemis || 0));
-  /* v55 ユリ受け皿マーカー（タイプ非依存の専用ルート。ノワールと同じ位置づけ）:
-     T7 再定義で賛美歌型は「広い歌」の型になったため、1オクターブ未満の賛美歌はユリの
-     領分のまま自動で残す（先生の階層原則）。ゲートは検証 t7new の選択肢 (i) の定義:
-     頑健音域 <12 かつロングトーン主体（LT率 ≥0.50 または相対ロングトーン ≥0.48）で、
-     着地が N 種（ユリ以外）ならユリに読み替える。実測（モデルA）でユリ 34 件 ≈ 現行 39 件。
-     なお入口を型内に二段構えにする形は、該当テイクが T2/T10 のマーカーに先取りされて
-     実質 1 件しか残らず不採用（同検証） */
-  if (rob < 12 && ((an.feat.longToneRatio || 0) >= 0.50 || (x.ltRel15 || 0) >= 0.48) && N_SET.has(id) && id !== 'lily') id = 'lily';
-  /* v55 オクターブの壁: N の着地（ダリア除く）が頑健音域 ≥12 なら行き先へ転送。
-     行き先が無い場合は終端受け皿 hotlips（どこにも属さない歌の花。発火は設計上ほぼゼロで、
-     発火率そのものが受け皿の穴を示す健全性メーター。wallDestOf の注記参照） */
-  if (N_SET.has(id) && id !== 'dahlia' && rob >= WALL_ROB_MIN){
-    id = wallDestOf(type, an.feat, x) || 'hotlips';
+  const type = classifyType(f, x);
+  let id = pickSpeciesInType(type, f, x);
+  const cl = srClaimsOf(f, x);
+  /* v56 憲法の完全実施（判定順序は SSR→SR→R→N）:
+     イベント同定（この関数の外・最優先）→ 型内（SR>R>N）→ 虹ルート（SSR:
+     主張+形が立てば何よりも優先）→ ノワールルート（v52 確定ゲート。虹だけは
+     奪わない）→ SR レスキュールート（水晶→銀河: 着地が SR/SSR 未満の時だけ発火し、
+     型内で正当に着地した SR は奪わない）→ オクターブの壁 → ユリ受け皿（最後尾）→
+     受け皿の出力にも壁。終端受け皿は hotlips（壁の行き先が無い場合のみ）。
+     花名曲イベントの同定は、この後段で別途優先される（従来どおり）。検証 design56/verify56 */
+  if (id !== 'rainbow' && cl.rainbow && rainbowShape(f)) id = 'rainbow';
+  if (id !== 'noirrose' && id !== 'rainbow' && cl.noir) id = 'noirrose';
+  if (!SR_SET.has(id) && id !== 'rainbow'){
+    if (cl.crystal && crystalShape(x)) id = 'crystal';
+    else if (cl.galaxy && galaxyShape(f, x)) id = 'galaxy';
   }
+  const rob = (x.robRange !== undefined ? x.robRange : (f.rangeSemis || 0));
+  const wallStep = () => { if (N_SET.has(id) && id !== 'dahlia' && rob >= WALL_ROB_MIN) id = wallDestOf(type, f, x) || 'hotlips'; };
+  wallStep();
+  /* v56 ユリ受け皿マーカー（最後尾）: v55 では型内判定の直後・壁より前に座り、
+     あらゆる基本種（N）の着地を奪ったため、実機で「ほぼユリかチューリップ」の
+     洪水になった（調査 lilyinv: ファズのユリは 100% が受け皿製で、その大半に SR の
+     主張が立っていた = 憲法違反）。順序を最後尾へ移し、二つのガードを足す:
+     (1) 強い SR の主張（チューリリー/水晶/虹/ノワール）が立つ歌には黙る
+     (2) ダリア（先生の例外）は奪わない。
+     脚は v55 検証 (i) の定義のまま: 頑健音域 <12 かつロングトーン主体
+     （LT率 ≥0.50 または相対ロングトーン ≥0.48）。脚を締めると正当な賛美歌でも
+     届かずユリが絶滅する（検証 V6 系）。出力にも壁を通す */
+  const strongSR = cl.tulilily || cl.crystal || cl.rainbow || cl.noir;
+  if (rob < 12 && ((f.longToneRatio || 0) >= 0.50 || (x.ltRel15 || 0) >= 0.48) && N_SET.has(id) && id !== 'lily' && id !== 'dahlia' && !strongSR) id = 'lily';
+  wallStep();
   return { sp: SPECIES.find(s => s.id === id) || SPECIES[0], type, x };
 }
 /* ========= v43 花名曲スペシャルイベント =========
