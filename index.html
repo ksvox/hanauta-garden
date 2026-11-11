@@ -182,6 +182,8 @@
 <!-- v47 マイガーデン -->
 <div id="gardenPage" style="display:none; position:fixed; inset:0; z-index:55; background:#f7f1e3; overflow-y:auto; padding:24px 16px 44px;">
   <div class="garden-plate"><h2>マイガーデン</h2></div>
+  <!-- v52: 今日の天気（開くたびに抽選。見た目だけの仕掛けで、成長ルールには影響しない） -->
+  <p id="gardenWeather" style="text-align:center; font-size:14.5px; font-weight:700; color:#7a5c2e; margin:0 0 4px; min-height:21px;"></p>
   <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">特別な種を植えて、10秒の鼻歌で育てる小さな花壇です。<br>歌を聴かせると、株が少しずつ育ちます。</p>
   <div id="gardenWilt" style="display:none; max-width:520px; margin:10px auto 4px;">
     <div class="bubble" style="box-shadow:0 6px 18px rgba(60,45,20,.18); font-size:14.5px;">
@@ -268,7 +270,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v51'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v52'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -847,42 +849,11 @@ function analyzeFrames(fr){
     const pushN = clamp((pushShare - 0.35) / 0.55, 0, 1);
     vigor = clamp(0.42 * brightN + 0.30 * richN + 0.28 * pushN, 0, 1);
   }
-  /* v49 声の暗さ darkTail（先生の提案: ノワールローズの条件を「低い声域＋太い声＋暗い」に）:
-     「暗さ」は、倍音の尾（6倍音以上）がどれだけ速く減衰するかで測る。スペクトル重心を
-     基本周波数で割った値（cent/f）と、rich（2〜5倍音の比率）から、倍音モデルを
-     逆算して尾の減衰率 r を求める。音高そのものの低さと、太さ（2〜5倍音の量）の影響を
-     割り引いた「響きの暗さ」であり、小さいほど暗い。
-     較正の目安（検証グリッド実測で設計値を復元）: 暗い声 0.50 / 中立 0.68 / 明るい声 0.82。
-     単純な cent/f は太さと強く相関し「太さの変装」になるため、この逆算形を使う。
-     材料が足りない時は 1（暗くない側）に倒す
-     v50: 逆算に使う代表値を中央値から下位25%分位点（q0.25）に変更。実機の広帯域ノイズは
-     重心を持ち上げる方向にしか働かないため、中央値は暗い声でも中立並みにずれてしまう
-     （試算: +200Hz 相当の持ち上がりで 暗い声 0.50→0.663、中立 0.68 とほぼ重なり、ラインの
-     緩和では救えない）。下側の分位は汚れにくく、同じノイズ条件でも 暗 0.583／中立 0.726／
-     明 0.838 と分離が保たれる（inv3b 実測）。分位の取り方は試算と同一の並び順インデックス */
-  let darkTail = 1;
-  if (voiced.length >= 20){
-    const ratios = [];
-    for (const v of voiced){ if ((v.cent || 0) > 0 && v.f > 0) ratios.push(v.cent / v.f); }
-    if (ratios.length >= 20){
-      ratios.sort((a, b) => a - b);
-      const Rq = ratios[Math.min(ratios.length - 1, Math.floor(ratios.length * 0.25))]; /* v50: q0.25（上の注記） */
-      const richM = richVals.length ? richVals.reduce((s, v) => s + v, 0) / richVals.length : 0.42;
-      const richC = clamp(richM, 0.05, 0.9), S = richC / (1 - richC);
-      const w5 = [0.42, 0.27, 0.18, 0.13];
-      const hbar = (r) => {
-        const m = [0, 1];
-        for (let k = 2; k <= 5; k++) m[k] = S * w5[k - 2];
-        for (let k = 6; k <= 16; k++) m[k] = m[5] * Math.pow(r, k - 5);
-        let num = 0, den = 0;
-        for (let k = 1; k <= 16; k++){ num += k * m[k]; den += m[k]; }
-        return num / den;
-      };
-      let lo = 0.05, hi = 0.98;
-      for (let it = 0; it < 24; it++){ const mid = (lo + hi) / 2; if (hbar(mid) < Rq) lo = mid; else hi = mid; }
-      darkTail = (lo + hi) / 2;
-    }
-  }
+  /* v52: 声の暗さ darkTail は廃止した（ノワールローズの脚から外したため）。
+     実機では広帯域ノイズがスペクトル重心を持ち上げ、暗い声ほど測れなくなる構造が
+     あった（v49〜v51 の実機で到達0%）。暗さの判定は「短調の曲」という個性に
+     置き換えた（extraFeatOf の minorMargin。音高クラスの統計はノイズに強い） */
+
   /* 音高の動きの型: つながり（3度まで/4度/5度以上）と、型5種を回数で測る */
   const nIv = Math.max(1, intervals.length);
   const shareLE2 = absI.filter(v => v <= 2.5).length / nIv;
@@ -928,7 +899,7 @@ function analyzeFrames(fr){
   };
   Object.assign(feat, { tessitura, changesPer4s, segMedianSec, segFeat: Math.min(segMedianSec, 9), break70, longToneSec, longToneRatio,
     keyCov, keyIdentifiable, keyVoteShare, vibratoDepth, vibratoPresent, vibNotes, vibSec, tempoGridRel, tempoStable, pacingScore, pacingPresent,
-    thickness, pat, oscEvents, midMoves, octaveLeaps, maxSameRun, vigor, darkTail });
+    thickness, pat, oscEvents, midMoves, octaveLeaps, maxSameRun, vigor });
   feat.topMoves = Object.entries(feat.moveScores).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0).map(x=>x[0]);
   if (!feat.topMoves.length) feat.topMoves = ['smooth'];
   /* 株は必ず1つ。2秒以上の「間」は、同スケールで再開した時だけ「意味のある間」として記録する
@@ -1108,14 +1079,52 @@ function extraFeatOf(notes){
     closeAsc();
     if (runLen + 1 > stepRun) stepRun = runLen + 1;
   }
-  return { stepShare, thirdShare, sameRep, turns, turnAmp, peakPos, medDur, maxDur, nNotes: ns.length, neff, ceffN, revShare, ltRel15, ascRun, ascRuns5, ascRuns4, ascRuns3, stepRun };
+  /* v52: 短調判定 minorMargin（ノワールローズの「短調の曲」脚）。
+     長さ重み付き音高クラス・ヒストグラムと、Krumhansl の長調/短調プロファイルとの
+     相関（Pearson）の差（最良の短調相関 − 最良の長調相関）。正で大きいほど短調らしい。
+     この関数が受ける音符列は noteFeaturesOf 経由の orgelMelody 加工後の列であり、
+     試算（検証 noir-pause、986テイク）で測った方式・材料と同一。
+     既存の scaleKey 多数決はモード判定に弱い（メジャー曲の45〜47%を短調と誤読する
+     実測がある）ため使わない。音高クラスの集計はスペクトル重心よりノイズに強い */
+  let minorMargin = 0;
+  {
+    const KMAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+    const KMIN = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+    const hist = new Array(12).fill(0);
+    for (const n of ns){ const pc = ((Math.round(n.midi) % 12) + 12) % 12; hist[pc] += n.dur || 0; }
+    const corr12 = (a, b) => {
+      const ma = a.reduce((s, v) => s + v, 0) / 12, mb = b.reduce((s, v) => s + v, 0) / 12;
+      let num = 0, da = 0, db = 0;
+      for (let i = 0; i < 12; i++){ num += (a[i] - ma) * (b[i] - mb); da += (a[i] - ma) * (a[i] - ma); db += (b[i] - mb) * (b[i] - mb); }
+      return num / Math.sqrt((da * db) || 1);
+    };
+    let bMaj = -2, bMin = -2;
+    for (let r = 0; r < 12; r++){
+      const pm = [], pn = [];
+      for (let i = 0; i < 12; i++){ pm.push(KMAJ[(i - r + 12) % 12]); pn.push(KMIN[(i - r + 12) % 12]); }
+      bMaj = Math.max(bMaj, corr12(hist, pm));
+      bMin = Math.max(bMin, corr12(hist, pn));
+    }
+    minorMargin = bMin - bMaj;
+  }
+  return { stepShare, thirdShare, sameRep, turns, turnAmp, peakPos, medDur, maxDur, nNotes: ns.length, neff, ceffN, revShare, ltRel15, ascRun, ascRuns5, ascRuns4, ascRuns3, stepRun, minorMargin };
 }
 /* orgelMelody はグローバルの analysis を読むため、一時的に差し替えて音符列を得る */
 function orgelNotesOf(an){
   const prevA = analysis; analysis = an;
   try { return orgelMelody(); } finally { analysis = prevA; }
 }
-function noteFeaturesOf(an){ return extraFeatOf(orgelNotesOf(an)); }
+function noteFeaturesOf(an){
+  const x = extraFeatOf(orgelNotesOf(an));
+  /* v52: 「間」= フレーズ間ギャップの最大値（ノワールローズの脚）。試算と同じく
+     phrases の start/end から直接測る（加工後の音符列では同音統合でギャップが
+     埋まる場合があるため）。部分解析（15秒の仮判定）でも同じ形で計算される */
+  let maxGap = 0;
+  const P = (an && an.phrases) || [];
+  for (let i = 1; i < P.length; i++) maxGap = Math.max(maxGap, P[i].start - P[i - 1].end);
+  x.maxGap = maxGap;
+  return x;
+}
 /* 構造タイプの重心とばらつき（v44 較正V5）。
    次元: R=音域, C=実効変化率 ceffN, LT=ロングトーン率, SS=段階移動率, TS=3度動き率,
    turns=折り返し数, peak=最高音の位置, lp=跳躍数, N=実効音数 Neff。
@@ -1184,46 +1193,41 @@ function typeRanking(f, x){
     .filter(t => !(t === 'T11' && (f.rangeSemis || 0) < 14) && !(t === 'T10' && (f.longToneRatio || 0) < 0.50))
     .map(t => [typeDist(v, TYPE_CENTROIDS[t]), t]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
 }
-/* v49 ノワールローズの専用ゲート（先生の決定: 条件を「低い声域＋太い声＋暗い」に作り替える）:
-   旧条件（T10の中で テンポB＋太さ＋ビブラート2.5秒）は、型（T10）に届かないことが主因で
-   実質到達不能だった（診断: 例題曲でも T10 到達 25〜50%、型内の条件はモデル内で全充足）。
-   新ゲートは「しっとりしたバラード」の形（ロングトーン率）と声の個性（低さ・太さ・暗さ）の
-   複合で、型を問わない専用ルートとして selectSpeciesNew で適用し、T10 の型内ルールも
-   同じゲートに統一する（旧経路のままだと、高く歌ってもノワールが咲いてしまうため）。
-   閾値の実測アンカー（検証: noir-study）:
-     ロングトーン率 ≥0.58 — 既存の T10 マーカーと同値。実測の分離帯 [Everything 最大 0.517,
-       例題3曲の最小 0.591] の内側。Everything（全体・静かな前半のみ）とも反応しない。
-     声域 ≤58 — 既存の月輪草ラインと同値。原調（≈60）では通らず「低く歌う」ことが必須になる。
-       （v49 の値。v50 で ≤60 に変更 — 下の v50 注記を参照）
-     太さ ≥0.55 — 既存のノワールラインと同値。
-     暗さ darkTail ≤0.583 — 検証グリッドの中立 0.68 と暗い声 0.50 の中点。通過率は
-       暗い音色 100%・中立 0%・明るい音色 0%（グリッド実測）。
-       （v49 の値。v50 で測り方を q0.25 に替え、ラインを 0.62 に再較正 — 下の v50 注記を参照）
-   テンポBとビブラートは、新条件では外す（ノワール様式の歌唱では両方とも常時通過して
-   判別に寄与せず、ビブラートは検出上限が壁になる水晶型の失敗を招くため）。
-   虹（SSR）の保護: 型が T11 で虹が立つテイクは、このルートで上書きしない
-   （SSR からの「格落ち」を作らない）。検証（現実的誤差モデル）: 例題3曲を低く・太く・
-   暗く歌った場合の到達 81.7%（残りは虹の条件を満たしたテイク）、高い・明るい・広音域の
-   バラードでは全て 0%、日常の歌唱では発動 0 件
-   v50 ゲート修正（先生の実機: 暗くて低いバラードを歌ってもランタン/ユリにしかならない、
-   の調査結果を受けた3点。試算は inv3 / inv3b）:
-     声域 ≤58 → ≤60: 先生の自然な声域は約60で、58 のラインでは原調のままでは 0% だった。
-       60 では通過率 83%、+7移調（声域≈67）の高い歌唱では誤発動 0 を維持できる（試算）。
-     ロングトーン脚に相対指標との OR を追加（ltRel15 ≥0.48、T7 救済路と同値）: 絶対LTは
-       「ロングトーン中心か」ではなく音の絶対長（テンポ込み）を測るため、間を取る・少し
-       速めのバラードでは通過率が 100%→6.7% に崩れた。相対指標はその歌い方でも 77% 通る。
-       広音域バラードの扱いは「声の定義を優先」で確定: 低く・太く・暗く・ロングトーンで
-       歌われた広音域曲がノワールになるのは定義の帰結として許容する（試算 POS 59%）。
-       音域・跳躍での追加ガードは抽出誤差で例題側と重なり塞ぎきれないことを試算で確認済み。
-     暗さのライン 0.583 → 0.62: darkTail の測り方を q0.25 に替えた（darkTail 側の注記）ことに
-       伴う再較正値。+200Hz の重心ノイズ条件でも 暗は通過・中立/明は不通過になる位置。
-       ※この値はモデル内較正による暫定値であり、実機テイクでの再較正が前提 */
-const NOIR_LT_MIN = 0.58, NOIR_LTREL_MIN = 0.48, NOIR_TESS_MAX = 60, NOIR_THICK_MIN = 0.55, NOIR_DARKTAIL_MAX = 0.62;
-function noirGate(f, ltRel){
-  return ((f.longToneRatio || 0) >= NOIR_LT_MIN || (ltRel || 0) >= NOIR_LTREL_MIN)
+/* v52 ノワールローズの専用ゲート（先生の決定: 個性を「暗いマイナー曲」に作り替える）:
+   v49〜v51 のゲート（ロングトーン＋低さ＋太さ＋暗さ darkTail）は、モデル内では届いても
+   実機では到達 0% が続いた。脚別の分解で、暗さ（スペクトル重心からの逆算）が実機の
+   広帯域ノイズで常時明るい側に倒れることが主因と判明（静かに歌うほど SNR が悪化し、
+   暗く歌う工夫がそのまま「暗くない」判定になる逆転）。ロングトーン脚もテンポで崩れる。
+   v52 では測り方そのものを、実機でも壊れない物差しに置き換える（試算: 検証 noir-pause）:
+     間（maxGap） ≥1.5秒 — ロングトーン脚の置き換え（先生の提案）。鼻歌では息が続かず
+       語末が短く切れ、インテンポで待つ分が無音になるため、暗いバラードほど自然に
+       2秒前後の間が生まれる。1.2秒ラインは通常の息継ぎ（境界0.8秒＋挿入で約1.25秒）と
+       区別がつかず誤発動 2.9% が出たため不採用。2.0秒では「1.6秒の間しか取らない歌い方」
+       が落ち、実機では残響で間が短く測られる分も見込んで 1.5秒。
+     短調（minorMargin） ≥0.05 — 暗さ脚の置き換え。長さ重み付き音高クラス・ヒストグラムと
+       Krumhansl プロファイルの相関差で判定し、短調曲の 94〜95% を拾いながら、低く太く
+       間つきで歌ったメジャーバラードを 60回全て弾く（試算）。音高クラスの統計は
+       スペクトル形状よりノイズに強い。既存の scaleKey 多数決はメジャー曲の45〜47%を
+       短調と誤読するため使わない。
+     声域 ≤62 — 「低い」ことのライン。先生の決定で v51 の 60 から緩和。61/62/63 の走査
+       （検証 noir52、1,274テイク）では到達は 61 で飽和（93.4%）し、負の集合（メジャー
+       バラード低く太く＋間つき／明るい曲／迷い止まり／日常26曲／高いマイナー曲）は
+       61〜63 の全ラインで誤発動ゼロ。境界プローブ（マイナー曲を+3移調＝声域≈63、
+       間つき・太く）では、ライン63 だと 51.4% が発動して「低さ」の個性が崩れるのに対し、
+       62 では実測声域が低く読めた境界の1件（1.4%）のみだったため、62 を採用した。
+     太さ ≥0.55 — 現行維持（既存のノワールラインと同値）。
+   性格の転換（先生が受容済み）: 間を取らなければ、どれだけ暗く歌っても咲かない。
+   カーネーションの「3.5秒ロングトーン」と同じく、仕掛けを知れば狙える花になる。
+   調性が曖昧な曲（『奏』のような）は短調と読み切れず到達が下がるのが、この設計の性質。
+   ゲートは型を問わない専用ルートとして selectSpeciesNew で適用し、T10 の型内ルールも
+   同じゲートに統一する（v49 以来の形）。虹（SSR）の保護: 型が T11 で虹が立つテイクは
+   このルートで上書きしない（SSR からの「格落ち」を作らない） */
+const NOIR_GAP_MIN = 1.5, NOIR_MINOR_MARGIN_MIN = 0.05, NOIR_TESS_MAX = 62, NOIR_THICK_MIN = 0.55;
+function noirGate(f, x){
+  return ((x && x.maxGap) || 0) >= NOIR_GAP_MIN
+    && ((x && x.minorMargin) || 0) >= NOIR_MINOR_MARGIN_MIN
     && (f.tessitura || 60) <= NOIR_TESS_MAX
-    && (f.thickness || 0) >= NOIR_THICK_MIN
-    && (f.darkTail != null ? f.darkTail : 1) <= NOIR_DARKTAIL_MAX;
+    && (f.thickness || 0) >= NOIR_THICK_MIN;
 }
 /* タイプ内の選定（DESIGN.md §4）。優先順位: ①SR/SSR（スキル） ②Rのスキル種 ③帯 ④基本種（条件なし）。
    タイプ内では条件が重ならないことが一意性の担保（T2 は繰り返し回数の一本分け） */
@@ -1257,7 +1261,7 @@ function pickSpeciesInType(type, f, x){
       if (x.ltRel15 >= 0.30) return 'lantern'; /* v44: 相対ロングトーン（自分の音長中央値の1.5倍以上の音の時間割合）。絶対LTはテンポで崩れるため置き換え（クリーン判定は不変） */
       if (tess <= 58) return 'moonring';
       return 'carnation';
-    case 'T10': return noirGate(f, x.ltRel15) ? 'noirrose' : 'featherflower'; /* v49: 専用ゲートに統一（上の注記参照）。旧 B＋太さ＋ビブラート経路は廃止 */
+    case 'T10': return noirGate(f, x) ? 'noirrose' : 'featherflower'; /* v49: 専用ゲートに統一（上の注記参照）。旧 B＋太さ＋ビブラート経路は廃止 */
     /* v47: 虹の花の条件を先生の決定で確定。A＋B だけでは緩すぎて T11 の約9割を虹が取り、
        基本種のダリアが残り物になっていた（ファズ520: 虹57 vs ダリア0）。
        虹 = 厳格なスキルA（keyCov 0.78以上のみ。SSR では緩い側の経路を使わない）＋スキルB
@@ -1274,10 +1278,10 @@ function selectSpeciesNew(an){
   const x = noteFeaturesOf(an);
   const type = classifyType(an.feat, x);
   let id = pickSpeciesInType(type, an.feat, x);
-  /* v49 ノワールローズ専用ルート: 型を問わず、ゲート（ロングトーン型の形＋低く・太く・
-     暗い声）が満ちればノワールローズにする。虹（SSR）が立つテイクだけは上書きしない。
-     花名曲イベントの同定は、この後段で別途優先される（従来どおり） */
-  if (id !== 'noirrose' && id !== 'rainbow' && noirGate(an.feat, x.ltRel15)) id = 'noirrose';
+  /* ノワールローズ専用ルート（v49で新設、v52でゲートを作り替え）: 型を問わず、ゲート
+     （間＋短調＋低く・太い）が満ちればノワールローズにする。虹（SSR）が立つテイクだけは
+     上書きしない。花名曲イベントの同定は、この後段で別途優先される（従来どおり） */
+  if (id !== 'noirrose' && id !== 'rainbow' && noirGate(an.feat, x)) id = 'noirrose';
   return { sp: SPECIES.find(s => s.id === id) || SPECIES[0], type, x };
 }
 /* ========= v43 花名曲スペシャルイベント =========
@@ -3420,6 +3424,7 @@ function gardenApplyWilt(st){
 let gardenSelSeed = -1;
 async function openGarden(){
   $('gardenPage').style.display = 'block';
+  gardenRollWeather(); /* v52: 天気は開くたびに抽選し、開いている間は変えない */
   const st = await gardenLoad();
   if (gardenApplyWilt(st)) await gardenSave(st);
   if (st.wiltNotice){ $('gardenWilt').style.display = 'block'; st.wiltNotice = false; await gardenSave(st); }
@@ -3428,9 +3433,10 @@ async function openGarden(){
   $('gardenMsg').textContent = '';
   $('gardenPlantMsg').textContent = '';
   await renderGardenPage(st);
+  gardenAnimStart(); /* v52: 揺れ・天気のアニメーションはページ表示中だけ回す */
 }
 $('btn-garden-open').onclick = openGarden;
-$('btn-garden-back').onclick = () => { if (gardenSinging) finishGardenSing(); $('gardenPage').style.display = 'none'; };
+$('btn-garden-back').onclick = () => { if (gardenSinging) finishGardenSing(); gardenAnimStop(); $('gardenPage').style.display = 'none'; };
 function gardenDayInfo(st){
   const today = gardenTodayStr();
   const n = (st.day && st.day.d === today) ? st.day.n : 0;
@@ -3506,23 +3512,151 @@ async function gardenPlant(areaKey){
 $('btn-plant-left').onclick = () => gardenPlant('left');
 $('btn-plant-center').onclick = () => gardenPlant('center');
 $('btn-plant-right').onclick = () => gardenPlant('right');
+/* ========= v52 マイガーデンの天気（先生の発案: 庭を「ついつい覗きたくなる場所」に） =========
+   見た目だけの仕掛けで、成長・枯れ・種・回数などのルールには一切影響しない。
+   天気はガーデンを開くたびに抽選し、開いている間は変わらない（植える・歌うなどの
+   再描画でも維持される）。配分は 晴天42%・曇天26%・風20%・雨12%（晴天が最も多く、雨が最もレア）。
+   描画は負荷を抑えるため、状態が変わった時だけ株をオフスクリーンに描き直し（drawGardenScene）、
+   毎フレームは「背景＋株を根元中心に回して描く＋天気の重ね描き」だけを行う（gardenDrawFrame）。
+   アニメーションループはガーデンのページ表示中だけ回り、閉じれば確実に止まる */
+const GARDEN_WEATHERS = {
+  sunny:  { label: '☀️ 晴れ',   sway: 0.006 },
+  cloudy: { label: '☁️ くもり', sway: 0.009 },
+  wind:   { label: '🍃 風',     sway: 0.045 },
+  rain:   { label: '🌧️ 雨',     sway: 0.013 },
+};
+let gardenWeather = null;   /* 未抽選（検証などで openGarden を経ていない場合）は素の静止画になる */
+let gardenLayers = null;    /* { bg, stalks: [{ cv, rootX, gy, phase }] } */
+let gardenAnimId = null, gardenLastFrame = 0;
+function gardenRollWeather(){
+  const r = Math.random();
+  gardenWeather = r < 0.42 ? 'sunny' : r < 0.68 ? 'cloudy' : r < 0.88 ? 'wind' : 'rain';
+  const el = $('gardenWeather');
+  if (el) el.textContent = GARDEN_WEATHERS[gardenWeather].label;
+}
+/* 雨粒と風に舞う花びら: 位置は時刻の関数で決める（状態を持たないので、再描画やタブ復帰に強い） */
+const GARDEN_RAIN = [];
+for (let i = 0; i < 110; i++) GARDEN_RAIN.push({ x: (i * 173) % 940 - 20, y0: (i * 389) % 1200, len: 26 + (i % 5) * 7, spd: 620 + (i % 7) * 60 });
+const GARDEN_PETALS = [];
+for (let i = 0; i < 12; i++) GARDEN_PETALS.push({ x0: (i * 211) % 900, y0: 180 + (i * 67) % 620, spd: 46 + (i % 4) * 14, wob: 0.9 + (i % 3) * 0.35, ph: i * 1.37, leaf: i % 3 === 2 });
+function gardenDrawFrame(t){
+  const c = $('gardenStage');
+  if (!c || !gardenLayers) return;
+  const x = c.getContext('2d');
+  x.clearRect(0, 0, 900, 1125);
+  x.drawImage(gardenLayers.bg, 0, 0);
+  const W = gardenWeather ? GARDEN_WEATHERS[gardenWeather] : null;
+  for (const L of gardenLayers.stalks){
+    if (!W){ x.drawImage(L.cv, 0, 0); continue; }
+    /* 株ごとに位相をずらし、根元を中心に揺らす。風の日は突風で振幅がうねる。
+       他の天気でもごく小さく揺れる（静止画に見えない程度） */
+    let amp = W.sway;
+    if (gardenWeather === 'wind') amp *= 0.62 + 0.38 * Math.sin(t * 0.5 + 1.3) * Math.sin(t * 0.17);
+    const ang = amp * (Math.sin(t * 1.35 + L.phase) + 0.45 * Math.sin(t * 2.27 + L.phase * 1.7));
+    x.save();
+    x.translate(L.rootX, L.gy); x.rotate(ang); x.translate(-L.rootX, -L.gy);
+    x.drawImage(L.cv, 0, 0);
+    x.restore();
+  }
+  if (!W) return;
+  if (gardenWeather === 'sunny'){
+    /* 晴天: 光だまりと光の筋（透明度はゆっくり明滅する） */
+    const shim = 0.85 + 0.15 * Math.sin(t * 0.6);
+    const grd = x.createRadialGradient(450, 60, 60, 450, 60, 720);
+    grd.addColorStop(0, 'rgba(255,226,150,' + (0.20 * shim).toFixed(3) + ')');
+    grd.addColorStop(1, 'rgba(255,226,150,0)');
+    x.fillStyle = grd; x.fillRect(0, 0, 900, 1125);
+    x.fillStyle = 'rgba(255,214,120,0.07)'; x.fillRect(0, 0, 900, 1125);
+    for (let i = 0; i < 3; i++){
+      const bx = 190 + i * 250 + 26 * Math.sin(t * 0.23 + i * 2.1);
+      const bg2 = x.createLinearGradient(bx, 0, bx + 190, 0);
+      bg2.addColorStop(0, 'rgba(255,240,190,0)');
+      bg2.addColorStop(0.5, 'rgba(255,240,190,' + (0.13 * shim).toFixed(3) + ')');
+      bg2.addColorStop(1, 'rgba(255,240,190,0)');
+      x.save();
+      x.translate(bx, 0); x.rotate(0.32); x.translate(-bx, 0);
+      x.fillStyle = bg2; x.fillRect(bx - 30, -80, 250, 1000);
+      x.restore();
+    }
+  } else if (gardenWeather === 'cloudy'){
+    /* 曇天: 薄暗いグレーの色調＋ゆっくり流れる雲の影 */
+    x.fillStyle = 'rgba(84,94,110,0.30)'; x.fillRect(0, 0, 900, 1125);
+    for (let i = 0; i < 2; i++){
+      const cxp = ((t * (14 + i * 6) + i * 480) % 1300) - 200;
+      const cg = x.createRadialGradient(cxp, 190 + i * 260, 40, cxp, 190 + i * 260, 330);
+      cg.addColorStop(0, 'rgba(50,58,72,0.16)');
+      cg.addColorStop(1, 'rgba(50,58,72,0)');
+      x.fillStyle = cg; x.fillRect(0, 0, 900, 1125);
+    }
+  } else if (gardenWeather === 'rain'){
+    /* 雨: やや暗く＋斜めに流れる雨筋 */
+    x.fillStyle = 'rgba(48,60,82,0.26)'; x.fillRect(0, 0, 900, 1125);
+    x.strokeStyle = 'rgba(198,220,248,0.55)';
+    x.lineWidth = 2.4;
+    x.beginPath();
+    for (const d of GARDEN_RAIN){
+      const yy = ((d.y0 + t * d.spd) % 1240) - 60;
+      const hx = d.x + yy * 0.12;
+      x.moveTo(hx - d.len * 0.12, yy - d.len);
+      x.lineTo(hx, yy);
+    }
+    x.stroke();
+  } else if (gardenWeather === 'wind'){
+    /* 風: 花びらと葉が横に舞う */
+    for (const p of GARDEN_PETALS){
+      const px = ((p.x0 + t * p.spd) % 980) - 40;
+      const py = p.y0 + Math.sin(t * p.wob + p.ph) * 26;
+      x.save();
+      x.translate(px, py); x.rotate(t * 1.8 + p.ph);
+      x.fillStyle = p.leaf ? 'rgba(122,158,84,0.55)' : 'rgba(238,158,186,0.60)';
+      x.beginPath(); x.ellipse(0, 0, 9, 5, 0, 0, 6.3); x.fill();
+      x.restore();
+    }
+  }
+}
+function gardenAnimStart(){
+  if (gardenAnimId != null) return; /* 開くたびに呼んでもループは増殖しない */
+  const step = (ts) => {
+    gardenAnimId = null;
+    const pg = $('gardenPage');
+    if (!pg || pg.style.display === 'none') return; /* ページが閉じていたら、そのまま止まる */
+    if (ts - gardenLastFrame >= 33){ gardenLastFrame = ts; gardenDrawFrame(ts / 1000); } /* 約30fpsに抑制 */
+    gardenAnimId = requestAnimationFrame(step);
+  };
+  gardenAnimId = requestAnimationFrame(step);
+}
+function gardenAnimStop(){
+  if (gardenAnimId != null){ cancelAnimationFrame(gardenAnimId); gardenAnimId = null; }
+}
 /* ---- ガーデンの舞台描画（本体の株描画を流用し、ガーデン専用の縮小係数で描く） ---- */
 async function drawGardenScene(st){
   const c = $('gardenStage');
   if (!c) return;
-  const x = c.getContext('2d');
-  const bg = await loadImg(A3 + 'garden-bg.jpg');
-  x.clearRect(0, 0, 900, 1125);
-  if (bg) x.drawImage(bg, 0, 0, 900, 1125);
+  /* v52: 状態が変わった時だけ、背景と株をオフスクリーンに描き直す。
+     毎フレームの合成は gardenDrawFrame が担う（揺れ・天気のため） */
+  const bgImg = await loadImg(A3 + 'garden-bg.jpg');
+  const bgCv = document.createElement('canvas');
+  bgCv.width = 900; bgCv.height = 1125;
+  const bx = bgCv.getContext('2d');
+  if (bgImg) bx.drawImage(bgImg, 0, 0, 900, 1125);
   const seedImg = await loadImg(A5 + 'seed-icon.webp');
+  const stalks = [];
   for (const key of ['left', 'right', 'center']){
     const area = st.areas[key];
     if (!area) continue;
     const sp = SPECIES.find(s => s.id === area.sp);
     if (!sp) continue;
     const order = [0, 2, 1].filter(i => i < area.stocks.length);
-    for (const i of order) await drawGardenStalk(x, key, area, sp, area.stocks[i], i, seedImg);
+    for (const i of order){
+      const cv = document.createElement('canvas');
+      cv.width = 900; cv.height = 1125;
+      await drawGardenStalk(cv.getContext('2d'), key, area, sp, area.stocks[i], i, seedImg);
+      const pos = GARDEN_AREAS[key], off = GARDEN_STALK_OFF[i] || GARDEN_STALK_OFF[1];
+      stalks.push({ cv, rootX: pos.x + off.dx, gy: pos.gy + off.dy, phase: (hashStr(key + ':' + i + ':' + area.sp) % 628) / 100 });
+    }
   }
+  gardenLayers = { bg: bgCv, stalks };
+  gardenDrawFrame(performance.now() / 1000);
 }
 async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
   const pos = GARDEN_AREAS[areaKey], off = GARDEN_STALK_OFF[idx] || GARDEN_STALK_OFF[1];
