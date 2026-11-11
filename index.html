@@ -280,7 +280,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v56'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v57'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -1223,6 +1223,20 @@ function robustRangeOf(ns){
   const at = q => { let acc = 0; for (const n of sorted){ acc += (n.dur || 0) || (tot / sorted.length); if (acc >= q * tot) return n.midi; } return sorted[sorted.length - 1].midi; };
   return at(0.95) - at(0.05);
 }
+/* v57: p98long（壁・ユリ受け皿専用の音域物差し。調査 inv57 で確定）:
+   頑健音域 rob は実音域を系統的に約 −2 半音狭く読む（実14→12、実12→9〜10、実9→7）。
+   0.25 秒以上の音だけを対象にした 2〜98 パーセンタイル幅は、短い装飾音・読み違いの
+   端数を捨てつつ実音域に一致する（クリーン26曲で全曲一致を実証）。壁と受け皿の
+   音域判定に限って max(rob, p98long) を使う。他の判定（型マーカー等）は rob のまま */
+function p98longOf(ns){
+  if (!ns || !ns.length) return 0;
+  const use = ns.filter(n => (n.dur || 0) >= 0.25);
+  if (!use.length) return 0;
+  const sorted = use.slice().sort((a, b) => a.midi - b.midi);
+  const tot = sorted.reduce((s, n) => s + (n.dur || 0), 0) || sorted.length;
+  const at = q => { let acc = 0; for (const n of sorted){ acc += (n.dur || 0) || (tot / sorted.length); if (acc >= q * tot) return n.midi; } return sorted[sorted.length - 1].midi; };
+  return at(0.98) - at(0.02);
+}
 /* v55: フレーズ末ロングトーンの回数（T7 再定義の物差し。検証 t7new の (b) 定義と同一）:
    各フレーズの最終音が 1.5 秒以上なら 1 回と数える。フレーズ途中の持続音は数えない
    （クライマックスで途中を伸ばす歌と、フレーズの終わりで伸ばす賛美歌を分ける要） */
@@ -1263,6 +1277,7 @@ function noteFeaturesOf(an){
   /* v55: 壁と新マーカーの材料（頑健音域・フレーズ末ロングトーン回数・音の密度）。
      密度 dens = 音数 ÷ 歌唱スパンは、ワタアメローズの「間」の物差し（COTTON_DENS_MAX の注記参照） */
   x.robRange = robustRangeOf(notes);
+  x.p98long = p98longOf(notes);
   x.phraseEndLT = phraseEndLTOf(an, notes);
   x.gridDev = gridDevOf(an);
   {
@@ -1491,12 +1506,20 @@ function galaxyShape(f, x){
   return ((x.turns || 0) >= 16 && (f.segFeat || 0) >= 8)
     || ((f.rangeSemis || 0) >= 11.5 && (f.rangeSemis || 0) <= 13.7 && (x.revShare || 0) >= 0.42 && (x.peakPos || 0) <= 0.30);
 }
-function selectSpeciesNew(an){
-  const f = an.feat;
-  const x = noteFeaturesOf(an);
-  const type = classifyType(f, x);
+function selectSpeciesNew(an, ov){
+  const f = (ov && ov.f) || an.feat;
+  const x = (ov && ov.x) || noteFeaturesOf(an);
+  const type = (ov && ov.type) || classifyType(f, x);
   let id = pickSpeciesInType(type, f, x);
-  const cl = srClaimsOf(f, x);
+  const cl = (ov && ov.cl) || srClaimsOf(f, x);
+  /* v57: 銀行済みの主張は型の中でも蒸発しない。チューリリー（T4）とシャボンアヤメ（T9）は
+     専用ルートが無く、主張の保護はこの2行が担う（スキル脚は銀行済み特徴量からも立つため
+     通常は pickSpeciesInType が先に返す。これは平均系の脚＝声域・太さが、最終時点の
+     全体平均で崩れた場合の保険で、主張そのものは「最も良い窓」で評価して銀行してある） */
+  if (ov && ov.cl){
+    if (type === 'T4' && cl.tulilily) id = 'tulilily';
+    else if (type === 'T9' && cl.bubble) id = 'bubble';
+  }
   /* v56 憲法の完全実施（判定順序は SSR→SR→R→N）:
      イベント同定（この関数の外・最優先）→ 型内（SR>R>N）→ 虹ルート（SSR:
      主張+形が立てば何よりも優先）→ ノワールルート（v52 確定ゲート。虹だけは
@@ -1510,7 +1533,10 @@ function selectSpeciesNew(an){
     if (cl.crystal && crystalShape(x)) id = 'crystal';
     else if (cl.galaxy && galaxyShape(f, x)) id = 'galaxy';
   }
-  const rob = (x.robRange !== undefined ? x.robRange : (f.rangeSemis || 0));
+  /* v57: 壁とユリ受け皿の音域判定だけ、物差しを max(rob, p98long) に差し替える
+     （p98longOf の注記参照。rob は実音域を系統的に狭く読み、広いバラードが
+     「1オクターブ未満＋ロングトーン主体」の受け皿に吸われていた） */
+  const rob = Math.max((x.robRange !== undefined ? x.robRange : (f.rangeSemis || 0)), x.p98long || 0);
   const wallStep = () => { if (N_SET.has(id) && id !== 'dahlia' && rob >= WALL_ROB_MIN) id = wallDestOf(type, f, x) || 'hotlips'; };
   wallStep();
   /* v56 ユリ受け皿マーカー（最後尾）: v55 では型内判定の直後・壁より前に座り、
@@ -2560,9 +2586,74 @@ let liveClosed = false;
 let xform = null, xformCand = null, xformCandSince = 0, awakenUsed = false, henshinUsed = false;
 /* v36 ①: 25秒までは「確定候補」を貯めるだけにし、26秒で種類・色・株を一度だけ確定する */
 let pendingFinal = null, pendingType = null, liveType = null, finalised26 = false, settleT0 = null;
+/* v57 判定方式（先生の設計の核心「数えた証拠は減らない」を、主張と物差しに取り込んだ形）:
+   型は v56 の骨格（仮判定の型＋持続した挑戦者による変身）で決め、種は確定時に
+   銀行済み証拠つきで決め直す。SR/SSR の「主張」は 15 秒以降の更新のたびに
+   評価し、一度でも立てば selBank に銀行されて 26 秒の確定でも保持される
+   （連続方式）。平均系の脚（声域・太さ・
+   調の被覆率など）は各リフレッシュの判定そのものをラッチするため「最も良い窓」で
+   評価したことになり、数える系の証拠（ビブラート総量・フレーズ末LT回数・間の最大値）
+   は最大値で累積する。前半で立った SR が後半の平均に薄まって蒸発する事故
+   （実機: CAN YOU CELEBRATE? のアヤメ→ユリ）への対策。形ガードは最終窓で評価する。
+   型の 15 秒固定（アンカー）は実測で破壊的（15 秒時点の型は最終型と 67% 不一致で、
+   固定すると基本種が洪水になる）だったため採用しない。検証 inv57 */
+let selBank = null;
 /* v43: 花名曲イベントで同定できた曲名。イベントの花が実際に咲いた時だけ確定時に記録する
    （フラワーメッセージの専用妖精 fairy-4 と、曲名入りの専用行の出し分けに使う） */
 let liveEventSong = null;
+/* v57 銀行: 主張と、主張を組み立てる証拠を貯める器 */
+function newSelBank(){
+  return { claims: { rainbow: false, crystal: false, tulilily: false, galaxy: false, bubble: false, noir: false },
+    vibSec: 0, phraseEndLT: 0, maxGap: 0,
+    keyCov: 0, keyVoteShare: 0, noteCount: 0,
+    tempoStable: false, gridDev: null };
+}
+/* 銀行への入金: 主張（claims）は 15 秒以降の更新のたびに評価し、一度でも立った
+   主張はラッチする（連続方式。＝平均系の脚は「最も良い窓」で評価される）。
+   チェックポイントを後ろに増やす案（25 秒など）は、その時点では最終判定とほぼ
+   同じデータになっており希釈を避けられないため、「いつ立っても記録する」形が
+   先生の意図（数えた証拠は減らない）を最も強く実現する。誤った主張の銀行が
+   ファズで増える分は計測して報告し、増分が大きい場合は固定2回に戻す判断があり得る。
+   数える系の証拠は毎回の入金で最大値で累積し、gridDev は「ずれ」の量なので最小値で
+   貯める。貯めたものは以後減らない */
+function bankUpdate(an, xIn){
+  if (!selBank) return;
+  const f = an.feat, x = xIn || noteFeaturesOf(an);
+  const cl = srClaimsOf(f, x);
+  for (const k in selBank.claims) if (cl[k]) selBank.claims[k] = true;
+  const mx = (a, b) => Math.max(a || 0, b || 0);
+  selBank.vibSec = mx(selBank.vibSec, f.vibSec);
+  selBank.phraseEndLT = mx(selBank.phraseEndLT, x.phraseEndLT);
+  selBank.maxGap = mx(selBank.maxGap, x.maxGap);
+  selBank.keyCov = mx(selBank.keyCov, f.keyCov);
+  selBank.keyVoteShare = mx(selBank.keyVoteShare, f.keyVoteShare);
+  selBank.noteCount = mx(selBank.noteCount, f.noteCount);
+  if (f.tempoStable) selBank.tempoStable = true;
+  if (x.gridDev !== null && x.gridDev !== undefined) selBank.gridDev = selBank.gridDev === null ? x.gridDev : Math.min(selBank.gridDev, x.gridDev);
+}
+/* 確定用の特徴量: 最終窓の解析に銀行済みの蓄積を重ねる。重ねるのは「数える系」の
+   証拠と、スキル判定の単調な材料だけ。比率・平均・音域の物差しは最終窓の値を
+   そのまま使う（壁・受け皿の音域は p98long との max で別途差し替えてある） */
+function bankedFeat(an){
+  const f = Object.assign({}, an.feat);
+  if (!selBank) return f;
+  const mx = (a, b) => Math.max(a || 0, b || 0);
+  f.vibSec = mx(f.vibSec, selBank.vibSec);
+  f.noteCount = mx(f.noteCount, selBank.noteCount);
+  f.keyCov = mx(f.keyCov, selBank.keyCov);
+  f.keyVoteShare = mx(f.keyVoteShare, selBank.keyVoteShare);
+  if (selBank.tempoStable) f.tempoStable = true;
+  return f;
+}
+function bankedX(an){
+  const x = noteFeaturesOf(an);
+  if (!selBank) return x;
+  const mx = (a, b) => Math.max(a || 0, b || 0);
+  x.phraseEndLT = mx(x.phraseEndLT, selBank.phraseEndLT);
+  x.maxGap = mx(x.maxGap, selBank.maxGap);
+  if (selBank.gridDev !== null) x.gridDev = (x.gridDev === null || x.gridDev === undefined) ? selBank.gridDev : Math.min(x.gridDev, selBank.gridDev);
+  return x;
+}
 async function refreshLive(t){
   if (liveClosed) return;
   if (liveBusy){ livePending = true; return; }
@@ -2581,6 +2672,9 @@ async function refreshLiveInner(t){
     const sel = selectSpeciesNew(an);
     const sp = sel.sp;
     liveSpecies = sp; liveLockedAt = t; liveType = sel.type;
+    /* v57: 銀行を開く（仮判定の時点で立っていた主張・証拠が最初の入金になる） */
+    selBank = newSelBank();
+    bankUpdate(an, sel.x);
     /* v43: 入れ替え候補になりやすい花（同じタイプの他種と、次点タイプで選ばれる花）は
        画像を先読みしておく（26秒の確定を読み込み待ちにしないため） */
     const preloadIds = new Set(TYPE_MEMBERS[sel.type] || []);
@@ -2595,14 +2689,29 @@ async function refreshLiveInner(t){
     return;
   }
   if (!liveStocks) return;
+  /* v57: 確定までの各リフレッシュで銀行へ入金する（主張も証拠も毎回評価し、
+     一度立ったものは残る） */
+  if (selBank && !finalised26) bankUpdate(an, null);
   /* v36 ①: 26秒の確定。この瞬間に種類・色・株を一度だけ決め直し、以後は変えない。
      育ててきた花と違う結果になった時だけ「覚醒✨」「変身⁉」として見せる（静かに差し替えない）。
      種類が同じなら、色だけを歌全体の特徴で決め直し、ベールの中で静かに落ち着かせる */
   if (!finalised26 && t >= 26){
     finalised26 = true;
     const prevSp = liveSpecies, prevType = liveType;
-    let target = (pendingFinal && pendingFinal.id !== prevSp.id) ? pendingFinal : prevSp;
-    let targetType = (pendingFinal && pendingFinal.id !== prevSp.id) ? pendingType : liveType;
+    /* v57: 確定の「型」は v56 の骨格のまま（仮判定の型を持続した挑戦者が覆した場合だけ
+       その型へ＝変身）。ただし「種」は最終窓の再判定で決め直し、その入力に銀行済み
+       証拠を重ねる。型を最終窓で即時再判定する形は、終盤の型の揺れで確定が崩れる
+       （実測: ドレミで最後の1秒に型が流れ、チューリリー→ゴールドベルに崩壊）ため採らない。
+       銀行が無い異常時は仮判定の花を引き継ぐ */
+    let target = prevSp, targetType = prevType;
+    if (selBank){
+      const fb = bankedFeat(an), xb = bankedX(an);
+      const clB = srClaimsOf(fb, xb);
+      for (const k in selBank.claims) if (selBank.claims[k]) clB[k] = true;
+      targetType = (pendingFinal && pendingFinal.id !== prevSp.id) ? (pendingType || prevType) : prevType;
+      const selF = selectSpeciesNew(an, { f: fb, x: xb, cl: clB, type: targetType });
+      target = selF.sp;
+    }
     /* v43: 花名曲スペシャルイベント。同定できた曲の花は、タイプや条件に関係なく咲く */
     const ev = matchEventDetail(an);
     const evSp = ev ? ev.sp : null;
@@ -2669,7 +2778,9 @@ async function refreshLiveInner(t){
   garden = liveStocks;
   /* ===== 確定候補の判定（17〜25秒） =====
      後半の歌で別の花が「はっきり上回った」状態が約1.2秒続いたら、26秒確定の候補として保持する。
-     この時点ではまだ入れ替えない（v36 ①: 入れ替えは26秒に一度だけ、出来事として見せる） */
+     この時点ではまだ入れ替えない（v36 ①: 入れ替えは26秒に一度だけ、出来事として見せる）
+     v57: 確定の「型」はこの候補追跡（v56 の骨格）で決め、「種」は確定時に銀行済み
+     証拠つきで決め直す。候補種の画像先読みも従来どおりここで行う */
   if (!finalised26 && t >= 17 && t <= 25){
     const sel = selectSpeciesNew(an);
     const cand = sel.sp;
@@ -2853,7 +2964,7 @@ $('btn-start').onclick = async () => {
   $('result').style.display = 'none'; $('result').classList.remove('gone'); $('stagewrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   stopAll(); liveSpecies = null; liveStocks = null; liveLockedAt = 0; stemR = 0.5; colorSatMul = 1; garden = null; liveDispMap = new Map(); livePrevT = null; liveClosed = false;
   xform = null; xformCand = null; awakenUsed = false; henshinUsed = false;
-  pendingFinal = null; pendingType = null; liveType = null; finalised26 = false; settleT0 = null; liveEventSong = null;
+  pendingFinal = null; pendingType = null; liveType = null; finalised26 = false; settleT0 = null; liveEventSong = null; selBank = null;
   const btn = $('btn-start');
   btn.disabled = true;
   /* 3・2・1 カウントイン */
@@ -2930,7 +3041,7 @@ function restartTake(){
   liveSpecies = null; liveStocks = null; liveLockedAt = 0; stemR = 0.5; garden = null;
   liveDispMap = new Map(); livePrevT = null; liveClosed = false;
   xform = null; xformCand = null; awakenUsed = false; henshinUsed = false;
-  pendingFinal = null; pendingType = null; liveType = null; finalised26 = false; settleT0 = null; liveEventSong = null;
+  pendingFinal = null; pendingType = null; liveType = null; finalised26 = false; settleT0 = null; liveEventSong = null; selBank = null;
   frames = [];
   $('btn-finish').style.display = 'none';
   resetStartBtn();
