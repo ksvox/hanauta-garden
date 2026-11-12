@@ -280,7 +280,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v57'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v58'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -981,7 +981,7 @@ function flowerCurve(R){ return R <= 0.8 ? 0.1 + R : 0.9 + 0.5 * (R - 0.8); }
 const SR_SET = new Set(['crystal','galaxy','noirrose','tulilily','bubble']);
 const SSR_SET = new Set(['rainbow']);
 /* フラワーメッセージの妖精2用（従来の第2層） */
-const TIER2_SET = new Set(['lantern','goldbell','firefly','moonring','candy','cotton','mobius','sakura','featherflower']);
+const TIER2_SET = new Set(['lantern','goldbell','firefly','moonring','candy','cotton','mobius','sakura','featherflower','swirl']); /* v58: 渦巻きが全ティア集合から漏れていた実バグの修正（監査で全26種がちょうど1集合に属することを確認済み） */
 function skillA(f){ return (f.keyCov || 0) >= 0.78 || ((f.keyCov || 0) >= 0.70 && (f.keyVoteShare || 0) >= 0.65); }
 function skillB(f){ return (f.noteCount || 0) >= 8 && !!f.tempoStable; }
 /* ビブラート要件（秒）。銀河は T8 のロングトーン予算では 1.5 に届かないため 1.2（DESIGN.md §7） */
@@ -1055,6 +1055,17 @@ function wallDestOf(type, f, x){
     case 'T9': return 'lantern';                /* 既定（実測では発火例ほぼゼロ） */
     default: return null;                       /* T6/T8/T10/T11 の着地は元から R 以上（ダリアは例外で壁を通らない） */
   }
+}
+/* v58 ティア順位（先生の階層: SSR＞SR＞R＞N）。ダウングレード禁止ルールと
+   覚醒バナーの「格」の判定に使う。イベント種（eventOnly）と hotlips はティアの外
+   として -1 を返し、どちらの判定の対象にもしない。R は「通常種のうち N/SR/SSR
+   以外」で数える（集合の側は TIER2_SET が R と一致する。渦巻き漏れの監査参照） */
+function tierRankOf(sp){
+  if (!sp || sp.eventOnly) return -1;
+  if (SSR_SET.has(sp.id)) return 3;
+  if (SR_SET.has(sp.id)) return 2;
+  if (N_SET.has(sp.id)) return 0;
+  return 1;
 }
 /* v54 ヒマワリの「声域上昇」ライン（先生の提案「音階が上行しながら声域も上昇する」）: 半音。
    走査（検証 scan54、560テイク）: ドレミ様式の tessRise は中央値 +3.05 半音（p10 でも +1.99）と
@@ -2712,6 +2723,13 @@ async function refreshLiveInner(t){
       const selF = selectSpeciesNew(an, { f: fb, x: xb, cl: clB, type: targetType });
       target = selF.sp;
     }
+    /* v58 ダウングレード禁止（先生の憲法追加）: 最終判定のティアは、15 秒の仮判定の
+       ティアを下回らない。確定種が仮判定の種より低ティアなら、仮判定の種に戻す
+       （種が変わらないので株の作り直しもバナーも起きない）。格上げと同格の変化は
+       従来どおり。イベント種・hotlips はティアの外（対象外）で、花名曲イベントの
+       同定はこの後段で従来どおり上書きする（イベントが最上位） */
+    const rkT = tierRankOf(target), rkP = tierRankOf(prevSp);
+    if (rkT >= 0 && rkP > rkT){ target = prevSp; targetType = prevType; }
     /* v43: 花名曲スペシャルイベント。同定できた曲の花は、タイプや条件に関係なく咲く */
     const ev = matchEventDetail(an);
     const evSp = ev ? ev.sp : null;
@@ -2747,12 +2765,11 @@ async function refreshLiveInner(t){
     /* イベントの花が実際に着地した時だけ、一致した曲名を記録する */
     liveEventSong = (evSp && evSp.id === target.id) ? ev.title : null;
     pendingFinal = null; pendingType = null;
-    const toUpper = SR_SET.has(target.id) || SSR_SET.has(target.id);
-    const fromUpper = SR_SET.has(prevSp.id) || SSR_SET.has(prevSp.id);
-    /* v43: 対応関係は先生の決定どおり。タイプが変われば「変身⁉」、
-       同じタイプの中で SR/SSR に届けば「覚醒✨」。イベントの花は「変身⁉」として見せる */
-    const type = (targetType && prevType && targetType !== prevType) ? 'henshin'
-      : (toUpper && !fromUpper) ? 'awaken' : 'henshin';
+    /* v58: 覚醒✨は「最終種が SR/SSR で、仮判定より格が上がった」場合に限る
+       （先生の決定。同型内の上昇も、型を跨いだ上昇も、どちらも覚醒）。
+       SR 未満への格上げ（N→R 等）と同格の種変化は「変身⁉」。
+       イベントの花はティアの外（tierRankOf = -1）なので従来どおり「変身⁉」 */
+    const type = (tierRankOf(target) >= 2 && tierRankOf(target) > tierRankOf(prevSp)) ? 'awaken' : 'henshin';
     const dur = type === 'awaken' ? 2.6 : 1.6;
     if (type === 'awaken') awakenUsed = true; else henshinUsed = true;
     /* v38: 表示の時計は「26秒」ではなく、入れ替えが実際に反映された瞬間から数える。
