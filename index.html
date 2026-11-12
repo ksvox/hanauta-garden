@@ -280,7 +280,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v58'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v59'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -771,18 +771,21 @@ function analyzeFrames(fr){
   }));
   const vibratoDepth = vibNotes ? (vibDepthSum / vibNotes) * 100 : 0; /* セント */
   const vibratoPresent = vibNotes >= 2 || (vibNotes >= 1 && vibratoDepth >= 42);
-  /* v36: ビブラート秒数（SR4種の個別条件用）。ビブラートは長い音にかけるものなので、
-     対象は1.5秒以上の音だけ。音の立ち上がり0.5秒は除き、残りを0.6秒窓で走査して
-     「周期的な揺れが続いている時間」の合計を出す。短い音の震えは数えない */
+  /* v36: ビブラート秒数（SR4種の個別条件用）。「周期的な揺れが続いている時間」の合計。
+     v59: 数え方を V2 に差し替え（対象は1.0秒以上の音、立ち上がり除外は0.35秒、窓は0.5秒）。
+     旧方式（1.5秒以上・除外0.5・窓0.6）では『きよしこの夜』（フレーズ末1.56秒×5＋
+     最終音2.08秒）の理論最大が約3.5秒しかなく、水晶の規定4.0秒に構造的に届かなかった
+     （調査 legato58: 実測最大3.6秒、1.0〜1.5秒の音はビブラートが乗っても0秒扱い）。
+     規定値の梯子（銀河1.2／水晶4.0／虹6.0秒）は変えない。検証 pevar/legato58 の V2 と同一方式 */
   let vibSec = 0;
   P.forEach(p => (p.segs || []).forEach(sg => {
     const dur = sg.t1 - sg.t0 + 0.05;
-    if (dur < 1.5 || sg.midis.length < 12) return;
+    if (dur < 1.0 || sg.midis.length < 12) return;
     const xs = sg.midis, n = xs.length;
     const dt = (sg.t1 - sg.t0) / Math.max(1, n - 1);
     if (!(dt > 0.02 && dt < 0.12)) return;
-    const iFrom = Math.min(n - 2, Math.floor(0.5 / dt));
-    const winN = Math.max(6, Math.round(0.6 / dt)), stepN = Math.max(1, Math.round(0.1 / dt));
+    const iFrom = Math.min(n - 2, Math.floor(0.35 / dt));
+    const winN = Math.max(6, Math.round(0.5 / dt)), stepN = Math.max(1, Math.round(0.1 / dt));
     for (let i0 = iFrom; i0 + winN <= n; i0 += stepN){
       const m = winN, meanT = (m - 1) / 2;
       let meanX = 0; for (let i = 0; i < m; i++) meanX += xs[i0 + i]; meanX /= m;
@@ -1262,6 +1265,22 @@ function phraseEndLTOf(an, ns){
   }
   return pe;
 }
+/* v59: 水晶ルートの形ガード専用の物差し。フレーズ末ロングトーンを、オルゴール加工前の
+   生フレーズ音符（phrases の notes の最終音）で、1.1 秒以上を 1 回として数える。
+   共有の phraseEndLT（加工後の音符・1.5秒）は抽出とオルゴール加工の二段で末尾が削られ、
+   『きよしこの夜』のフレーズ末（原曲1.56秒）が実測1.20〜1.45秒に集まって ≥3 回が
+   両モデルで 0/40 しか立たなかった（調査 pevar: 生・1.1秒では 23〜24/30 で立つ）。
+   T7 マーカーと共有定義は変えず、ガードにだけこの物差しを使う */
+function phraseEndRawOf(an){
+  const P = (an && an.phrases) || [];
+  let pe = 0;
+  for (const p of P){
+    const ns = p.notes || [];
+    const last = ns.length ? ns[ns.length - 1] : null;
+    if (last && (last.dur || 0) >= 1.1) pe++;
+  }
+  return pe;
+}
 /* v55: gridDev（チューリリーの「音程の脚」。検証 inv-stab の定義と同一）:
    抽出された各音の中心（生の音高）が半音グリッドから外れている量の平均絶対偏差（セント）。
    全体の中央値オフセット（移調・全体的なシャープ/フラット）は差し引くので、キーが
@@ -1290,6 +1309,7 @@ function noteFeaturesOf(an){
   x.robRange = robustRangeOf(notes);
   x.p98long = p98longOf(notes);
   x.phraseEndLT = phraseEndLTOf(an, notes);
+  x.phraseEndRaw = phraseEndRawOf(an);
   x.gridDev = gridDevOf(an);
   {
     const srt = (notes || []).slice().sort((a, b) => a.start - b.start);
@@ -1496,8 +1516,9 @@ function srClaimsOf(f, x){
    虹 = 広音域クライマックス型（T11）のマーカー形そのもの。型判定で T7/T2 等の
         先行マーカーに奪われて T11 に届かないテイクを救う（ファズA で 7 件救済、
         うち 6 件はユリ受け皿に盗まれていた広いバラード）
-   水晶 = フレーズ末ロングトーン ≥3 回（賛美歌の形そのもの、先生の T7 定義と同一）。
-        型が T2 に崩壊した『きよしこの夜』テイク（ファズA で 8 件）を救う
+   水晶 = フレーズ末ロングトーン ≥3 回（賛美歌の形そのもの）。
+        型が T2 に崩壊した『きよしこの夜』テイク（ファズA で 8 件）を救う。
+        v59: ガードの物差しだけ専用化（生フレーズ音符・1.1秒。phraseEndRawOf 参照）
    銀河 = 半音往復型（T8）のマーカー形そのもの（折り返し多発 or 小反復の往復）
    チューリリーとシャボンアヤメには専用ルートを作らない（型内のまま）:
      チューリリー — 主張（A∧B∧gridDev≤16）が非特異で「上手く歌えた歌」ほぼ全てに
@@ -1512,7 +1533,9 @@ function rainbowShape(f){
   const r = f.rangeSemis || 0;
   return r >= 12 && (f.longToneRatio || 0) >= 0.30 && (f.changesPer4s || 0) <= 3.2 && (f.noteCount || 0) <= 22;
 }
-function crystalShape(x){ return (x.phraseEndLT || 0) >= T7_PHRASE_END_LT_MIN; }
+/* v59: 水晶の形ガードは専用物差し（生フレーズ音符・1.1秒以上が3回以上）に差し替え。
+   回数の規定（3回）は変えていない。phraseEndRawOf の注記参照 */
+function crystalShape(x){ return (x.phraseEndRaw || 0) >= 3; }
 function galaxyShape(f, x){
   return ((x.turns || 0) >= 16 && (f.segFeat || 0) >= 8)
     || ((f.rangeSemis || 0) >= 11.5 && (f.rangeSemis || 0) <= 13.7 && (x.revShare || 0) >= 0.42 && (x.peakPos || 0) <= 0.30);
@@ -1556,11 +1579,15 @@ function selectSpeciesNew(an, ov){
      主張が立っていた = 憲法違反）。順序を最後尾へ移し、二つのガードを足す:
      (1) 強い SR の主張（チューリリー/水晶/虹/ノワール）が立つ歌には黙る
      (2) ダリア（先生の例外）は奪わない。
-     脚は v55 検証 (i) の定義のまま: 頑健音域 <12 かつロングトーン主体
-     （LT率 ≥0.50 または相対ロングトーン ≥0.48）。脚を締めると正当な賛美歌でも
-     届かずユリが絶滅する（検証 V6 系）。出力にも壁を通す */
+     脚は v55 検証 (i) の定義で: 頑健音域 <12 かつロングトーン主体。出力にも壁を通す。
+     v59: 脚を M9 に変更（調査 legato58）。レガート下では絶対LT脚（≥0.50）は中央値
+     0.24 で死に、発火は実質 ltRel15 の単独脚になっていた。ltRel15 ≥0.48 に
+     LT率 ≥0.15 の下限を足すと、狭い賛美歌の生息地（7/20）を全量保持したまま、
+     ポップスバラード『奏』の横取りが 4/20→0 になった（ファズのユリも 1→0）。
+     LT率は低いラインで使えば末尾保持の回数差（賛美歌 0.18〜0.45 vs バラード
+     0.07〜0.10）を拾えるため、絶滅側には倒れない */
   const strongSR = cl.tulilily || cl.crystal || cl.rainbow || cl.noir;
-  if (rob < 12 && ((f.longToneRatio || 0) >= 0.50 || (x.ltRel15 || 0) >= 0.48) && N_SET.has(id) && id !== 'lily' && id !== 'dahlia' && !strongSR) id = 'lily';
+  if (rob < 12 && (x.ltRel15 || 0) >= 0.48 && (f.longToneRatio || 0) >= 0.15 && N_SET.has(id) && id !== 'lily' && id !== 'dahlia' && !strongSR) id = 'lily';
   wallStep();
   return { sp: SPECIES.find(s => s.id === id) || SPECIES[0], type, x };
 }
@@ -2615,7 +2642,7 @@ let liveEventSong = null;
 /* v57 銀行: 主張と、主張を組み立てる証拠を貯める器 */
 function newSelBank(){
   return { claims: { rainbow: false, crystal: false, tulilily: false, galaxy: false, bubble: false, noir: false },
-    vibSec: 0, phraseEndLT: 0, maxGap: 0,
+    vibSec: 0, phraseEndLT: 0, phraseEndRaw: 0, maxGap: 0,
     keyCov: 0, keyVoteShare: 0, noteCount: 0,
     tempoStable: false, gridDev: null };
 }
@@ -2635,6 +2662,7 @@ function bankUpdate(an, xIn){
   const mx = (a, b) => Math.max(a || 0, b || 0);
   selBank.vibSec = mx(selBank.vibSec, f.vibSec);
   selBank.phraseEndLT = mx(selBank.phraseEndLT, x.phraseEndLT);
+  selBank.phraseEndRaw = mx(selBank.phraseEndRaw, x.phraseEndRaw);
   selBank.maxGap = mx(selBank.maxGap, x.maxGap);
   selBank.keyCov = mx(selBank.keyCov, f.keyCov);
   selBank.keyVoteShare = mx(selBank.keyVoteShare, f.keyVoteShare);
@@ -2661,6 +2689,7 @@ function bankedX(an){
   if (!selBank) return x;
   const mx = (a, b) => Math.max(a || 0, b || 0);
   x.phraseEndLT = mx(x.phraseEndLT, selBank.phraseEndLT);
+  x.phraseEndRaw = mx(x.phraseEndRaw, selBank.phraseEndRaw);
   x.maxGap = mx(x.maxGap, selBank.maxGap);
   if (selBank.gridDev !== null) x.gridDev = (x.gridDev === null || x.gridDev === undefined) ? selBank.gridDev : Math.min(x.gridDev, selBank.gridDev);
   return x;
@@ -4680,8 +4709,41 @@ function playOrgel(){
      無関係になり、実機で「テンポとメロディが全く合っていない」原因になったため廃止。
      格子が確定しなかった歌（orgelForceGrid でも乗せられなかった歌）ではシェイカーを入れない */
   if (isSR && orgelGrid){
-    const k = Math.max(1, Math.min(6, Math.round(0.5 / orgelGrid.u)));
-    const B = orgelGrid.u * k, beat0 = orgelGrid.s0 + orgelGrid.ph;
+    /* v59: 拍の決め方を差し替え（調査 inv-shaker）。旧方式は周期を約0.5秒に寄せるだけ
+       （k = round(0.5/u)）で、曲の拍とは無関係だった: 拍0.60→0.456、3拍子0.75→0.504、
+       賛美歌0.85→0.424 の倍速刻みになり、位相が裏返る（メロディが −1 番線に吸着した
+       テイクで全打撃が半拍ずれる）こともあった。新方式は2段:
+       (1) 系列はメロディ自身から選ぶ。候補 k=1..6 と系列 c=0..k-1 の全組み合わせについて、
+       その拍線（s0+ph+c*u から k*u 間隔）に乗るメロディ音の合計長（フレーズ頭の音は
+       2倍で重み増し）を数え、最良の組を採る（同点なら B が 0.5 秒に近い方）。これで
+       位相は「実際に拍の音が乗っている線」に揃い、間引かれた疎な系列が部分集合の
+       重みで勝つこともない（平均で比べる方式はその部分集合効果で実曲が崩れた。
+       検証 verify-org）。
+       (2) 勝った周期が 0.30 秒未満（細分の刻み）なら、0.6 秒に最も近づく整数倍へ
+       引き上げる。子系列のうち最も重いものを残すので位相は保たれる。密な歌で
+       シェイカーが16分刻みになり続けるのを防ぐ段で、実曲（周期が最初から拍に
+       乗っている歌）には発動しない。
+       周期は曲の拍の整数比に、位相はメロディの線に揃う。メロディ側は不変 */
+    let bk = Math.max(1, Math.min(6, Math.round(0.5 / orgelGrid.u))), bc = 0, bScore = -1;
+    {
+      const u = orgelGrid.u, s0g = orgelGrid.s0, phg = orgelGrid.ph;
+      const midx = notes.map(n => Math.round(((n.start || 0) - s0g - phg) / u));
+      const wsum = (k, c) => { let s = 0; for (let i = 0; i < notes.length; i++) if (((midx[i] - c) % k + k) % k === 0) s += (notes[i].dur || 0) * (notes[i].head ? 2 : 1); return s; };
+      for (let k = 1; k <= 6; k++){
+        for (let c = 0; c < k; c++){
+          const score = wsum(k, c);
+          if (score > bScore + 1e-9 || (Math.abs(score - bScore) <= 1e-9 && Math.abs(u * k - 0.5) < Math.abs(u * bk - 0.5))){ bk = k; bc = c; bScore = score; }
+        }
+      }
+      if (u * bk < 0.30){
+        let bj = 2, bd = Infinity;
+        for (let j = 2; j <= 8 && u * bk * j <= 0.95; j++){ const d = Math.abs(u * bk * j - 0.6); if (d < bd - 1e-9){ bd = d; bj = j; } }
+        let bcNew = bc, bsNew = -1;
+        for (let r = 0; r < bj; r++){ const cc = bc + r * bk, s = wsum(bk * bj, cc); if (s > bsNew + 1e-9){ bsNew = s; bcNew = cc; } }
+        bc = bcNew; bk = bk * bj;
+      }
+    }
+    const B = orgelGrid.u * bk, beat0 = orgelGrid.s0 + orgelGrid.ph + bc * orgelGrid.u;
     const lastN = notes[notes.length - 1];
     const endT = (lastN.start || 0) + (lastN.dur || 0.3);
     for (let bt = beat0; bt <= endT + 0.001; bt += B){
