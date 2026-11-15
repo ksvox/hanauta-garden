@@ -182,7 +182,7 @@
 <!-- v47 マイガーデン -->
 <div id="gardenPage" style="display:none; position:fixed; inset:0; z-index:55; background:#f7f1e3; overflow-y:auto; padding:24px 16px 44px;">
   <div class="garden-plate"><h2>マイガーデン</h2></div>
-  <!-- v52: 今日の天気（開くたびに抽選。見た目だけの仕掛けで、成長ルールには影響しない） -->
+  <!-- v52: 今日の天気（開くたびに抽選）。v61: 天気ボーナスで成長秒数にも影響する（先生の決定） -->
   <p id="gardenWeather" style="text-align:center; font-size:14.5px; font-weight:700; color:#7a5c2e; margin:0 0 4px; min-height:21px;"></p>
   <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">特別な種を植えて、10秒の鼻歌で育てる小さな花壇です。<br>歌を聴かせると、株が少しずつ育ちます。</p>
   <div id="gardenWilt" style="display:none; max-width:520px; margin:10px auto 4px;">
@@ -280,7 +280,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v59'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v61'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -1612,19 +1612,23 @@ function selectSpeciesNew(an, ov){
    適用する（長い参照では実音声の距離が膨らみ、正解まで弾く主因になっていた）。短参照の
    フロアと veto は現行維持。加えて、通常ゲートで同定できない場合の救済路として
    チューリップ断片チャンネル（tulipFragFallback）を追加した。
-   マスター音符列の正本は ~/workspace/hanauta-v47-masters/masters.json に恒久保存
-   （2026-11-10、楽譜情報源を複数照合して再書き起こし）:
-   チューリップ=1番全体38音（確度:高）、バラが咲いた=冒頭19音（中）、
-   さくら（森山直太朗）=サビ28音（中〜高）、春よ、来い=サビ9音（中）。
-   赤いスイートピー/マリーゴールド/さくら坂は検証コーパスの音符列（サビ）を使う */
+   マスター音符列の正本は ~/workspace/hanauta-v47-masters/masters.json に恒久保存。
+   v61: 先生の階名唱（2026-11-14/15）によるマスターへ全面差し替え＋3曲追加
+   （バラが咲いた35音、赤いスイートピー43音、春よ、来い38音、桜坂34音、
+   さくら28音、マリーゴールドは参照長さの実測で40音版（フレーズ1〜5）が最適、
+   新規: 情熱の薔薇41音・SAKURA30音・ひまわりの約束48音。チューリップは従来通り）。
+   あわせて『SAKURA』断片チャンネル（sakuraFragFallback）を救済路に追加した */
 const EVENT_SONGS = [
   { key: 'tulip', sp: 'tulip', title: 'チューリップ', notes: [60, 62, 64, 60, 62, 64, 67, 64, 62, 60, 62, 64, 62, 60, 62, 64, 60, 62, 64, 67, 64, 62, 60, 62, 64, 60, 67, 67, 64, 67, 69, 69, 67, 64, 64, 62, 62, 60] },
-  { key: 'bara_ga_saku', sp: 'rose', title: 'バラが咲いた', notes: [60, 60, 60, 60, 60, 62, 64, 64, 64, 64, 64, 65, 67, 67, 69, 67, 65, 64, 67] },
-  { key: 'akai_sweetpea', sp: 'sweetpea', title: '赤いスイートピー', notes: [58, 60, 62, 63, 62, 60, 58, 56, 58, 60, 58, 56, 55, 53, 55, 58, 60, 63, 65, 63, 60, 62, 60, 58, 60, 58] },
-  { key: 'marigold', sp: 'marigold', title: 'マリーゴールド', notes: [58, 60, 62, 63, 62, 60, 58, 58, 60, 62, 63, 65, 63, 62, 63, 62, 60, 62, 60, 58, 56, 55, 56, 55, 53, 55, 51] },
-  { key: 'sakurazaka', sp: 'sakura2', title: 'さくら坂', notes: [58, 60, 63, 62, 60, 58, 60, 58, 60, 62, 63, 65, 63, 62, 63, 62, 60, 58, 60, 62, 60, 58, 56, 55, 53, 51] },
-  { key: 'sakura_moriyama', sp: 'sakura2', title: 'さくら', notes: [60, 63, 63, 60, 63, 63, 60, 58, 56, 68, 68, 70, 67, 65, 63, 61, 63, 65, 67, 68, 63, 56, 63, 61, 60, 58, 56, 58] },
-  { key: 'haru_yo_koi', sp: 'sakura2', title: '春よ、来い', notes: [68, 65, 63, 61, 63, 65, 68, 65, 63] }
+  { key: 'bara_ga_saku', sp: 'rose', title: 'バラが咲いた', notes: [60,60,60,60,62,64,64,64,64,65,67,67,69,67,65,64,65,67,69,69,69,65,69,67,67,67,64,67,67,65,65,65,64,62,60] },
+  { key: 'akai_sweetpea', sp: 'sweetpea', title: '赤いスイートピー', notes: [65,67,67,69,69,72,67,69,69,72,67,69,69,70,69,65,65,67,67,69,69,72,67,69,69,72,67,69,69,70,69,65,65,62,62,60,60,65,65,65,62,62,60] },
+  { key: 'marigold', sp: 'marigold', title: 'マリーゴールド', notes: [66,64,66,67,66,66,64,66,67,69,64,64,66,64,62,59,62,62,62,64,64,66,61,61,62,61,59,62,62,62,62,62,64,62,66,67,66,67,66,62] },
+  { key: 'sakurazaka', sp: 'sakura2', title: '桜坂', notes: [71,69,67,67,67,62,67,69,71,71,69,67,67,67,62,67,69,71,74,71,69,67,72,72,72,71,67,67,72,71,72,71,67,67] },
+  { key: 'sakura_moriyama', sp: 'sakura2', title: 'さくら', notes: [60,63,63,60,63,63,60,58,56,56,68,70,67,65,63,61,63,65,67,68,63,60,63,61,60,58,56,58] },
+  { key: 'jounetsu_no_bara', sp: 'rose', title: '情熱の薔薇', notes: [59,62,64,62,62,59,62,71,66,67,64,60,62,64,64,67,66,64,62,62,62,62,62,59,71,62,64,66,67,67,64,64,64,64,62,71,72,71,69,69,67] },
+  { key: 'haru_yo_koi', sp: 'sakura2', title: '春よ、来い', notes: [68,65,63,61,63,65,63,61,58,68,65,63,63,61,63,65,61,63,65,68,65,63,61,63,65,63,61,58,56,58,61,63,65,63,61,58,56,58] },
+  { key: 'sakura_ikimono', sp: 'sakura2', title: 'SAKURA', notes: [60,63,65,72,70,72,70,68,67,68,67,68,67,63,60,60,63,65,72,70,72,70,69,67,69,70,64,76,70,72] },
+  { key: 'himawari_no_yakusoku', sp: 'sunflower', title: 'ひまわりの約束', notes: [67,65,64,65,67,69,67,64,62,60,62,60,62,64,65,67,64,62,60,60,62,60,59,60,69,67,72,67,65,64,65,65,57,65,64,62,64,64,55,64,62,60,62,62,57,60,62,62] }
 ];
 const EVENT_REFS = EVENT_SONGS.map(s => ({ target: s.sp, from: s.key, seq: s.notes.slice(1).map((m, i) => m - s.notes[i]) }));
 /* 照合に使う輪郭列: 音程0（同音の反復）は数えない。同音反復は legato で歌うと1音に
@@ -1835,6 +1839,24 @@ function tulipFragFallback(qz, tulipWhole){
   }
   return null;
 }
+/* v61 『SAKURA』断片チャンネル（チューリップ方式の転用。測定 ev60zR で確定）:
+   通常ゲートで同定できなかった場合にだけ働く救済路。全体の一致率が0.70以上あり、
+   かつ署名断片（冒頭の型／終盤の跳躍型）のどれかが0.90以上で一致したら
+   『SAKURA』として同定する。半音往復は抽出で消えるため断片の材料にしない */
+function sakuraFragFallback(qz){
+  const sz = EVENT_REFS_Z.find(r => r.from === 'sakura_ikimono');
+  if (!sz) return null;
+  if (levRateScore(qz, sz.seq) < 0.70) return null;
+  const S = sz.seq;
+  const frags = [S.slice(0, 6), S.slice(23)];
+  for (const f of frags){
+    if (levRateScore(qz, f) >= 0.90){
+      const sp = SPECIES.find(s => s.id === 'sakura2') || null;
+      return sp ? { sp, title: EVENT_TITLES.sakura_ikimono || '' } : null;
+    }
+  }
+  return null;
+}
 function matchEventDetail(an){
   const qs = eventQuerySeq(an);
   if (qs.n < 8) return null;
@@ -1857,7 +1879,7 @@ function matchEventDetail(an){
   }
   const ents = Object.keys(per).map(k => [k, per[k]]).sort((a, b) => b[1] - a[1]);
   /* v50: 通常ゲートで同定できない場合は、チューリップ断片チャンネル（救済路）に回す */
-  const fragFB = () => tulipFragFallback(qz, per.tulip || 0);
+  const fragFB = () => tulipFragFallback(qz, per.tulip || 0) || sakuraFragFallback(qz);
   if (!ents.length || ents[0][1] < EVENT_AGREE) return fragFB();
   if (ents.length > 1 && ents[0][1] - ents[1][1] < EVENT_AGREE_MARGIN) return fragFB();
   /* v48 囮チェック（第1ゲート側）: 囮の方が同じくらい近い一致は、紛らわしいだけの歌として同定しない */
@@ -4092,6 +4114,8 @@ $('btn-garden-photo').onclick = async () => {
    v54: 天気の2軸化に合わせ、蝶々は「晴天かつ雨なし」の時だけに変更。
    v54: 天気を「基本天気（晴天・曇天・風）× 雨の有無」の2軸・計6種に作り替えた（先生の決定）。
    見た目だけの仕掛けで、成長・枯れ・種・回数などのルールには一切影響しない。
+   v61: 先生の決定で方針転換。天気ボーナス（晴れ雨+3／晴れ+2／雨+1／風±0／曇−1／風雨−2秒）
+   が成長秒数に乗るようになった（GARDEN_WEATHERS の bonus、finishGardenSing で適用）。
    天気はガーデンを開くたびに抽選し、開いている間は変わらない（植える・歌うなどの
    再描画でも維持される）。抽選は2段階: 基本天気（晴天44%・曇天31%・風25%）→ 雨を独立に
    18% で抽選。合計は 晴天36.1%・曇天25.4%・風20.5%・晴れ雨7.9%・くもり雨5.6%・風雨4.5%
@@ -4100,12 +4124,12 @@ $('btn-garden-photo').onclick = async () => {
    毎フレームは「背景＋株を根元中心に回して描く＋天気の重ね描き」だけを行う（gardenDrawFrame）。
    アニメーションループはガーデンのページ表示中だけ回り、閉じれば確実に止まる */
 const GARDEN_WEATHERS = {
-  sunny:      { label: '☀️ 晴れ',       sway: 0.006, base: 'sunny',  rain: false },
-  cloudy:     { label: '☁️ くもり',     sway: 0.009, base: 'cloudy', rain: false },
-  wind:       { label: '🍃 風',         sway: 0.045, base: 'wind',   rain: false },
-  sunnyRain:  { label: '🌦️ 晴れ・雨',  sway: 0.013, base: 'sunny',  rain: true },
-  cloudyRain: { label: '🌧️ くもり・雨', sway: 0.013, base: 'cloudy', rain: true },
-  windRain:   { label: '🍃🌧️ 風・雨',  sway: 0.045, base: 'wind',   rain: true },
+  sunny:      { label: '☀️ 晴れ',       sway: 0.006, base: 'sunny',  rain: false, bonus: 2 },
+  cloudy:     { label: '☁️ くもり',     sway: 0.009, base: 'cloudy', rain: false, bonus: -1 },
+  wind:       { label: '🍃 風',         sway: 0.045, base: 'wind',   rain: false, bonus: 0 },
+  sunnyRain:  { label: '🌦️ 晴れ・雨',  sway: 0.013, base: 'sunny',  rain: true,  bonus: 3 },
+  cloudyRain: { label: '🌧️ くもり・雨', sway: 0.013, base: 'cloudy', rain: true,  bonus: 1 },
+  windRain:   { label: '🍃🌧️ 風・雨',  sway: 0.045, base: 'wind',   rain: true,  bonus: -2 },
 };
 let gardenWeather = null;   /* 未抽選（検証などで openGarden を経ていない場合）は素の静止画になる */
 let gardenLayers = null;    /* { bg, stalks: [{ cv, rootX, gy, phase }] } */
@@ -4162,12 +4186,74 @@ function gardenDrawButterflies(x, t){
     x.restore();
   }
 }
+/* v61 満開イベントの動物（先生の設計）: 各3ポーズをフェードで切り替え、ポーズごとに
+   場所が決まる（食べる=前方左／ノーマル=前方右／ウサギ立つ・カピバラ寝る=奥中央で
+   一回り小さく）。位置とポーズは時刻の関数で決める（雨や花びらと同じ流儀で状態を持たない） */
+const GARDEN_ANIM_FADE = 0.9;
+const GARDEN_ANIM_SPOTS = {
+  frontL: { x: 200, bottom: 1046 },
+  frontR: { x: 662, bottom: 1032 },
+  back:   { x: 450, bottom: 726 },
+};
+const GARDEN_ANIMALS = {
+  rabbit: {
+    seq: [ ['normal', 5], ['stand', 6], ['normal', 4], ['eat', 6] ],
+    poses: { normal: { spot: 'frontR', h: 228 }, stand: { spot: 'back', h: 212 }, eat: { spot: 'frontL', h: 205 } },
+  },
+  capybara: {
+    seq: [ ['normal', 6], ['eat', 7], ['sleep', 9], ['normal', 5] ],
+    poses: { normal: { spot: 'frontR', h: 250 }, eat: { spot: 'frontL', h: 198 }, sleep: { spot: 'back', h: 168 } },
+  },
+};
+function gardenAnimalPoseAt(kind, t){
+  const A = GARDEN_ANIMALS[kind];
+  let total = 0; for (const s of A.seq) total += s[1] + GARDEN_ANIM_FADE;
+  let tt = ((t % total) + total) % total;
+  for (let i = 0; i < A.seq.length; i++){
+    if (tt < A.seq[i][1]) return { cur: A.seq[i][0], nxt: null, f: 0 };
+    tt -= A.seq[i][1];
+    if (tt < GARDEN_ANIM_FADE) return { cur: A.seq[i][0], nxt: A.seq[(i + 1) % A.seq.length][0], f: tt / GARDEN_ANIM_FADE };
+    tt -= GARDEN_ANIM_FADE;
+  }
+  return { cur: A.seq[0][0], nxt: null, f: 0 };
+}
+function gardenDrawAnimal(x, t, back){
+  const an = gardenLayers && gardenLayers.animal;
+  if (!an || !an.imgs) return;
+  const A = GARDEN_ANIMALS[an.kind];
+  const st = gardenAnimalPoseAt(an.kind, t);
+  const draw = (pose, alpha) => {
+    const P = A.poses[pose];
+    if (!P || (P.spot === 'back') !== back) return;
+    const img = an.imgs[pose];
+    if (!img) return;
+    const spot = GARDEN_ANIM_SPOTS[P.spot];
+    const w = P.h * img.width / img.height;
+    x.save(); x.globalAlpha = alpha;
+    x.drawImage(img, spot.x - w / 2, spot.bottom - P.h, w, P.h);
+    x.restore();
+  };
+  if (st.nxt){ draw(st.cur, 1 - st.f); draw(st.nxt, st.f); } else draw(st.cur, 1);
+}
+/* v61 虹: 庭の奥に柔らかい弧を重ねる（手続き描画。素材は増やさない） */
+function gardenDrawRainbow(x){
+  const cols = ['255,110,110', '255,175,95', '255,240,150', '150,230,160', '130,190,255', '190,150,255'];
+  x.save();
+  x.lineWidth = 16;
+  for (let i = 0; i < 6; i++){
+    x.strokeStyle = 'rgba(' + cols[i] + ',0.20)';
+    x.beginPath(); x.arc(450, 690, 148 + i * 17, Math.PI * 1.06, Math.PI * 1.94); x.stroke();
+  }
+  x.restore();
+}
 function gardenDrawFrame(t){
   const c = $('gardenStage');
   if (!c || !gardenLayers) return;
   const x = c.getContext('2d');
   x.clearRect(0, 0, 900, 1125);
   x.drawImage(gardenLayers.bg, 0, 0);
+  if (gardenLayers.rainbow) gardenDrawRainbow(x);
+  gardenDrawAnimal(x, t, true); /* 奥のポーズ（立つ・寝る）は株より後ろに描く */
   const W = gardenWeather ? GARDEN_WEATHERS[gardenWeather] : null;
   for (const L of gardenLayers.stalks){
     if (!W){ x.drawImage(L.cv, 0, 0); continue; }
@@ -4181,6 +4267,7 @@ function gardenDrawFrame(t){
     x.drawImage(L.cv, 0, 0);
     x.restore();
   }
+  gardenDrawAnimal(x, t, false); /* 前のポーズ（ノーマル・食べる）は株より手前に描く */
   if (!W) return;
   if (W.base === 'sunny'){
     /* 晴天: 光だまりと光の筋（透明度はゆっくり明滅する） */
@@ -4281,7 +4368,39 @@ async function drawGardenScene(st){
       stalks.push({ cv, rootX: pos.x + off.dx, gy: pos.gy + off.dy, phase: (hashStr(key + ':' + i + ':' + area.sp) % 628) / 100 });
     }
   }
-  gardenLayers = { bg: bgCv, stalks };
+  /* v61 満開イベント（先生の設計）:
+     虹 = 「満開の種が3種」または「どれか1種が3本とも満開」かつ晴れ（晴れ・雨を含む）。
+     白ウサギ = 3エリア×3本=9本すべて満開。カピバラ = 満開の花がすべてSR以上。
+     動物は同時に出さず、カピバラの条件が立つ時はカピバラだけを出す（先生の決定） */
+  const fullBySp = {}; let fullTotal = 0, stockTotal = 0, allFullSR = true, anySp3 = false;
+  for (const key of ['left', 'center', 'right']){
+    const area = st.areas[key];
+    if (!area) continue;
+    const sp2 = SPECIES.find(s => s.id === area.sp);
+    if (!sp2) continue;
+    let fullHere = 0;
+    for (const stk of area.stocks){
+      stockTotal++;
+      if (gardenStageOf(Math.max(0, area.areaSec - stk.born)) === 'full'){
+        fullHere++; fullTotal++;
+        if (!(SR_SET.has(sp2.id) || SSR_SET.has(sp2.id))) allFullSR = false;
+      }
+    }
+    if (fullHere > 0) fullBySp[sp2.id] = (fullBySp[sp2.id] || 0) + fullHere;
+    if (fullHere >= 3) anySp3 = true;
+  }
+  const wNow = gardenWeather ? GARDEN_WEATHERS[gardenWeather] : null;
+  const rainbowOn = (Object.keys(fullBySp).length >= 3 || anySp3) && !!wNow && wNow.base === 'sunny';
+  let animalKind = null;
+  if (fullTotal > 0 && allFullSR) animalKind = 'capybara';
+  else if (stockTotal >= 9 && fullTotal >= 9) animalKind = 'rabbit';
+  let animalImgs = null;
+  if (animalKind){
+    animalImgs = {};
+    const poses = animalKind === 'rabbit' ? ['normal', 'stand', 'eat'] : ['normal', 'sleep', 'eat'];
+    for (const p of poses) animalImgs[p] = await loadImg(A3 + 'garden-' + animalKind + '-' + p + '.webp');
+  }
+  gardenLayers = { bg: bgCv, stalks, rainbow: rainbowOn, animal: animalKind ? { kind: animalKind, imgs: animalImgs } : null };
   gardenDrawFrame(performance.now() / 1000);
 }
 async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
@@ -4408,14 +4527,18 @@ async function finishGardenSing(){
   } catch (e) { /* 解析できなくてもアプリは止めない */ }
   const st = await gardenLoad();
   st.lastSungAt = Date.now();
-  if (sungSec > 0){
+  /* v61 天気ボーナス（先生の決定）: 表示中の天気の bonus を成長秒数に加える（下限0）。
+     色の蓄積（acc）も同じ秒数で重み付けする */
+  const wBonus = (gardenWeather && GARDEN_WEATHERS[gardenWeather]) ? (GARDEN_WEATHERS[gardenWeather].bonus || 0) : 0;
+  const growSec = sungSec > 0 ? Math.max(0, sungSec + wBonus) : 0;
+  if (growSec > 0){
     for (const k of ['left', 'center', 'right']){
       const area = st.areas[k];
-      if (area) gardenApplySong(area, sungSec, feat);
+      if (area) gardenApplySong(area, growSec, feat);
     }
   }
   await gardenSave(st);
-  $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + sungSec.toFixed(1) + '秒ぶん育ちました）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
+  $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + growSec.toFixed(1) + '秒ぶん育ちました' + (wBonus !== 0 ? '・天気ボーナス' + (wBonus > 0 ? '+' : '') + wBonus + '秒' : '') + '）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
   await renderGardenPage(st);
 }
 $('btn-garden-sing').onclick = startGardenSing;
@@ -4534,10 +4657,17 @@ function quantizeOnsets(list, relax){
    通過したテイクでも格子が落ち、シェイカーもテンポ補正も消えた（再現: ドレミの歌・
    モデルB・一般で share 0.644 < 0.7）。格子の判定は選定と同じ物差し（平均ズレ最小）
    ・同じ音符列（解析の音符列）で行い、tempoStable が立っている歌ではその格子に
-   コミットする。平均ズレ >0.20（拍と言える物差しが無い）の時だけ乗せない */
+   コミットする。平均ズレ >0.20（拍と言える物差しが無い）の時だけ乗せない
+   v61 修正（先生の実機: 『Tomorrow Never Knows』で銀河が咲いてもシェイカーが鳴らない）:
+   銀河・水晶・シャボンアヤメの SR 条件はスキルB（テンポ判定）を含まないため、
+   テンポの証明（tempoStable = 平均ズレ ≤0.16）が立たないテイクでは、この関数が
+   入口で弾いて格子もシェイカーも消えていた。実測（repro-shaker、4曲×4モデル）では
+   シェイカーが鳴らなかったテイクの理由は全てこの門で、平均ズレ >0.20 で落ちた
+   テイクは1件も無かった。門の条件を「選定側の証明があること」から「再生側の物差し
+   （平均ズレ ≤0.20 の格子が存在すること）」自体へ改める。音符列・走査・上限は不変 */
 function orgelForceGrid(list){
   if (list.length < 4) return list;
-  if (!analysis || !analysis.feat || !analysis.feat.tempoStable) return list;
+  if (!analysis || !analysis.feat) return list;
   /* 判定対象は選定と同じ解析の音符列（analysis.phrases の音符 = gridFitRel の allNotes） */
   const aStarts = [];
   for (const g of (analysis.phrases || [])) for (const n of (g.notes || [])) if (n.midi > 0 && n.start != null) aStarts.push(n.start);
@@ -4597,15 +4727,26 @@ function orgelShaker(tAbs){
   } catch (e) { /* シェイカーが作れない環境では無音 */ }
 }
 /* 薄いリバーブ（SR特典）: 残響はその場で生成したインパルス応答を使う。外部ファイル不要 */
-function attachReverb(){
+function attachReverb(rootPc){
   try {
     const conv = AC.createConvolver();
     const durS = 1.0, len = Math.floor(AC.sampleRate * durS);
     const ir = AC.createBuffer(2, len, AC.sampleRate);
     /* v39: 残響の応答は「減衰する正弦波の重なり」で作る。従来はランダムノイズから作っていたため、
        どれだけ滑らかにしても音のたびに薄いノイズの尾が鳴った（SRでだけノイズが残る原因）。
-       ノイズ成分を含まない応答に替える。立ち上がりの30msフェードはクリック防止に残す */
-    const parts = [ [392.0, 1.00, 3.2], [587.33, 0.72, 2.7], [880.0, 0.52, 2.2], [1318.5, 0.34, 1.7], [1975.5, 0.20, 1.25] ];
+       ノイズ成分を含まない応答に替える。立ち上がりの30msフェードはクリック防止に残す
+       v61: 倍音列を固定の G の和音（392Hz系）から、曲の調のルートの倍音列へ替える。
+       従来は調の違う曲でも演奏中ずっと薄い G の響きが重なり続けていた（先生の実機
+       「オルゴール全般に小さなノイズ」の一因候補。音量のピーク実測ではクリッピングは
+       無かった）。ルートが分かる時はその 1〜5倍音で残響を作り、分からない時は従来通り */
+    let parts;
+    if (rootPc != null){
+      let f0 = 440 * Math.pow(2, ((60 + rootPc) - 69) / 12);
+      while (f0 > 200) f0 /= 2; while (f0 < 100) f0 *= 2;
+      parts = [ [f0, 1.00, 3.2], [f0 * 2, 0.72, 2.7], [f0 * 3, 0.52, 2.2], [f0 * 4, 0.34, 1.7], [f0 * 5, 0.20, 1.25] ];
+    } else {
+      parts = [ [392.0, 1.00, 3.2], [587.33, 0.72, 2.7], [880.0, 0.52, 2.2], [1318.5, 0.34, 1.7], [1975.5, 0.20, 1.25] ];
+    }
     for (let ch = 0; ch < 2; ch++){
       const d = ir.getChannelData(ch);
       const det = ch === 0 ? 1 : 1.003; /* 左右でわずかにずらして広がりを出す */
@@ -4698,7 +4839,7 @@ function playOrgel(){
      SR は「アレンジ」と公言している特別演奏なので、補正で原型が薄れることより
      メロディと調性・リズムの一致を優先する、という先生の決定で置き換える */
   if (key) for (const n of notes) n.midi = snapToScale(n.midi, key.pcs);
-  if (isSR) attachReverb();
+  if (isSR) attachReverb(key ? key.root : null); /* v61: 残響は曲の調のルートで作る */
   const noteFn = isSR ? orgelNotePlus : orgelNote;
   const t0 = notes[0].start || 0;
   const base = AC.currentTime + 0.06;
