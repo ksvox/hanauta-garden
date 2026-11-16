@@ -280,7 +280,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v62'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v63'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -1404,41 +1404,29 @@ function typeRanking(f, x){
     .filter(t => !(t === 'T11' && (f.rangeSemis || 0) < 14) && !(t === 'T10' && (f.longToneRatio || 0) < 0.50))
     .map(t => [typeDist(v, TYPE_CENTROIDS[t]), t]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
 }
-/* v52 ノワールローズの専用ゲート（先生の決定: 個性を「暗いマイナー曲」に作り替える）:
-   v49〜v51 のゲート（ロングトーン＋低さ＋太さ＋暗さ darkTail）は、モデル内では届いても
-   実機では到達 0% が続いた。脚別の分解で、暗さ（スペクトル重心からの逆算）が実機の
-   広帯域ノイズで常時明るい側に倒れることが主因と判明（静かに歌うほど SNR が悪化し、
-   暗く歌う工夫がそのまま「暗くない」判定になる逆転）。ロングトーン脚もテンポで崩れる。
-   v52 では測り方そのものを、実機でも壊れない物差しに置き換える（試算: 検証 noir-pause）:
-     間（maxGap） ≥1.5秒 — ロングトーン脚の置き換え（先生の提案）。鼻歌では息が続かず
-       語末が短く切れ、インテンポで待つ分が無音になるため、暗いバラードほど自然に
-       2秒前後の間が生まれる。1.2秒ラインは通常の息継ぎ（境界0.8秒＋挿入で約1.25秒）と
-       区別がつかず誤発動 2.9% が出たため不採用。2.0秒では「1.6秒の間しか取らない歌い方」
-       が落ち、実機では残響で間が短く測られる分も見込んで 1.5秒。
-     短調（minorMargin） ≥0.05 — 暗さ脚の置き換え。長さ重み付き音高クラス・ヒストグラムと
-       Krumhansl プロファイルの相関差で判定し、短調曲の 94〜95% を拾いながら、低く太く
-       間つきで歌ったメジャーバラードを 60回全て弾く（試算）。音高クラスの統計は
-       スペクトル形状よりノイズに強い。既存の scaleKey 多数決はメジャー曲の45〜47%を
-       短調と誤読するため使わない。
-     声域 ≤62 — 「低い」ことのライン。先生の決定で v51 の 60 から緩和。61/62/63 の走査
-       （検証 noir52、1,274テイク）では到達は 61 で飽和（93.4%）し、負の集合（メジャー
-       バラード低く太く＋間つき／明るい曲／迷い止まり／日常26曲／高いマイナー曲）は
-       61〜63 の全ラインで誤発動ゼロ。境界プローブ（マイナー曲を+3移調＝声域≈63、
-       間つき・太く）では、ライン63 だと 51.4% が発動して「低さ」の個性が崩れるのに対し、
-       62 では実測声域が低く読めた境界の1件（1.4%）のみだったため、62 を採用した。
-     太さ ≥0.55 — 現行維持（既存のノワールラインと同値）。
-   性格の転換（先生が受容済み）: 間を取らなければ、どれだけ暗く歌っても咲かない。
-   カーネーションの「3.5秒ロングトーン」と同じく、仕掛けを知れば狙える花になる。
-   調性が曖昧な曲（『奏』のような）は短調と読み切れず到達が下がるのが、この設計の性質。
-   ゲートは型を問わない専用ルートとして selectSpeciesNew で適用し、T10 の型内ルールも
-   同じゲートに統一する（v49 以来の形）。虹（SSR）の保護: 型が T11 で虹が立つテイクは
-   このルートで上書きしない（SSR からの「格落ち」を作らない） */
-const NOIR_GAP_MIN = 1.5, NOIR_MINOR_MARGIN_MIN = 0.05, NOIR_TESS_MAX = 62, NOIR_THICK_MIN = 0.55;
+/* v63 ノワールローズの専用ゲート（先生の決定 2026-11-16: 個性は「短調＋静けさ」）:
+   v52〜v62 のゲート（間≥1.5秒＋短調≥0.05＋声域≤62＋太さ≥0.55）は実機で一度も
+   開花しなかった。脚別分解（ev73〜75、Dev 208テイク）の結論:
+     間 1.5秒 — 通過率 1%（短調バラードでも 0%）。鼻歌では生まれず、抽出が
+       フレーズを繋いで消す。先生の短調曲の歌い方（短めのフレーズを置く・
+       語末を伸ばさない）とも逆向きだった。
+     声域・太さ — どちらも素通りか飽和で、個性として機能していなかった。
+   新ゲートは、実機で壊れない2つの物差しだけに絞る:
+     短調マージン ≥0.20 — 音高クラス統計はノイズに強く、本物の短調曲では
+       中央値 0.24〜0.32 と大きく立つ。旧ライン 0.05 の「短調っぽさ」から
+       「短調がはっきり立った歌」に引き上げる。キー不問（先生は男性曲を
+       原曲キーで歌うため、移調で壊れる条件は置かない）。
+     音密度 dens ≤1.5/秒 — 音数÷歌唱スパン（ワタアメの「間」と同じ物差し）。
+       短調曲はフレーズを置くように歌われ密度が下がる。フレーズ末の測定の
+       ように抽出で潰れる量ではなく、音の数え間違いにも強い。
+   実測（Dev 208テイク）: 通過 24件、うち短調曲群 23/48、非短調の混入 1件。
+   アネモネ（調が立たない短調脚）とは衝突しない。
+   ゲートは型を問わない専用ルート＋主張（cl.noir）で適用し、T10 の型内ルールも
+   同じゲートに統一する（v49 以来の形）。虹（SSR）は上書きしない */
+const NOIR_MINOR_MIN = 0.20, NOIR_DENS_MAX = 1.5;
 function noirGate(f, x){
-  return ((x && x.maxGap) || 0) >= NOIR_GAP_MIN
-    && ((x && x.minorMargin) || 0) >= NOIR_MINOR_MARGIN_MIN
-    && (f.tessitura || 60) <= NOIR_TESS_MAX
-    && (f.thickness || 0) >= NOIR_THICK_MIN;
+  return ((x && x.minorMargin) || 0) >= NOIR_MINOR_MIN
+    && ((x && x.dens) || 99) <= NOIR_DENS_MAX;
 }
 /* タイプ内の選定（DESIGN.md §4）。優先順位: ①SR/SSR（スキル） ②Rのスキル種 ③帯 ④基本種（条件なし）。
    タイプ内では条件が重ならないことが一意性の担保（T2 は繰り返し回数の一本分け） */
@@ -2124,6 +2112,38 @@ function bandStandalone(an){
   const sp = song ? SPECIES.find(s => s.id === song.sp) : null;
   return sp ? { sp, title: EVENT_TITLES[wk] || '' } : null;
 }
+/* v63 署名断片チャンネル（先生の着想「サビの歌い出し数秒で人には分かる」）:
+   各曲のサビ冒頭12音程（同音を除く）だけを取り出した「署名」と歌唱を照合する
+   追加の hedge チャンネル。段階判定の既存3層が全て届かないテイクだけに効く。
+   発火条件は実測（ev72、Dev 120テイク）で決めた素の形: 署名スコア ≥0.90 かつ
+   その曲の全体スコア ≥0.65。マージンや囮の追加条件は実測で差が出なかったため
+   置かない。実測: 正解 hedge +6（計 59/120）、誤名 +0、非対象 hedge +5 */
+const EV_SIG_LEN = 12, EV_SIG_MIN = 0.90, EV_SIG_WHOLE_MIN = 0.65;
+function signatureStandalone(an){
+  const rawNotes = [];
+  for (const g of (an.phrases || [])) for (const n of (g.notes || [])) if (n.midi > 0) rawNotes.push({ midi: Math.round(n.midi), start: n.start || 0 });
+  rawNotes.sort((a, b) => a.start - b.start);
+  const ki = eventKeyOf(an);
+  if (ki) for (const n of rawNotes) n.midi = snapToScale(n.midi, ki.pcs);
+  const qc = [];
+  for (let i = 1; i < rawNotes.length; i++) qc.push(rawNotes[i].midi - rawNotes[i - 1].midi);
+  const qz = qc.filter(v => v !== 0);
+  const qo = evBuildQzOrgel(an);
+  let topKey = null, topSc = 0;
+  for (const ref of EVENT_REFS_Z){
+    const sig = ref.seq.slice(0, EV_SIG_LEN);
+    if (sig.length < EV_SIG_LEN) continue;
+    let sc = levRateScoreW(qz, sig);
+    if (qo) sc = Math.max(sc, levRateScoreW(qo, sig));
+    if (sc > topSc){ topSc = sc; topKey = ref.from; }
+  }
+  if (!topKey || topSc < EV_SIG_MIN) return null;
+  const ev = eventEvidenceW(an);
+  if ((ev.perKey[topKey] || 0) < EV_SIG_WHOLE_MIN) return null;
+  const song = EVENT_SONGS.find(s => s.key === topKey);
+  const sp = song ? SPECIES.find(s => s.id === song.sp) : null;
+  return sp ? { sp, title: EVENT_TITLES[topKey] || '' } : null;
+}
 function matchEventTiered(an){
   EV_C_SUPPORT = 0.75;
   const d = matchEventDetail(an);
@@ -2132,6 +2152,8 @@ function matchEventTiered(an){
   if (c) return { sp: c.sp, title: c.title, tier: 'hedge' };
   const b = bandStandalone(an);
   if (b) return { sp: b.sp, title: b.title, tier: 'hedge' };
+  const s = signatureStandalone(an);
+  if (s) return { sp: s.sp, title: s.title, tier: 'hedge' };
   return null;
 }
 function matchEvent(an){ const d = matchEventDetail(an); return d ? d.sp : null; }
