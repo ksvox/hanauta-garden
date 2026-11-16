@@ -168,8 +168,19 @@
     ※iPhoneをご利用の方は、長く開かないでいると記録が消えてしまうことがあります。ホーム画面に追加しておくと安心です。<br>
     <button id="btn-coll-reset" style="margin-top:8px; background:none; border:none; padding:2px 4px; font-size:12px; color:#a08c66; text-decoration:underline; cursor:pointer;">はじめから集め直す</button>
   </div>
+<style>
+#collectionPage.lab-selecting > :not(#collGrid):not(#labZone){ opacity:.22; pointer-events:none; }
+#collGrid .lab-picked{ outline:3.5px solid #e2543e; outline-offset:2px; border-radius:12px; animation:labBounce .45s ease; }
+@keyframes labBounce{ 0%{transform:scale(1);} 35%{transform:scale(1.07);} 70%{transform:scale(.97);} 100%{transform:scale(1);} }
+</style>
+  <div id="labZone" style="display:none; text-align:center; margin:0 2px 18px;">
+    <button class="btn btn-main" id="btn-lab-select" style="padding:12px 28px; font-size:16px; background:linear-gradient(135deg,#7fae5f,#4e7d46);">🌱 新種を開発する</button>
+    <button class="btn btn-sub" id="btn-lab-cancel" style="display:none; padding:12px 18px; font-size:14px; margin-left:8px;">やめる</button>
+    <p id="labSelNote" style="display:none; font-size:13.5px; color:#7a5c2e; font-weight:700; margin:9px 0 0;">交配したい花を2種類選んでね。</p>
+  </div>
   <div id="collGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 10px;"></div>
   <div id="collHints" style="text-align:center; margin-top:32px;">
+    <button class="btn btn-main" id="btn-lab-go" style="display:none; padding:11px 26px; font-size:15.5px; margin-bottom:10px; background:linear-gradient(135deg,#7fae5f,#4e7d46);">🧪 開発室に行く</button><br>
     <button class="btn btn-sub" id="btn-hint" style="padding:11px 26px; font-size:15.5px;">💡 ヒント</button>
     <div id="hintNote" style="font-size:12px; color:#a08c66; margin-top:5px;"></div>
     <div id="hintPanel" style="display:none; max-width:520px; margin:16px auto 0; text-align:left;"></div>
@@ -234,6 +245,67 @@
 </div>
 
 <!-- v47 種イベントのモーダル -->
+<div id="labUnlockModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:66; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
+  <div class="bubble">
+    <p class="btitle">🎊 新しい扉が開きました</p>
+    <p>おめでとう🎊15種以上の花を咲いたのね。これから新種の開発ができるよ！</p>
+  </div>
+  <img src="assets5/fairy-4.webp" alt="花の妖精" style="height:170px; margin-top:20px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));">
+  <div style="margin-top:16px;">
+    <button class="btn btn-sub" id="btn-lab-unlock-go" style="padding:12px 26px; font-size:16px;">🌱 新種を開発する</button>
+  </div>
+</div>
+
+<div id="labPage" style="display:none; position:fixed; inset:0; z-index:56; background:#eef0e6; overflow-y:auto; padding:24px 16px 44px;">
+  <div style="text-align:center;">
+    <span style="position:relative; display:inline-block; background:linear-gradient(180deg,#f5f6f7 0%,#ccd0d5 42%,#a9aeb6 58%,#dde0e4 100%); border:1px solid #878d95; border-radius:6px; padding:9px 46px; font-size:23px; font-weight:800; letter-spacing:.14em; color:#33383f; text-shadow:0 1px 0 rgba(255,255,255,.75), 0 -1px 1px rgba(0,0,0,.18); box-shadow:0 3px 8px rgba(30,35,45,.35), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.12);"><span style="position:absolute; left:11px; top:50%; width:11px; height:11px; margin-top:-6px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#f2f3f5,#9aa0a8 70%,#767c85); box-shadow:inset 0 -1px 2px rgba(0,0,0,.35), 0 1px 1px rgba(255,255,255,.7);"><span style="position:absolute; left:1px; right:1px; top:50%; height:2px; margin-top:-1px; background:rgba(40,45,52,.55); transform:rotate(38deg); border-radius:2px;"></span></span>開発室<span style="position:absolute; right:11px; top:50%; width:11px; height:11px; margin-top:-6px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#f2f3f5,#9aa0a8 70%,#767c85); box-shadow:inset 0 -1px 2px rgba(0,0,0,.35), 0 1px 1px rgba(255,255,255,.7);"><span style="position:absolute; left:1px; right:1px; top:50%; height:2px; margin-top:-1px; background:rgba(40,45,52,.55); transform:rotate(-24deg); border-radius:2px;"></span></span></span>
+  </div>
+  <p style="text-align:center; font-weight:800; font-size:17px; color:#4c3a22; margin:14px 0 2px;">2つの花種を交配させて新種を開発！</p>
+  <p style="text-align:center; font-size:13.5px; color:#6b6151; margin:0 6px 14px;">ここでは、お花が求めるメロディーをハナウタにしてね。</p>
+  <div id="labNoCur" style="display:none; text-align:center; background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:16px; font-size:14px; line-height:1.8; color:#6b6151;">いま開発中の花はありません。<br>図鑑で花を2種類選ぶと、交配を始められます。</div>
+  <div id="labCur">
+    <p style="font-weight:700; color:#7a5c2e; margin:10px 0 6px;">① 現在交配中の花</p>
+    <div style="display:flex; align-items:flex-start; justify-content:center; gap:10px;">
+      <div id="labParentA" style="width:38%; text-align:center;"></div>
+      <div style="font-size:22px; font-weight:800; color:#a08c66; padding-top:14%;">×</div>
+      <div id="labParentB" style="width:38%; text-align:center;"></div>
+    </div>
+    <div style="max-width:520px; margin:12px auto 0;">
+      <canvas id="labStage" width="900" height="1125" style="width:100%; border-radius:16px; box-shadow:0 10px 30px rgba(60,40,20,.25); display:block; background:#20351f;"></canvas>
+      <p id="labPoints" style="text-align:center; font-size:14px; font-weight:700; color:#7a5c2e; margin:10px 0 4px;"></p>
+      <div style="height:10px; background:#e5dcc4; border-radius:999px; overflow:hidden;"><div id="labBar" style="height:100%; width:0%; background:linear-gradient(90deg,#8fae5f,#e88bb0); transition:width .5s;"></div></div>
+    </div>
+    <p style="font-weight:700; color:#7a5c2e; margin:20px 0 6px;">② 新種を育てる</p>
+    <p style="font-size:13px; line-height:1.7; color:#6b6151; margin:0 0 8px;">お花が求めるメロディーを聴いて、同じようにハナウタしてね。正解率が高いほどポイントが増えて、花が育ちます（満開は50P）。難易度ごとに、1日1回ずつ歌えます。</p>
+    <div style="display:flex; flex-direction:column; gap:9px; max-width:420px; margin:0 auto;">
+      <button class="btn btn-main" id="btn-lab-t1" style="padding:12px; font-size:15.5px;">初級の鼻歌をうたう</button>
+      <button class="btn btn-main" id="btn-lab-t2" style="padding:12px; font-size:15.5px;">中級の鼻歌をうたう</button>
+      <button class="btn btn-main" id="btn-lab-t3" style="padding:12px; font-size:15.5px;">上級の鼻歌をうたう</button>
+    </div>
+    <div id="labSessionBtns" style="display:none; gap:9px; max-width:420px; margin:12px auto 0;">
+      <button class="btn btn-sub" id="btn-lab-relisten" style="padding:12px; font-size:15.5px; flex:1; margin:0;">🔁 もう一度聞く</button>
+      <button class="btn btn-main" id="btn-lab-challenge" style="padding:12px; font-size:15.5px; flex:1; margin:0;">🎤 ハナウタに挑戦</button>
+    </div>
+    <div id="labCount" style="text-align:center; font-size:46px; font-weight:800; color:#b3547e; min-height:58px; margin-top:10px; letter-spacing:.1em;"></div>
+    <div id="labNotes" style="text-align:center; margin-top:4px; min-height:38px;"></div>
+    <p id="labMsg" style="text-align:center; font-size:14px; color:#6b6151; min-height:20px; margin:6px 0 0;"></p>
+  </div>
+  <div id="labBloom" style="display:none; text-align:center; margin-top:22px;">
+    <p id="labBloomName" style="font-size:17px; font-weight:800; color:#7a5c2e;"></p>
+    <img id="labBloomImg" style="width:min(100%,420px); border-radius:14px; box-shadow:0 10px 30px rgba(60,40,20,.3);">
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;">
+      <button class="btn btn-main" id="btn-lab-save" style="padding:11px 20px;">💾 保存する</button>
+      <button class="btn btn-sub" id="btn-lab-share" style="padding:11px 20px;">📤 シェアする</button>
+      <button class="btn btn-sub" id="btn-lab-fmsg" style="padding:11px 20px; background:linear-gradient(135deg,#fdf3e3,#fbe9f2);">💌 フラワーメッセージ</button>
+      <button class="btn btn-sub" id="btn-lab-zoom" style="padding:11px 20px;">🔍 花のアップを見る</button>
+    </div>
+    <div style="margin-top:12px;"><button class="btn btn-sub" id="btn-lab-next" style="padding:11px 22px;">🌱 次の交配を始める</button></div>
+  </div>
+  <div style="text-align:center; margin-top:26px;">
+    <button class="btn btn-sub" id="btn-lab-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
+  </div>
+</div>
+
 <div id="seedModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:65; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
   <div class="bubble">
     <p class="btitle">🎁 特別なプレゼント</p>
@@ -245,7 +317,6 @@
   <div id="seedSwap" style="display:none; margin-top:14px; width:100%; max-width:520px;"></div>
   <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
     <button class="btn btn-sub" id="btn-seed-ok">🎁 種をもらう</button>
-    <button class="btn btn-sub" id="btn-seed-garden" style="display:none;">🌷 マイガーデンに行く</button>
   </div>
 </div>
 
@@ -280,7 +351,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v63'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v64'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -414,6 +485,7 @@ function buildFlowerMessage(){
   if (sp.id === 'hotlips'){
     return { one, cheer, lucky, fairy: 4 };
   }
+  if (sp.hybrid) return { one, cheer, lucky, fairy: 4 }; /* v64: 交配種は専用妖精 */
   return { one, cheer, lucky, fairy };
 }
 const FAMILY_HUE = { red:352, orange:30, yellow:52, green:130, blue:218, purple:272, pink:332, white:0 };
@@ -2640,7 +2712,7 @@ function drawComposite(x, stock, progOf, now){
     if (!tipPos || !st) return;
     const hp = clamp((progOf.stem(st, idx) - 0.3) / 0.7, 0, 1);
     if (hp <= 0) return;
-    const h = st.headH * headScaleAt(hp);
+    const h = st.headH * headScaleAt(hp) * (stock.layerScale ? (hp < 0.45 ? (stock.layerScale.bud || 1) : hp < 0.75 ? (stock.layerScale.half || 1) : (stock.layerScale.full || 1)) : 1);
     const metaNm = imgs.metaName[st.ind] || imgs.metaName.full;
     const ar = (P5[metaNm] && P5[metaNm].ar) || 1;
     headDiscs.push({ x: tipPos.x, y: tipPos.y - h * 0.42, r: Math.max(h, h * ar) * 0.58 });
@@ -2752,7 +2824,7 @@ function drawComposite(x, stock, progOf, now){
       else { img = imgs[layer.k]; nm = imgs.metaName[layer.k]; }
       if (!img) continue;
       const dyed = dyeImage(img, sp, stock.color.hue + st.hueJ, dyeSat(stock, st, tip.idx === 0), clamp(stock.color.light + st.lightJ, 0, 1), nm);
-      const ctr = drawHeadAt(x, dyed, P5[nm], tip.pos, st.headH * scale, tip.rot * 0.45 + sway, layer.a);
+      const ctr = drawHeadAt(x, dyed, P5[nm], tip.pos, st.headH * scale * (stock.layerScale && stock.layerScale[layer.k] && (layer.k !== 'bud' || layer.a > 0.5) ? stock.layerScale[layer.k] : 1), tip.rot * 0.45 + sway, layer.a);
       if (layer.k === 'full' && layer.a > 0.5 && ctr) st.headPos = ctr;
     }
   }
@@ -3873,8 +3945,9 @@ async function openCollection(){
   for (const r of all) map[r.id] = r;
   /* v43 図鑑B方式: 分母は「既存種＋獲得済みイベント種の数」。未獲得のイベント種は
      分母にも入れない（咲かせるまで存在自体を秘密にする） */
-  const totalKinds = SPECIES.filter(sp => !sp.eventOnly).length + SPECIES.filter(sp => sp.eventOnly && map[sp.id]).length;
-  $('collCount').textContent = `これまでにあなたが咲かせた花種⋯${SPECIES.filter(sp => map[sp.id]).length}／${totalKinds}種`;
+  const hybGot = HYBRIDS.filter(h => map[h.id]);
+  const totalKinds = SPECIES.filter(sp => !sp.eventOnly).length + SPECIES.filter(sp => sp.eventOnly && map[sp.id]).length + hybGot.length;
+  $('collCount').textContent = `これまでにあなたが咲かせた花種⋯${SPECIES.filter(sp => map[sp.id]).length + hybGot.length}／${totalKinds}種`;
   setupHints(SPECIES.filter(sp => map[sp.id]).length);
   const grid = $('collGrid');
   grid.innerHTML = '';
@@ -3882,6 +3955,7 @@ async function openCollection(){
     const rec = map[sp.id];
     if (!rec && sp.eventOnly) continue; /* v43 図鑑B方式: イベント種は未獲得の間グリッドに出さない（シルエットも作らない） */
     const cell = document.createElement('div');
+    cell.dataset.spid = sp.id;
     cell.style.textAlign = 'center';
     if (rec){
       const wrap = document.createElement('div');
@@ -3929,6 +4003,42 @@ async function openCollection(){
     }
     grid.appendChild(cell);
   }
+  /* v64: 交配種はB方式（入手したものだけ、通常種の後ろに並ぶ） */
+  for (const h of HYBRIDS){
+    const rec = map[h.id];
+    if (!rec) continue;
+    const cell = document.createElement('div');
+    cell.dataset.spid = h.id;
+    cell.style.textAlign = 'center';
+    const wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+    const im = document.createElement('img');
+    im.src = rec.img;
+    im.alt = h.jp;
+    im.style.cssText = 'width:100%; border-radius:10px; box-shadow:0 4px 14px rgba(60,45,20,.25); display:block;';
+    wrap.appendChild(im);
+    if ((rec.count || 1) === 1){
+      const bd = document.createElement('span');
+      bd.textContent = '初';
+      bd.style.cssText = 'position:absolute; top:6px; left:6px; background:#e2543e; color:#fff; font-weight:700; font-size:13px; padding:2px 9px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
+      wrap.appendChild(bd);
+    }
+    if ((rec.count || 1) >= 2){
+      const cb = document.createElement('span');
+      cb.textContent = (rec.count || 1) + '回';
+      cb.style.cssText = 'position:absolute; top:6px; right:6px; background:rgba(66,48,20,.85); color:#ffe9a8; font-weight:700; font-size:12.5px; padding:2px 8px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
+      wrap.appendChild(cb);
+    }
+    cell.appendChild(wrap);
+    const nm = document.createElement('div');
+    nm.textContent = h.jp;
+    nm.style.cssText = 'margin-top:5px; font-size:13.5px; font-weight:600; color:#4c463c;';
+    cell.appendChild(nm);
+    cell.style.cursor = 'pointer';
+    cell.onclick = () => { $('zoomImg').src = rec.img; $('zoomName').textContent = h.jp; zoomOpen = true; $('zoomModal').style.display = 'flex'; };
+    grid.appendChild(cell);
+  }
+  labOnCollection(map);
 }
 $('btn-coll-open').onclick = openCollection;
 
@@ -4036,7 +4146,6 @@ async function presentNextSeedGift(){
   const swap = $('seedSwap');
   swap.innerHTML = '';
   $('btn-seed-ok').onclick = null;
-  $('btn-seed-garden').onclick = null;
   if (full){
     $('seedModalWhat').textContent = '「' + sp.jp + '」の種を手に入れました！でも、種は3つまでしか持てません。';
     swap.style.display = 'block';
@@ -4068,12 +4177,10 @@ async function presentNextSeedGift(){
     bd.onclick = async () => { closeSeedModal(); await openGarden(); }; /* v51: 捨てた場合もマイガーデンを開く */
     swap.appendChild(bd);
     $('btn-seed-ok').style.display = 'none';
-    $('btn-seed-garden').style.display = 'none';
   } else {
     $('seedModalWhat').textContent = '「' + sp.jp + '」の種を手に入れました！';
     swap.style.display = 'none';
     $('btn-seed-ok').style.display = '';
-    $('btn-seed-garden').style.display = '';
     const receive = async () => {
       const s2 = await gardenLoad();
       if (s2.seeds.length < 3) s2.seeds.push({ sp: spId, at: Date.now() });
@@ -4084,7 +4191,6 @@ async function presentNextSeedGift(){
     /* v51: 「種をもらう」を押したら、受け取った上で自動でマイガーデンを開く（先生の指定）。
        「マイガーデンに行く」も従来どおり同じ動きをする */
     $('btn-seed-ok').onclick = async () => { await receive(); closeSeedModal(); await openGarden(); };
-    $('btn-seed-garden').onclick = async () => { await receive(); closeSeedModal(); await openGarden(); };
   }
   $('seedModal').style.display = 'flex';
 }
@@ -5227,6 +5333,657 @@ ${APP_URL}
     note('シェアに失敗しました（' + (err && err.message ? err.message : '不明なエラー') + '）。');
   }
 };
+
+const LAB_ROOT = {"granrose":{"bud":{"cx":0.49,"top":0.018,"bottom":0.449,"rootx":0.502,"ar":0.433},"half":{"cx":0.503,"top":0.015,"bottom":0.631,"rootx":0.515,"ar":0.52},"full":{"cx":0.5,"top":0.029,"bottom":0.751,"rootx":0.504,"ar":0.779}},"pomponrose":{"bud":{"cx":0.498,"top":0.022,"bottom":0.384,"rootx":0.474,"ar":0.41},"half":{"cx":0.503,"top":0.025,"bottom":0.775,"rootx":0.5,"ar":0.697},"full":{"cx":0.5,"top":0.022,"bottom":0.813,"rootx":0.503,"ar":0.819}},"roselily":{"bud":{"cx":0.498,"top":0.047,"bottom":0.665,"rootx":0.508,"ar":0.247},"half":{"cx":0.507,"top":0.072,"bottom":0.691,"rootx":0.513,"ar":0.553},"full":{"cx":0.502,"top":0.052,"bottom":0.698,"rootx":0.507,"ar":0.714}},"bellrose":{"bud":{"cx":0.488,"top":0.062,"bottom":0.621,"rootx":0.488,"ar":0.671},"half":{"cx":0.5,"top":0.033,"bottom":0.668,"rootx":0.511,"ar":0.702},"full":{"cx":0.496,"top":0.028,"bottom":0.677,"rootx":0.503,"ar":0.735}},"featherrose":{"bud":{"cx":0.498,"top":0.02,"bottom":0.544,"rootx":0.521,"ar":0.31},"half":{"cx":0.502,"top":0.019,"bottom":0.677,"rootx":0.507,"ar":0.614},"full":{"cx":0.501,"top":0.044,"bottom":0.773,"rootx":0.507,"ar":0.797}},"millefeuille":{"bud":{"cx":0.509,"top":0.011,"bottom":0.445,"rootx":0.518,"ar":0.481},"half":{"cx":0.501,"top":0.018,"bottom":0.652,"rootx":0.5,"ar":0.672},"full":{"cx":0.501,"top":0.02,"bottom":0.788,"rootx":0.506,"ar":0.797}},"dahlialily":{"bud":{"cx":0.513,"top":0.023,"bottom":0.649,"rootx":0.539,"ar":0.329},"half":{"cx":0.498,"top":0.032,"bottom":0.625,"rootx":0.513,"ar":0.397},"full":{"cx":0.505,"top":0.036,"bottom":0.789,"rootx":0.51,"ar":0.773}},"stardahlia":{"bud":{"cx":0.356,"top":0.061,"bottom":0.443,"rootx":0.334,"ar":0.608},"half":{"cx":0.504,"top":0.053,"bottom":0.709,"rootx":0.495,"ar":0.747},"full":{"cx":0.507,"top":0.045,"bottom":0.752,"rootx":0.505,"ar":0.784}},"clouddahlia":{"bud":{"cx":0.507,"top":0.048,"bottom":0.508,"rootx":0.512,"ar":0.449},"half":{"cx":0.501,"top":0.024,"bottom":0.728,"rootx":0.5,"ar":0.789},"full":{"cx":0.503,"top":0.032,"bottom":0.813,"rootx":0.503,"ar":0.799}},"ranunlily":{"bud":{"cx":0.497,"top":0.009,"bottom":0.488,"rootx":0.499,"ar":0.522},"half":{"cx":0.498,"top":0.012,"bottom":0.687,"rootx":0.503,"ar":0.78},"full":{"cx":0.5,"top":0.018,"bottom":0.774,"rootx":0.502,"ar":0.831}},"moonbell":{"bud":{"cx":0.478,"top":0.088,"bottom":0.81,"rootx":0.481,"ar":0.71},"half":{"cx":0.492,"top":0.089,"bottom":0.826,"rootx":0.491,"ar":0.722},"full":{"cx":0.499,"top":0.088,"bottom":0.846,"rootx":0.492,"ar":0.777}},"featheranemone":{"bud":{"cx":0.51,"top":0.029,"bottom":0.638,"rootx":0.498,"ar":0.337},"half":{"cx":0.507,"top":0.022,"bottom":0.661,"rootx":0.502,"ar":0.78},"full":{"cx":0.507,"top":0.028,"bottom":0.818,"rootx":0.506,"ar":0.809}},"belllily":{"bud":{"cx":0.509,"top":0.032,"bottom":0.784,"rootx":0.516,"ar":0.729},"half":{"cx":0.511,"top":0.033,"bottom":0.776,"rootx":0.512,"ar":0.735},"full":{"cx":0.488,"top":0.035,"bottom":0.808,"rootx":0.487,"ar":0.799}},"angellily":{"bud":{"cx":0.482,"top":0.029,"bottom":0.673,"rootx":0.446,"ar":0.272},"half":{"cx":0.511,"top":0.024,"bottom":0.712,"rootx":0.505,"ar":0.735},"full":{"cx":0.503,"top":0.067,"bottom":0.801,"rootx":0.495,"ar":0.813}},"featherbell":{"bud":{"cx":0.516,"top":0.041,"bottom":0.759,"rootx":0.508,"ar":0.721},"half":{"cx":0.51,"top":0.04,"bottom":0.775,"rootx":0.495,"ar":0.752},"full":{"cx":0.5,"top":0.043,"bottom":0.806,"rootx":0.488,"ar":0.804}},"queenrose":{"bud":{"cx":0.508,"top":0.03,"bottom":0.63,"rootx":0.501,"ar":0.522},"half":{"cx":0.477,"top":0.022,"bottom":0.722,"rootx":0.459,"ar":0.58},"full":{"cx":0.479,"top":0.042,"bottom":0.748,"rootx":0.481,"ar":0.812}},"granddahlia":{"bud":{"cx":0.505,"top":0.04,"bottom":0.404,"rootx":0.475,"ar":0.372},"half":{"cx":0.528,"top":0.047,"bottom":0.672,"rootx":0.519,"ar":0.755},"full":{"cx":0.496,"top":0.036,"bottom":0.801,"rootx":0.492,"ar":0.806}},"princessranun":{"bud":{"cx":0.489,"top":0.013,"bottom":0.511,"rootx":0.474,"ar":0.508},"half":{"cx":0.501,"top":0.019,"bottom":0.776,"rootx":0.499,"ar":0.755},"full":{"cx":0.497,"top":0.013,"bottom":0.783,"rootx":0.495,"ar":0.807}},"madonnalily":{"bud":{"cx":0.503,"top":0.014,"bottom":0.564,"rootx":0.51,"ar":0.229},"half":{"cx":0.489,"top":0.049,"bottom":0.706,"rootx":0.479,"ar":0.675},"full":{"cx":0.498,"top":0.046,"bottom":0.734,"rootx":0.492,"ar":0.801}},"grandbell":{"bud":{"cx":0.502,"top":0.113,"bottom":0.714,"rootx":0.486,"ar":0.589},"half":{"cx":0.502,"top":0.041,"bottom":0.805,"rootx":0.499,"ar":0.707},"full":{"cx":0.497,"top":0.024,"bottom":0.814,"rootx":0.493,"ar":0.796}},"plumeflower":{"bud":{"cx":0.694,"top":0.059,"bottom":0.589,"rootx":0.673,"ar":0.604},"half":{"cx":0.496,"top":0.026,"bottom":0.68,"rootx":0.496,"ar":0.787},"full":{"cx":0.49,"top":0.069,"bottom":0.794,"rootx":0.494,"ar":0.829}}};
+
+/* ========= v64 交配・開発室（第3の柱「生み出す」） =========
+   設計: 交配表-v1.md v3（先生の分類・対角線ルール）＋ 2026-11-16 の決定群。
+   図鑑15種で解放／親は通常26種のみ（交配種は親にできない＝無限地獄の回避）／
+   開発室は1株だけ／トレーニング（BPM84・2小節・難易度3種・各1日1回）で
+   ポイントを貯め、50Pで満開。色は両親の固有色×トレーニング成績で決まる */
+const LAB_FAM = { rose:'bara', noirrose:'bara', galaxy:'bara', cotton:'bara', candy:'bara', swirl:'bara',
+  dahlia:'kiku', mobius:'kiku', sunflower:'kiku', marguerite:'kiku', gerbera:'kiku', carnation:'kiku',
+  anemone:'kinpouge', ranunculus:'kinpouge', moonring:'kinpouge', rainbow:'kinpouge',
+  lily:'yuri', tulilily:'yuri', tulip:'yuri', bubble:'yuri', crystal:'yuri',
+  lantern:'suzu', goldbell:'suzu', firefly:'suzu', featherflower:'hane', sakura:'hane' };
+const LAB_FAM_JP = { bara:'バラ科', kiku:'キク科', kinpouge:'キンポウゲ科', yuri:'ユリ科', suzu:'鈴系', hane:'羽系' };
+const LAB_CROSS = { 'bara|kiku':'granrose', 'bara|kinpouge':'pomponrose', 'bara|yuri':'roselily', 'bara|suzu':'bellrose', 'bara|hane':'featherrose',
+  'hane|kiku':'clouddahlia', 'kiku|kinpouge':'millefeuille', 'kiku|suzu':'stardahlia', 'kiku|yuri':'dahlialily',
+  'hane|kinpouge':'featheranemone', 'kinpouge|suzu':'moonbell', 'kinpouge|yuri':'ranunlily',
+  'hane|suzu':'featherbell', 'hane|yuri':'angellily', 'suzu|yuri':'belllily',
+  'bara':'queenrose', 'kiku':'granddahlia', 'kinpouge':'princessranun', 'yuri':'madonnalily', 'suzu':'grandbell', 'hane':'plumeflower' };
+function labChildId(aId, bId){
+  const fa = LAB_FAM[aId], fb = LAB_FAM[bId];
+  if (!fa || !fb) return null;
+  if (fa === fb) return LAB_CROSS[fa] || null;
+  return LAB_CROSS[[fa, fb].sort().join('|')] || null;
+}
+/* 両親の固有色（HOME_HUE と同じ値＋固定色種の代表色） */
+const LAB_HOME = { dahlia:332, rose:350, lily:298, gerbera:45, sunflower:48, anemone:218, ranunculus:18, marguerite:55, tulip:50, featherflower:312, swirl:255, tulilily:50, candy:345, mobius:285, sakura:340, cotton:325, moonring:250, carnation:130, galaxy:235, lantern:30, crystal:200, goldbell:45, bubble:275, noirrose:348, firefly:80, rainbow:315 };
+/* 交配種21種: stem/leaf は xstem 系・xleaf 系素材の短縮名。pose は図鑑カード紹介文用の文 */
+const HYBRIDS = [
+ { id:'granrose', jp:'グランローズ', genus:'マグニフィカ', stem:'thick', leaf:'serrated', adj:['堂々たる','巨大な','女王の'], words:['気品に満ちた','情熱を帯びた'], pose:'バラの花弁の重なりが、そのまま巨大になった大輪が開く', trait:'バラの血を引く堂々たる大輪', mood:'華やか', one:['あっ、すごい大輪！バラの重なりがそのまま大きくなったみたい。開発室で生まれた最初の奇跡だね。','あっ、見てこの大きさ！両親の良さが掛け合わさって、こんな花になるんだね。'], cheer:['大きな花は、大きく育てた人のもの。これからも堂々と咲かせていこう。','掛け合わせるって、可能性を広げることだね。あなたの挑戦、ちゃんと実を結んだよ。'] },
+ { id:'pomponrose', jp:'ポンポンローズ', genus:'ポンポネラ', stem:'standard', leaf:'round', adj:['まんまるの','愛らしい','房咲きの'], words:['優しさに満ちた','愛らしく'], pose:'ラナンキュラスの丸い重なりがバラになった、まんまるの房が咲く', trait:'まんまるに重なる愛らしさ', mood:'可憐', one:['あっ、まんまるのバラだ！花弁が何重にも重なって、ポンポンみたいで可愛いね。','あっ、丸い花が房になって咲いたよ。両親の優しさが、この形になったんだね。'], cheer:['丸い花は、角のない優しさの形。その優しさで、まわりを包んであげてね。','重なり合う花弁みたいに、経験も重なって厚みになるよ。これからが楽しみだね。'] },
+ { id:'roselily', jp:'ローズリリー', genus:'エレガンティア', stem:'slender', leaf:'slender', adj:['凛とした','気高い','伸びやかな'], words:['清らかな','気品があり'], pose:'ユリの凛とした立ち姿の中で、バラの重ね花弁が開く', trait:'凛とした姿に宿るバラの心', mood:'清らか', one:['あっ、ユリの姿なのに心はバラだ！凛とした立ち姿に、重ね花弁がよく似合うね。','あっ、なんて気高い花なの。両親の品格が、そのまま受け継がれてるよ。'], cheer:['凛とした美しさは、静かな自信から生まれるよ。その姿勢、大切にしてね。','掛け合わせても凛と立つ。あなたの芯の強さ、そのものだね。'] },
+ { id:'bellrose', jp:'ベルローズ', genus:'カンパナ', stem:'branch', leaf:'round', adj:['鈴なりの','可憐な','揺れる'], words:['愛らしく','優しさに満ちた'], pose:'バラの形の小花が、鈴なりに連なって垂れる', trait:'鈴なりに揺れるバラの小花', mood:'可憐', one:['あっ、バラが鈴なりになってる！小さなバラが連なって、風に揺れそうだね。','あっ、可憐な房咲きだね。ひとつひとつが小さなバラの形をしているのが素敵。'], cheer:['小さな花が集まれば、大きな景色になるよ。あなたの積み重ねも、きっとそうだね。','揺れる花は、風と仲良し。しなやかさは、あなたの強さだよ。'] },
+ { id:'featherrose', jp:'フェザーローズ', genus:'プルーマ', stem:'woody', leaf:'serrated', adj:['軽やかな','羽根の','儚げな'], words:['柔らかで','儚げな'], pose:'花弁の縁が羽根のようにほどける、軽やかなバラが開く', trait:'羽根のようにほどける花弁', mood:'穏やか', one:['あっ、花弁の縁が羽根みたいにほどけてる！軽くて儚くて、目が離せないね。','あっ、バラなのにこんなに軽やかなの。両親の出会いが、新しい質感を生んだんだね。'], cheer:['軽やかさは、身軽に生きる力だよ。重いものは、そっと置いていこう。','ほどける花弁みたいに、心もほぐしていいんだよ。無理しないでね。'] },
+ { id:'millefeuille', jp:'ミルフィーユダリア', genus:'ラミナ', stem:'standard', leaf:'pointed', adj:['層の','華やかな','幾重もの'], words:['華やかさがあり','優しさに満ちた'], pose:'薄い花弁が何層にも重なり、ミルフィーユのような層の花が開く', trait:'何層にも重なる薄い花弁', mood:'華やか', one:['あっ、花弁の層がすごい！薄い花弁が何十枚も重なって、まるでミルフィーユだね。','あっ、層の美しさってこういうことか。両親の重なりが、さらに深くなったんだね。'], cheer:['層は、一日ではできないもの。あなたの積み重ねが、この厚みになったんだよ。','薄い一枚も、重なれば強くなる。焦らず、一枚ずつ重ねていこう。'] },
+ { id:'dahlialily', jp:'ダリアリリー', genus:'ギガン', stem:'thick', leaf:'slender', adj:['大輪の','凛とした','堂々たる'], words:['清らかな','堂々とした'], pose:'ユリの花形のまま大輪になった花が、凛と大きく開く', trait:'ユリの形の大輪', mood:'清らか', one:['あっ、ユリの形のまま、こんなに大きくなったの！凛として堂々として、見事だね。','あっ、大輪なのに姿が清らかだね。大きさと品、両方を受け継いだんだね。'], cheer:['大きく咲くには、凛とした軸がいる。あなたの軸は、しっかりしてるよ。','堂々と大きく。それでいて清らかに。理想の咲き方だね。'] },
+ { id:'stardahlia', jp:'スターダリア', genus:'ステラ', stem:'branch', leaf:'pointed', adj:['星屑の','煌めく','華やかな'], words:['躍動的で','華やかさがあり'], pose:'星屑のような鋭い花弁が放射状に開き、星のダリアになる', trait:'星のように放射する花弁', mood:'華やか', one:['あっ、星の形のダリアだ！花弁が星屑みたいに放射状に開いて、煌めいてるね。','あっ、鋭い花弁が格好いい！両親から、こんな星が生まれるなんてね。'], cheer:['星は、暗い空でこそ目立つもの。あなたの輝きも、きっと誰かに届いてるよ。','放射状に広がる力強さ。その勢いのまま、進んでいこう。'] },
+ { id:'clouddahlia', jp:'クラウドダリア', genus:'ヌーベ', stem:'thick', leaf:'big', adj:['綿雲の','ふわりと','大きな'], words:['柔らかで','包み込むような'], pose:'綿雲のようにもこもこと膨らむ、柔らかな大輪が開く', trait:'綿雲のように膨らむ柔らかさ', mood:'穏やか', one:['あっ、雲みたいなダリアだ！もこもこ膨らんで、触ったら柔らかそうだね。','あっ、大きな雲が花になったみたい。包み込むような優しい形だね。'], cheer:['雲は形を変えながら進むもの。変わることを、恐れないでね。','もこもこの優しさは、まわりをほっとさせるよ。その柔らかさ、大切にね。'] },
+ { id:'ranunlily', jp:'ラナンリリー', genus:'カリクス', stem:'standard', leaf:'slender', adj:['杯の','優しい','重なる'], words:['優しさが滲む','清らかな'], pose:'チューリップの杯の形に、ラナンキュラスの重ね花弁が詰まる', trait:'杯の形に詰まる重ね花弁', mood:'穏やか', one:['あっ、杯の形に花弁が重なってる！チューリップの姿に、ラナンキュラスの心だね。','あっ、優しい重なりの花だね。杯いっぱいに、優しさが詰まってるみたい。'], cheer:['器があってこそ、中身が映える。あなたの器、大きくなってるよ。','重なる優しさは、深い優しさ。焦らず、あなたのペースでね。'] },
+ { id:'moonbell', jp:'ムーンベル', genus:'セレナ', stem:'branch', leaf:'round', adj:['月明かりの','連なる','静かな'], words:['控えめで可憐','落ち着きのある'], pose:'月輪草の輪の形が鈴になって、静かに連なる', trait:'月の輪の形をした鈴の房', mood:'神秘', one:['あっ、月の輪が鈴になったみたい。静かに連なる姿が、夜に似合いそうだね。','あっ、可憐な鈴の房だね。月明かりみたいな、静かな輝きがあるよ。'], cheer:['静かな輝きは、長く続くもの。焦らなくて大丈夫だよ。','連なる鈴みたいに、小さな一歩を重ねていこう。それが一番確かだよ。'] },
+ { id:'featheranemone', jp:'フェザーアネモネ', genus:'ヴェーラ', stem:'slender', leaf:'pointed', adj:['軽やかな','儚げな','神秘的な'], words:['神秘的で','儚げな'], pose:'アネモネの花弁が羽根のように裂けて、軽やかに開く', trait:'羽根のように裂ける花弁', mood:'神秘', one:['あっ、花弁が羽根のように裂けてる！アネモネの神秘さに、軽やかさが加わったね。','あっ、儚げで軽い花だね。風に乗って、どこかへ行ってしまいそう。'], cheer:['儚さと軽さは、自由の形でもあるよ。縛られないで、ふわりとね。','神秘的な魅力は、簡単には真似できない。あなたの個性だよ。'] },
+ { id:'belllily', jp:'ベルリリー', genus:'ティンティナ', stem:'branch', leaf:'slender', adj:['鈴鳴る','清らかな','房咲きの'], words:['清らかな','愛らしく'], pose:'ユリの小花が房になって、鈴のように揺れる', trait:'房になって揺れるユリの小花', mood:'清らか', one:['あっ、ユリの小花が房になってる！鈴みたいに揺れる姿が、清らかで可愛いね。','あっ、音が聞こえてきそうな花だね。両親の出会いで、こんな房咲きになるんだね。'], cheer:['清らかな音は、心を整えてくれるよ。あなたの声も、きっとそうだね。','房になって揺れる強さ。一人じゃない咲き方も、素敵だよ。'] },
+ { id:'angellily', jp:'エンジェルリリー', genus:'アンジェラ', stem:'slender', leaf:'slender', adj:['透ける','純白の','優美な'], words:['清らかな','優美さがある'], pose:'羽根をまとったような白ユリが、花弁を薄く透かして開く', trait:'羽根をまとった透ける白ユリ', mood:'清らか', one:['あっ、天使みたいなユリだ！花弁が薄く透けて、羽根をまとっているみたいだね。','あっ、純白で優美な花だね。両親の清らかさが、極まった感じがするよ。'], cheer:['透けるような清らかさは、磨いた人にだけのもの。これからも大切にね。','優美さは、静かな強さだよ。自信を持っていいんだからね。'] },
+ { id:'featherbell', jp:'フェザーベル', genus:'そよかぜ', stem:'branch', leaf:'round', adj:['そよ風の','軽やかな','可憐な'], words:['柔らかで','愛らしく'], pose:'羽根のように軽い鈴の房が、風に揺れる', trait:'羽根のように軽い鈴の房', mood:'穏やか', one:['あっ、鈴の縁が羽根みたいになってる！そよ風に揺れる姿が目に浮かぶね。','あっ、軽やかな鈴の房だね。両親の軽さ同士が掛け合わさったんだね。'], cheer:['そよ風に揺れる花は、風と喧嘩しない。しなやかに受け流す力、大切だね。','軽い音は、遠くまで届くよ。あなたの声も、きっと届いてる。'] },
+ { id:'queenrose', jp:'クイーンローズ', genus:'レジーナ', stem:'woody', leaf:'serrated', adj:['女王の','気高い','深紅の'], words:['気品に満ちた','情熱を帯びた'], pose:'バラの理想形を極めた、女王のバラが開く', trait:'バラの理想形を極めた女王の花', mood:'華やか', one:['あっ、これぞ女王のバラ！バラ同士の血が純粋に極まって、理想の形になったね。','あっ、気品が違うね。同系統の交配は、血の純粋培養なんだって実感するよ。'], cheer:['極めた美しさは、一朝一夕じゃない。あなたの積み重ねの証だよ。','女王の品格は、静かな自信から。その自信、大切にしてね。'] },
+ { id:'granddahlia', jp:'グランダリア', genus:'マキシマ', stem:'thick', leaf:'big', adj:['最大級の','堂々たる','華やかな'], words:['情熱的で','華やかさがあり'], pose:'キク科の大きさと層を極めた、最大級の一輪が開く', trait:'大きさと層を極めた最大級の一輪', mood:'華やか', one:['あっ、最大級のダリアだ！大きさも層も極まって、圧倒的な存在感だね。','あっ、同系統の純粋培養、すごいね。キク科の全部が、この一輪に集まったみたい。'], cheer:['大きな花を咲かせる人は、根も大きく張っているもの。あなたの努力の証だよ。','極めるって、続けた人だけにできること。これからも楽しみにしてるね。'] },
+ { id:'princessranun', jp:'プリンセスラナン', genus:'プリマ', stem:'standard', leaf:'round', adj:['姫の','まんまるの','優しい'], words:['優しさに満ちた','愛らしく'], pose:'ラナンキュラスの丸みを極めた、姫の花が開く', trait:'丸みを極めた姫の花', mood:'可憐', one:['あっ、姫みたいな花だね！ラナンキュラスの丸みが極まって、優しく輝いてるよ。','あっ、まんまるで可憐な花。同系統同士だと、こんなに純粋になるんだね。'], cheer:['丸みは優しさの形。あなたの優しさも、ちゃんと極まってきてるよ。','可憐さの奥にある芯の強さ。それが姫の花の魅力だね。'] },
+ { id:'madonnalily', jp:'マドンナリリー', genus:'マドンナ', stem:'slender', leaf:'slender', adj:['純白の','凛とした','聖なる'], words:['清らかな','無垢で'], pose:'純白で凛と立つ、ユリの聖花が開く', trait:'純白で凛と立つユリの聖花', mood:'清らか', one:['あっ、マドンナリリーだ！純白で凛と立つ姿に、思わず背筋が伸びるよ。','あっ、ユリの血が純粋に極まった花だね。清らかさって、こういうことだね。'], cheer:['清らかさは、守り続けた人にだけ残るもの。その凛とした姿、大切にね。','凛と立つ姿は、誰かの目印になるよ。あなたらしく、まっすぐ咲いてね。'] },
+ { id:'grandbell', jp:'グランベル', genus:'カンパヌラ', stem:'branch', leaf:'pointed', adj:['大聖堂の','壮大な','連なる'], words:['清らかな','堂々とした'], pose:'鈴の房を極めた、大聖堂の鐘のような花房が垂れる', trait:'大聖堂の鐘のような鈴の花房', mood:'華やか', one:['あっ、大聖堂の鐘みたいな花房だ！鈴の血が極まると、こんなに壮大になるんだね。','あっ、大きな鈴が幾つも連なってる。鳴ったら、町中に響きそうだね。'], cheer:['大きな鐘の音は、遠くまで届く。あなたの声も、きっと誰かに届いてるよ。','壮大さは、小さな鈴の積み重ね。一つひとつを大切にね。'] },
+ { id:'plumeflower', jp:'プルームフラワー', genus:'プルマージ', stem:'slender', leaf:'round', adj:['羽根飾りの','軽やかな','大きな'], words:['柔らかで','個性が強く'], pose:'羽根の軽さを極めた、大きな羽根飾りの花が開く', trait:'羽根の軽さを極めた羽根飾りの花', mood:'元気', one:['あっ、花全体が羽根飾りみたい！羽の血が極まって、こんなに軽やかな花になったね。','あっ、大きな羽根の花だ！風に乗って飛んでいきそうな軽さだね。'], cheer:['軽さは、自由に動ける力だよ。その羽根で、行きたい場所へ行こう。','個性が極まると、芸術になる。あなたの個性、大切にしてね。'] },
+];
+const HYBRID_BY_ID = {}; for (const h of HYBRIDS) HYBRID_BY_ID[h.id] = h;
+Object.assign(FMSG.species, Object.fromEntries(HYBRIDS.map(h => [h.id, { trait: h.trait, mood: h.mood, one: h.one, cheer: h.cheer }])));
+function labSpeciesOf(id){ return SPECIES.find(s => s.id === id) || (HYBRID_BY_ID[id] ? { id, jp: HYBRID_BY_ID[id].jp, hybrid: true } : null); }
+
+/* 交配の状態は garden ストアに key='lab' で保存（図鑑と同じ端末内DB） */
+collDB.getLab = async function(){
+  const db = await collDB.open(); if (!db) return null;
+  return new Promise(res => { try { const rq = db.transaction('garden').objectStore('garden').get('lab'); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); } catch (e) { res(null); } });
+};
+collDB.putLab = async function(state){
+  const db = await collDB.open(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction('garden', 'readwrite'); tx.objectStore('garden').put({ key: 'lab', ...state }); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch (e) { res(); } });
+};
+function labDefaultState(){ return { unlocked: false, unlockShown: false, cur: null, day: { d: '', used: {} }, blooms: 0, lastChild: null }; }
+async function labLoad(){
+  try { const s = await collDB.getLab(); if (s && typeof s === 'object'){ const d = labDefaultState(); return { ...d, ...s, day: (s.day && typeof s.day === 'object') ? s.day : d.day }; } } catch (e) { /* DBが無い環境では既定値 */ }
+  return labDefaultState();
+}
+async function labSave(st){ try { await collDB.putLab(st); } catch (e) { /* 保存できなくても止めない */ } }
+function labTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+
+/* ===== 図鑑側: 解放イベントと親の選択 ===== */
+let labLastMap = {}, labSel = { on: false, picks: [] };
+async function labOnCollection(map){
+  labLastMap = map || {};
+  const st = await labLoad();
+  const found26 = SPECIES.filter(sp => !sp.eventOnly && map[sp.id]).length;
+  if (found26 >= 15 && !st.unlocked){ st.unlocked = true; await labSave(st); }
+  const zone = $('labZone'), go = $('btn-lab-go');
+  if (zone) zone.style.display = st.unlocked ? '' : 'none';
+  if (go) go.style.display = st.unlocked ? '' : 'none';
+  labRenderSelectUI(st);
+  if (st.unlocked && !st.unlockShown){
+    st.unlockShown = true; await labSave(st);
+    $('labUnlockModal').style.display = 'flex';
+  }
+}
+function labRenderSelectUI(st){
+  const btn = $('btn-lab-select'), note = $('labSelNote'), cancel = $('btn-lab-cancel');
+  if (!btn) return;
+  if (!st.unlocked){ btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  if (st.cur){
+    btn.disabled = true;
+    btn.textContent = '🧪 開発中…';
+    note.textContent = 'いまは開発室で新種を育てています。満開になったら、次の交配ができます。';
+    note.style.display = '';
+    if (cancel) cancel.style.display = 'none';
+    return;
+  }
+  btn.disabled = false;
+  if (labSel.on){
+    btn.textContent = labSel.picks.length === 2 ? '🌸 交配する' : '新種を開発する';
+    note.textContent = labSel.picks.length === 2 ? 'この2つで交配します。よければ「交配する」を押してね。' : '交配したい花を2種類選んでね。';
+    note.style.display = '';
+    if (cancel) cancel.style.display = '';
+  } else {
+    btn.textContent = '🌱 新種を開発する';
+    note.style.display = 'none';
+    if (cancel) cancel.style.display = 'none';
+  }
+}
+function labSetSelectMode(on){
+  labSel.on = on; if (!on) labSel.picks = [];
+  $('collectionPage').classList.toggle('lab-selecting', on);
+  document.querySelectorAll('#collGrid .lab-picked').forEach(el => el.classList.remove('lab-picked'));
+  labLoad().then(labRenderSelectUI);
+}
+$('btn-lab-select').onclick = async () => {
+  const st = await labLoad();
+  if (st.cur) return;
+  if (!labSel.on){ labSetSelectMode(true); return; }
+  if (labSel.picks.length !== 2){ $('labSelNote').textContent = 'あと' + (2 - labSel.picks.length) + '種類、選んでね。交配したい花を2種類選んでね。'; return; }
+  const [a, b] = labSel.picks;
+  if (!labChildId(a, b)){ $('labSelNote').textContent = 'この組み合わせでは交配できません。'; return; }
+  st.cur = { a, b, points: 0, accSum: 0, accN: 0, tonicSum: 0, sessions: 0, born: Date.now() };
+  await labSave(st);
+  labSetSelectMode(false);
+  openLab();
+};
+$('btn-lab-cancel').onclick = () => labSetSelectMode(false);
+$('btn-lab-go').onclick = () => openLab();
+$('btn-lab-unlock-go').onclick = () => { $('labUnlockModal').style.display = 'none'; };
+$('collGrid').addEventListener('click', e => {
+  if (!labSel.on) return;
+  const cell = e.target.closest('[data-spid]'); if (!cell) return;
+  e.stopPropagation(); /* 選択中は図鑑の拡大表示を開かない */
+  const id = cell.dataset.spid;
+  if (!LAB_FAM[id] || !labLastMap[id]) return; /* 親にできるのは、集めた通常26種だけ（交配種・未獲得は選べない） */
+  e.stopPropagation();
+  const i = labSel.picks.indexOf(id);
+  if (i >= 0){ labSel.picks.splice(i, 1); cell.classList.remove('lab-picked'); }
+  else { if (labSel.picks.length >= 2) return; labSel.picks.push(id); cell.classList.add('lab-picked'); }
+  labLoad().then(labRenderSelectUI);
+}, true);
+
+/* ===== 開発室ページ ===== */
+const LAB_STAGES = [ { at: 0, name: '種' }, { at: 10, name: '芽' }, { at: 20, name: '双葉' }, { at: 30, name: '蕾' }, { at: 40, name: '半開' }, { at: 50, name: '満開' } ];
+function labStageOf(points){ let s = 0; for (let i = 0; i < LAB_STAGES.length; i++) if (points >= LAB_STAGES[i].at) s = i; return s; }
+const LAB_IMG = {};
+async function labImg(key, src){ if (!LAB_IMG[key]) LAB_IMG[key] = loadImg(src); return LAB_IMG[key]; }
+function labChildDef(st){ return st && st.cur ? HYBRID_BY_ID[labChildId(st.cur.a, st.cur.b)] : null; }
+function labHueOf(aId, bId){
+  const h1 = LAB_HOME[aId] !== undefined ? LAB_HOME[aId] : 330, h2 = LAB_HOME[bId] !== undefined ? LAB_HOME[bId] : 330;
+  const r1 = h1 * Math.PI / 180, r2 = h2 * Math.PI / 180;
+  let h = Math.atan2(Math.sin(r1) + Math.sin(r2), Math.cos(r1) + Math.cos(r2)) * 180 / Math.PI;
+  if (h < 0) h += 360;
+  return h;
+}
+function labFamOfHue(hue, sat){
+  if (sat < 0.18) return 'white';
+  let best = 'pink', bd = 1e9;
+  for (const k of Object.keys(FAMILY_HUE)){ if (k === 'white') continue; let d = Math.abs(hue - FAMILY_HUE[k]); if (d > 180) d = 360 - d; if (d < bd){ bd = d; best = k; } }
+  return best;
+}
+function labFinalColor(st){
+  const cur = st.cur;
+  const hue = labHueOf(cur.a, cur.b);
+  const meanAcc = cur.accN > 0 ? cur.accSum / cur.accN : 0.5;
+  const sat = clamp(0.30 + 0.55 * meanAcc, 0.15, 0.92);
+  const meanTonic = cur.accN > 0 ? cur.tonicSum / cur.accN : 58;
+  const light = clamp(0.40 + (meanTonic - 53) / 11 * 0.28, 0.40, 0.68);
+  const fam = labFamOfHue(hue, sat);
+  const words = COLOR_WORDS[fam] || COLOR_WORDS.pink;
+  const word = words[Math.floor(rng(hashStr(cur.a + '|' + cur.b + '|' + st.blooms))() * words.length)];
+  return { hue, sat, light, fam, word };
+}
+function labIntroOf(def, st, color){
+  const fa = LAB_FAM_JP[LAB_FAM[st.cur.a]], fb = LAB_FAM_JP[LAB_FAM[st.cur.b]];
+  const exprs = COLOR_EXPR[color.fam] || COLOR_EXPR.pink;
+  const expr = exprs[Math.floor(rng(hashStr(st.cur.a + st.cur.b + 'expr'))() * exprs.length)];
+  const closing = CLOSINGS[Math.floor(rng(hashStr(st.cur.a + st.cur.b + 'close'))() * CLOSINGS.length)];
+  const blood = fa === fb ? (fa + 'の血を純粋に受け継ぐ新種') : (fa + 'と' + fb + 'の血を受け継ぐ新種');
+  return blood + '。' + def.pose + '、' + expr + '花を咲かせた。 ' + closing;
+}
+async function labFlowerInfoOf(st, def, color){
+  const r = rng(hashStr(st.cur.a + '|' + st.cur.b + '|' + st.blooms + 'name'));
+  const adj = def.adj[Math.floor(r() * def.adj.length)];
+  return { name: adj + ' ' + color.word + '・' + def.genus, intro: labIntroOf(def, st, color), sp: { id: def.id, jp: def.jp, hybrid: true, base: def.id, dye: true }, color };
+}
+
+/* ステージ描画: テラリウム（900x1125、土の頂点は実測で中央・約69%）の中に、
+   本編と同じ buildStock / drawStock で株を描く（茎・枝・葉芽は本編の既存パーツ。
+   先生の指示 2026-11-16: 茎や葉は現在使っているものにする）。
+   交配種の頭は P5 に実測アンカー（付け根 rootx・首元 bottom・縦横比）を登録して流用する */
+const LAB_SOIL = { x: 450, y: 800 };
+const LAB_SC = 0.68; /* 本編と同じ寸法で組んだ株を、テラリウム内に収める縮小係数 */
+/* 交配種ごとの茎系・葉芽（本編の既存パーツから、系統に合わせて選定） */
+const LAB_PLANT = {
+  granrose: ['rose', 'sprig-rose'], pomponrose: ['rose', 'sprig-rose'], roselily: ['lily', 'sprig-tulilily'],
+  bellrose: ['rose', 'sprig-rose'], featherrose: ['rose', 'sprig-rose'], millefeuille: ['dahlia', 'sprig-rose'],
+  dahlialily: ['dahlia', 'sprig-rose'], stardahlia: ['dahlia', 'sprig-rose'], clouddahlia: ['dahlia', 'sprig-rose'],
+  ranunlily: ['anemone', 'sprig-rose'], moonbell: ['lily', 'sprig-tulilily'], featheranemone: ['anemone', 'sprig-rose'],
+  belllily: ['lily', 'sprig-tulilily'], angellily: ['lily', 'sprig-tulilily'], featherbell: ['cherry', 'sprig-rose'],
+  queenrose: ['rose', 'sprig-rose'], granddahlia: ['dahlia', 'sprig-rose'], princessranun: ['anemone', 'sprig-rose'],
+  madonnalily: ['lily', 'sprig-tulilily'], grandbell: ['lily', 'sprig-tulilily'], plumeflower: ['cherry', 'sprig-rose'],
+};
+for (const h of HYBRIDS){
+  for (const stg of ['bud', 'half', 'full']){
+    const rt = LAB_ROOT[h.id] && LAB_ROOT[h.id][stg]; if (!rt) continue;
+    P5[h.id + '-' + stg] = { a: (rt.rootx !== undefined ? rt.rootx : rt.cx), b: rt.bottom, ar: rt.ar };
+  }
+}
+/* 鈴系の満開（A案・先生の決定 2026-11-16）: 満開を1.5倍にしても天井に届かないよう、
+   満開の留め位置を上げて、てっぺんを半開のてっぺんに揃える。大きくした分は房が下へ伸びて吸収する */
+const LAB_BELLS = ['bellrose', 'moonbell', 'belllily', 'grandbell', 'featherbell', 'stardahlia'];
+for (const id of LAB_BELLS){
+  const f = LAB_ROOT[id] && LAB_ROOT[id].full, p = P5[id + '-full'];
+  if (f && p) p.b = 0.09 + f.top + (f.bottom - 0.09 - f.top) * 0.615;
+}
+function labProxySp(st, def){
+  const pl = LAB_PLANT[def.id] || ['rose', 'sprig-rose'];
+  const spA = SPECIES.find(s => s.id === st.cur.a);
+  return { id: def.id, jp: def.jp, base: def.id, stemFam: pl[0], sprig: pl[1], sprout: (spA && spA.sprout) || 'sprout-round', dye: true };
+}
+let labStockCache = null;
+async function labGetStock(st, color, stage){
+  const def = labChildDef(st); if (!def) return null;
+  const key = def.id + '|' + st.cur.born + '|' + stage + '|' + Math.round(color.hue) + '|' + Math.round((color.sat || 0) * 20) + '|' + Math.round((color.light || 0) * 20);
+  if (labStockCache && labStockCache.key === key) return labStockCache.stock;
+  const sp = labProxySp(st, def);
+  /* 本編の株と寸法・作りを揃える: ガーデンと同じフレーズ、本編と同じ地面高さ・
+     高さガードで組み、株ごと一様に縮小してテラリウムへ収める（比例は本編のまま） */
+  const phrase = { start: 0, durSec: 5, meanRms: 0.12, notes: [] };
+  for (let i = 0; i < 10; i++) phrase.notes.push({ midi: 60, start: i * 0.5, dur: 0.5, dev: 0.05 });
+  const saveR = stemR;
+  /* 株の大きさは段階で決まる（先生の定義: 30P=60%で蕾、40P=80%で半開、50P=100%で満開） */
+  stemR = stage === 3 ? 0.62 : stage === 4 ? 0.8 : 1;
+  /* 色は hue/sat/light のみ渡す（fam を渡すと dyeSat が彩度の下限を掛けてベタ塗りになる） */
+  const stock = buildStock([phrase], sp, { hue: color.hue, sat: color.sat, light: color.light }, 0, 990, 'lab' + def.id + st.cur.born, 1, { stabCents: 18 }, 430);
+  stemR = saveR;
+  stock.layerScale = LAB_BELLS.includes(def.id) ? { bud: 3, half: 1.5, full: 1.5 } : { bud: 3, half: 1.5, full: 1.2 }; /* 開発種の頭の大きさ（先生の決定 2026-11-16）: 蕾3倍・半開1.5倍・満開1.2倍（鈴系の満開は1.5倍＋留め位置調整で天井回避）。drawComposite が段階レイヤーごとに適用 */
+  stock.rootX = LAB_SOIL.x; stock.groundY = LAB_SOIL.y;
+  stock.imgs = await loadSpeciesImages(sp);
+  labStockCache = { key, stock };
+  return stock;
+}
+async function drawLabPlant(e, st, opt){
+  opt = opt || {};
+  const def = labChildDef(st); if (!def) return;
+  const stage = opt.stage !== undefined ? opt.stage : labStageOf(st.cur.points);
+  const ter = await labImg('terrarium', A3 + 'lab-terrarium.webp');
+  if (ter) e.drawImage(ter, 0, 0, 900, 1125);
+  const color = opt.color || { hue: labHueOf(st.cur.a, st.cur.b), sat: 0.35, light: 0.55 };
+  if (stage === 0){
+    const seed = await labImg('seed', A5 + 'seed-icon.webp');
+    if (seed) e.drawImage(seed, LAB_SOIL.x - 34, LAB_SOIL.y - 58, 68, 68);
+    return;
+  }
+  if (stage === 1){
+    const spA = SPECIES.find(s => s.id === st.cur.a);
+    const spr = spA ? await labImg('sprout:' + spA.sprout, A4 + spA.sprout + '.webp') : null;
+    if (spr){ const h = 130, w = h * spr.width / spr.height; e.drawImage(spr, LAB_SOIL.x - w / 2, LAB_SOIL.y - h + 14, w, h); }
+    return;
+  }
+  if (stage === 2){
+    /* 双葉: 本編の芽素材を土の盛り上がりと一緒に（ガーデンと同じ描き方） */
+    const sp2 = labProxySp(st, def);
+    drawSoilMound(e, LAB_SOIL.x, LAB_SOIL.y, 104, 15, GARDEN_SOIL_RGB);
+    const img = await loadImg(A4 + sp2.sprout + '.webp');
+    if (img) drawAnchored(e, img, sp2.sprout, LAB_SOIL.x, LAB_SOIL.y + 3, 130, 0, false, 1);
+    return;
+  }
+  /* 蕾（30P・株60%）・半開（40P・株80%）・満開（50P・株100%）: 本編の株描画をそのまま使う。
+     株の大きさは labGetStock の stemR、頭の育ちは進捗P（0.51=蕾、0.72=半開、1=満開） */
+  const stock = await labGetStock(st, color, stage);
+  if (!stock) return;
+  const P = opt.prog !== undefined ? opt.prog : (stage === 3 ? 0.51 : stage === 4 ? 0.72 : 1);
+  e.save();
+  e.translate(LAB_SOIL.x, LAB_SOIL.y); e.scale(LAB_SC, LAB_SC); e.translate(-LAB_SOIL.x, -LAB_SOIL.y);
+  /* 開発種だけの規則（先生の決定 2026-11-16）: 満開は中央の主茎1本だけ。
+     枝の花は半開（上限0.79）か蕾（上限0.55）までで止める。交配種には角度違いの
+     満開画像が無く、満開が複数並ぶと全部同じ正面絵になってしまうため */
+  drawStock(e, stock, { global: P, stem: (st, idx) => idx === 0 ? P : Math.min(P, idx % 2 === 1 ? 0.79 : 0.55) }, 0);
+  e.restore();
+}
+async function renderLabStage(){
+  const st = await labLoad();
+  const cv = $('labStage'); if (!cv) return;
+  const e = cv.getContext('2d');
+  e.clearRect(0, 0, 900, 1125);
+  if (!st.cur){
+    /* 満開直後は、収穫した花をそのままステージに残す（ページを開き直すまで） */
+    if (labBloomCtx && labBloomCtx.st && labBloomCtx.st.cur){ await drawLabPlant(e, labBloomCtx.st, { stage: 5, color: labBloomCtx.color }); return; }
+    const ter = await labImg('terrarium', A3 + 'lab-terrarium.webp'); if (ter) e.drawImage(ter, 0, 0, 900, 1125); return;
+  }
+  await drawLabPlant(e, st, {});
+}
+async function renderLabPage(){
+  const st = await labLoad();
+  const has = !!st.cur;
+  $('labNoCur').style.display = has ? 'none' : '';
+  $('labCur').style.display = has ? '' : 'none';
+  $('labBloom').style.display = 'none';
+  if (has){
+    const all = await collDB.getAll(); const map = {}; for (const r of all) map[r.id] = r;
+    const pa = SPECIES.find(s => s.id === st.cur.a), pb = SPECIES.find(s => s.id === st.cur.b);
+    $('labParentA').innerHTML = (map[st.cur.a] ? '<img src="' + map[st.cur.a].img + '" style="width:100%; border-radius:10px; display:block;">' : '') + '<div style="margin-top:5px; font-size:13.5px; font-weight:600;">' + (pa ? pa.jp : st.cur.a) + '</div>';
+    $('labParentB').innerHTML = (map[st.cur.b] ? '<img src="' + map[st.cur.b].img + '" style="width:100%; border-radius:10px; display:block;">' : '') + '<div style="margin-top:5px; font-size:13.5px; font-weight:600;">' + (pb ? pb.jp : st.cur.b) + '</div>';
+    const stage = labStageOf(st.cur.points);
+    $('labPoints').textContent = '現在のポイント: ' + st.cur.points + 'P / 50P（いまは「' + LAB_STAGES[stage].name + '」）';
+    $('labBar').style.width = Math.min(100, st.cur.points * 2) + '%';
+    const today = labTodayStr();
+    const used = (st.day && st.day.d === today) ? st.day.used : {};
+    for (const lv of [1, 2, 3]){
+      const b = $('btn-lab-t' + lv);
+      b.disabled = !!used[lv] || labTraining;
+      b.textContent = (lv === 1 ? '初級' : lv === 2 ? '中級' : '上級') + 'の鼻歌をうたう' + (used[lv] ? '（また明日うたってね）' : '');
+    }
+  }
+  await renderLabStage();
+}
+async function openLab(){
+  $('labPage').style.display = 'block';
+  await renderLabPage();
+}
+$('btn-lab-back').onclick = () => { $('labPage').style.display = 'none'; };
+
+/* ===== トレーニング（BPM84・2小節=8拍。難易度3種、各1日1回） ===== */
+const LAB_BPM = 84, LAB_BEAT = 60 / LAB_BPM;
+let labCountRunSeq = 0;
+const LAB_SCALE_MAJ = [0, 2, 4, 5, 7, 9, 11, 12, 14], LAB_SCALE_MIN = [0, 2, 3, 5, 7, 8, 10, 12, 14];
+const LAB_SOL_MAJ = ['ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'ド', 'レ'], LAB_SOL_MIN = ['ド', 'レ', 'ミ♭', 'ファ', 'ソ', 'ラ♭', 'シ♭', 'ド', 'レ'];
+let labTraining = false, labTrainStream = null, labTrainTimer = null;
+function labGenMelody(level){
+  const tonic = 53 + Math.floor(Math.random() * 12); /* F3〜E4 */
+  const minor = Math.random() < 0.5;
+  const maxDeg = level === 1 ? 4 : level === 2 ? 6 : 8;
+  const maxStep = level === 3 ? 4 : 2;
+  /* リズム: 1小節（4拍）ごとに、拍に乗るパターンから選ぶ（先生の指摘 2026-11-16:
+     8拍への自由な詰め込みでは長い音のアクセントが不規則な位置に来て、テンポを感じられない。
+     全パターン「小節の頭から始まり、3拍目は発音するか拍に乗った音がまたぐ」ことが条件） */
+  const LAB_RHYTHMS = {
+    1: [[1, 1, 1, 1], [2, 1, 1], [1, 1, 2], [2, 2]],
+    2: [[1, 1, 1, 1], [2, 1, 1], [1, 1, 2], [2, 2], [1.5, 0.5, 1, 1], [1, 1.5, 0.5, 1], [1.5, 0.5, 2], [2, 1.5, 0.5]],
+    3: [[1, 1, 1, 1], [2, 1, 1], [1, 1, 2], [2, 2], [1.5, 0.5, 1, 1], [1, 1.5, 0.5, 1], [1.5, 0.5, 2], [2, 1.5, 0.5], [0.5, 0.5, 1, 1, 1], [1, 0.5, 0.5, 1, 1], [0.5, 1, 0.5, 1, 1]],
+  };
+  const pats = LAB_RHYTHMS[level] || LAB_RHYTHMS[2];
+  for (let attempt = 0; attempt < 60; attempt++){
+    const durs = [...pats[Math.floor(Math.random() * pats.length)], ...pats[Math.floor(Math.random() * pats.length)]];
+    if (durs.length < 4) continue;
+    const degs = [0]; let ok = true;
+    for (let i = 1; i < durs.length; i++){
+      const steps = [];
+      for (let s = -maxStep; s <= maxStep; s++){ const d = degs[i - 1] + s; if (d >= 0 && d <= maxDeg) steps.push(d); }
+      degs.push(steps[Math.floor(Math.random() * steps.length)]);
+    }
+    degs[degs.length - 1] = 0; /* 終止は主音 */
+    if (level === 3){ let leap = false; for (let i = 1; i < degs.length; i++) if (Math.abs(degs[i] - degs[i - 1]) >= 4) leap = true; if (!leap) continue; }
+    const scale = minor ? LAB_SCALE_MIN : LAB_SCALE_MAJ;
+    let t = 0;
+    const notes = durs.map((d, i) => { const n = { deg: degs[i], midi: tonic + scale[degs[i]], start: t, dur: d }; t += d; return n; });
+    /* 鉄則（先生 2026-11-16）: 時間軸は2小節8拍、最小単位は8分音符（0.5拍）。
+       発音位置と音価は必ず0.5拍グリッド（16本）に合わせる。16分音符的な揺らぎを入れない */
+    for (const n of notes){ n.start = Math.round(n.start * 2) / 2; n.dur = Math.round(n.dur * 2) / 2; }
+    return { tonic, minor, notes };
+  }
+  /* フォールバック（到達しない想定）: ドレミレド */
+  const scale = minor ? LAB_SCALE_MIN : LAB_SCALE_MAJ;
+  let t = 0; const notes = [0, 1, 2, 1, 0].map(dg => { const n = { deg: dg, midi: tonic + scale[dg], start: t, dur: 1 }; t += 1; return n; });
+  while (t < 8){ notes.push({ deg: 0, midi: tonic, start: t, dur: 1 }); t += 1; }
+  return { tonic, minor, notes };
+}
+function labTone(freq, tAbs, dur, vol, type){
+  const o = AC.createOscillator(), o2 = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'triangle'; o.frequency.value = freq;
+  o2.type = 'sine'; o2.frequency.value = freq * 2;
+  const g2 = AC.createGain(); g2.gain.value = 0.25;
+  g.gain.setValueAtTime(0.0001, tAbs);
+  g.gain.exponentialRampToValueAtTime(vol || 0.20, tAbs + 0.02);
+  g.gain.setValueAtTime(vol || 0.20, tAbs + Math.max(0.03, dur - 0.06));
+  g.gain.exponentialRampToValueAtTime(0.0001, tAbs + dur);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(AC.destination);
+  o.start(tAbs); o.stop(tAbs + dur + 0.05); o2.start(tAbs); o2.stop(tAbs + dur + 0.05);
+}
+function labClick(tAbs, accent, volMul){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'square'; o.frequency.value = accent ? 1760 : 1320;
+  g.gain.setValueAtTime((accent ? 0.20 : 0.13) * (volMul || 1), tAbs);
+  g.gain.exponentialRampToValueAtTime(0.0001, tAbs + 0.045);
+  o.connect(g); g.connect(AC.destination);
+  o.start(tAbs); o.stop(tAbs + 0.06);
+}
+const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
+function labScore(frames, mel){
+  let correct = 0;
+  for (const n of mel.notes){
+    const t0 = n.start * LAB_BEAT + 0.08, t1 = (n.start + n.dur) * LAB_BEAT - 0.03;
+    const win = frames.filter(fr => fr.t >= t0 && fr.t <= t1);
+    if (!win.length) continue;
+    const voiced = win.filter(fr => fr.f > 0);
+    if (voiced.length / win.length < 0.35) continue;
+    const midis = voiced.map(fr => 69 + 12 * Math.log2(fr.f / 440)).sort((a, b) => a - b);
+    const med = midis[Math.floor(midis.length / 2)];
+    if (Math.abs(med - n.midi) * 100 <= 50) correct++;
+  }
+  return mel.notes.length ? correct / mel.notes.length : 0;
+}
+function labPointsOf(acc){ return clamp(Math.floor(acc * 100 / 10) + 1, 1, 10); }
+/* ===== トレーニング（先生の提案 2026-11-16: ひとまとまりにしない） =====
+   難易度ボタン → デモ再生 → 「もう一度聞く」「ハナウタに挑戦」の2ボタン出現 →
+   挑戦を押して初めてカウント→録音→採点。デモを聞くだけでは1日1回を消費しない。
+   課題メロディーは挑戦が終わるまで同じものを保持する（聞き直しても変わらない） */
+let labSession = null; /* { level, mel } */
+function labBuildChips(mel){
+  const sol = mel.minor ? LAB_SOL_MIN : LAB_SOL_MAJ;
+  const chips = $('labNotes'); chips.innerHTML = '';
+  mel.notes.forEach(n => { const s = document.createElement('span'); s.textContent = sol[n.deg]; s.style.cssText = 'display:inline-block; min-width:34px; padding:5px 4px; margin:2px; border-radius:8px; background:#efe7d3; font-size:14px; font-weight:700; color:#6b6151; text-align:center;'; chips.appendChild(s); });
+}
+function labSetChip(idx, bg){ [...$('labNotes').children].forEach((c, i) => { if (i === idx) c.style.background = bg; }); }
+function labClearChips(){ [...$('labNotes').children].forEach(c => c.style.background = '#efe7d3'); }
+function labGrid(){
+  const T0 = AC.currentTime + 0.4;
+  return { T0, at: beat => T0 + beat * LAB_BEAT,
+    waitUntil: tAbs => new Promise(r => { const chk = () => { const d = (tAbs - AC.currentTime) * 1000; if (d <= 5) r(); else setTimeout(chk, Math.min(Math.max(d - 2, 1), 50)); }; chk(); }),
+    later: (tAbs, fn) => setTimeout(fn, Math.max(0, (tAbs - AC.currentTime) * 1000)) };
+}
+/* カウント表示ドライバ: beats拍ぶん「1・2・3・4」を繰り返す。pulseFrom拍目からは数字が膨らむ */
+function labCountRun(at, later, beats, pulseFrom){
+  const countRun = ++labCountRunSeq;
+  for (let b = 0; b < beats; b++){
+    const n = b % 4 + 1;
+    later(at(b), () => { if (countRun !== labCountRunSeq) return; const el = $('labCount'); el.textContent = String(n); if (pulseFrom !== null && b >= pulseFrom && el.animate) el.animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 160 }); });
+  }
+  later(at(beats), () => { if (countRun === labCountRunSeq) $('labCount').textContent = ''; });
+}
+async function labPlayDemo(level){
+  if (labTraining) return;
+  const st = await labLoad();
+  if (!st.cur) return;
+  const today = labTodayStr();
+  if (st.day && st.day.d === today && st.day.used && st.day.used[level]){ $('labMsg').textContent = 'その難易度は今日はもう歌いました。また明日どうぞ。'; return; }
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') await AC.resume(); } catch (e) { return; }
+  if (!labSession || labSession.level !== level) labSession = { level, mel: labGenMelody(level) };
+  const mel = labSession.mel;
+  $('labSessionBtns').style.display = 'none';
+  labTraining = true;
+  for (const lv of [1, 2, 3]) $('btn-lab-t' + lv).disabled = true;
+  labBuildChips(mel);
+  const { at, waitUntil, later } = labGrid();
+  /* カウント（表示＋強いクリック）→ デモ（弱いクリック継続）。表示は数字が変わるだけ */
+  $('labMsg').textContent = '🎧 デモを聴く（' + (mel.minor ? '短調' : '長調') + '）';
+  for (let b = 0; b < 4; b++) labClick(at(b), b === 0);
+  labCountRun(at, later, 12, null);
+  mel.notes.forEach((n, i) => { labTone(midiHz(n.midi), at(4 + n.start), n.dur * LAB_BEAT * 0.92, 0.22); later(at(4 + n.start), () => labSetChip(i, '#f7d774')); });
+  for (let b = 0; b < 8; b++) labClick(at(4 + b), b === 0, 0.5);
+  await waitUntil(at(12));
+  labClearChips();
+  labTraining = false;
+  for (const lv of [1, 2, 3]) $('btn-lab-t' + lv).disabled = !!(st.day && st.day.d === today && st.day.used && st.day.used[lv]);
+  $('labMsg').textContent = '🎧 デモが終わったよ。もう一度聞く？ それとも挑戦する？';
+  $('labSessionBtns').style.display = 'flex';
+}
+async function labChallenge(){
+  if (labTraining || !labSession) return;
+  const level = labSession.level, mel = labSession.mel;
+  $('labSessionBtns').style.display = 'none';
+  const st = await labLoad();
+  if (!st.cur){ labSession = null; return; }
+  if (AC && AC.state === 'suspended') await AC.resume();
+  try {
+    labTrainStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
+  } catch (e) { $('labMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; $('labSessionBtns').style.display = 'flex'; return; }
+  const today = labTodayStr();
+  if (!st.day || st.day.d !== today) st.day = { d: today, used: {} };
+  st.day.used[level] = true; /* 消費は挑戦を始めた時点（デモ再生では消費しない） */
+  await labSave(st);
+  labTraining = true;
+  for (const lv of [1, 2, 3]) $('btn-lab-t' + lv).disabled = true;
+  labBuildChips(mel);
+  const { at, waitUntil, later } = labGrid();
+  /* カウント＋ルート音（表示は数字のみ）→ 録音（数字が膨らむ・クリック音なし＝コエシル方式） */
+  $('labMsg').textContent = '🌟 ハナウタチャレンジ！カウントとルート音を聴いてね';
+  labTone(midiHz(mel.tonic), at(0), 4 * LAB_BEAT * 0.95, 0.20);
+  for (let b = 0; b < 4; b++) labClick(at(b), b === 0);
+  labCountRun(at, later, 12, 4);
+  later(at(4), () => { $('labMsg').textContent = '🎤 拍の数字に合わせて歌ってね！'; });
+  await waitUntil(at(4));
+  const src = AC.createMediaStreamSource(labTrainStream);
+  const an2 = AC.createAnalyser(); an2.fftSize = 2048; src.connect(an2);
+  const buf = new Float32Array(an2.fftSize);
+  const frames = [];
+  const recT0 = performance.now();
+  let beatShown = -1;
+  await new Promise(done => {
+    const tick = () => {
+      if (!labTraining) return done();
+      const t = (performance.now() - recT0) / 1000;
+      an2.getFloatTimeDomainData(buf);
+      const { f, rms } = autoPitch(buf, AC.sampleRate);
+      frames.push({ t, f, rms });
+      const beat = Math.floor(t / LAB_BEAT);
+      if (beat !== beatShown && beat < 8){ beatShown = beat; let idx = mel.notes.findIndex(n => beat >= n.start && beat < n.start + n.dur); labClearChips(); if (idx >= 0) labSetChip(idx, '#bfe3a8'); }
+      if (t >= 8 * LAB_BEAT) return done();
+      labTrainTimer = setTimeout(tick, 50);
+    };
+    tick();
+  });
+  clearTimeout(labTrainTimer);
+  if (labTrainStream) labTrainStream.getTracks().forEach(tr => tr.stop());
+  labTrainStream = null;
+  labTraining = false;
+  labSession = null;
+  labClearChips();
+  /* 採点と成長 */
+  const acc = labScore(frames, mel);
+  const pts = labPointsOf(acc);
+  const st2 = await labLoad();
+  if (st2.cur){
+    st2.cur.points = Math.min(50, st2.cur.points + pts);
+    st2.cur.accSum += acc; st2.cur.accN += 1; st2.cur.tonicSum += mel.tonic; st2.cur.sessions += 1;
+    await labSave(st2);
+    $('labCount').textContent = '';
+    $('labMsg').textContent = '🎉 ' + pts + 'ポイント獲得！（正解率 ' + Math.round(acc * 100) + '％・合計 ' + st2.cur.points + 'P）';
+    if (st2.cur.points >= 50){ await labBloom(st2); return; }
+  }
+  await renderLabPage();
+}
+$('btn-lab-t1').onclick = () => labPlayDemo(1);
+$('btn-lab-t2').onclick = () => labPlayDemo(2);
+$('btn-lab-t3').onclick = () => labPlayDemo(3);
+$('btn-lab-relisten').onclick = () => { if (labSession) labPlayDemo(labSession.level); };
+$('btn-lab-challenge').onclick = () => labChallenge();
+
+
+/* ===== 満開: 色の確定・図鑑登録・カード ===== */
+async function renderLabExport(fi, st, color, serial){
+  const EW = 1080, EH = 1600;
+  const c = document.createElement('canvas'); c.width = EW; c.height = EH;
+  const e = c.getContext('2d');
+  e.fillStyle = '#fffdf8'; e.fillRect(0, 0, EW, EH);
+  const gh = 1275;
+  const stage = document.createElement('canvas'); stage.width = 900; stage.height = 1125;
+  await drawLabPlant(stage.getContext('2d'), st, { stage: 5, color });
+  e.save(); e.beginPath(); e.rect(30, 30, EW - 60, gh); e.clip();
+  e.drawImage(stage, 30, 30, EW - 60, gh);
+  e.restore();
+  const rbY = 30 + gh - 168, rbH = 98, rbX0 = 108, rbX1 = EW - 108, rbMid = rbY + rbH / 2;
+  e.save();
+  e.beginPath();
+  e.moveTo(rbX0, rbY); e.lineTo(rbX1, rbY); e.lineTo(rbX1 - 34, rbMid); e.lineTo(rbX1, rbY + rbH); e.lineTo(rbX0, rbY + rbH); e.lineTo(rbX0 + 34, rbMid); e.closePath();
+  e.fillStyle = 'rgba(22,17,12,0.66)'; e.fill();
+  e.strokeStyle = 'rgba(216,178,106,0.95)'; e.lineWidth = 2.5; e.stroke();
+  e.beginPath();
+  e.moveTo(rbX0 + 9, rbY + 8); e.lineTo(rbX1 - 9, rbY + 8); e.lineTo(rbX1 - 38, rbMid); e.lineTo(rbX1 - 9, rbY + rbH - 8); e.lineTo(rbX0 + 9, rbY + rbH - 8); e.lineTo(rbX0 + 38, rbMid); e.closePath();
+  e.strokeStyle = 'rgba(216,178,106,0.55)'; e.lineWidth = 1.2; e.stroke();
+  e.fillStyle = '#fdf6e0'; e.textAlign = 'center'; e.textBaseline = 'middle';
+  e.font = '700 41px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+  e.fillText(fi.name, EW / 2, rbMid + 2);
+  e.restore();
+  e.fillStyle = '#2d2a26'; e.textAlign = 'center';
+  e.font = '24px sans-serif'; e.fillStyle = '#a08b62';
+  e.fillText('Lab No. ' + serial, EW / 2, gh + 96);
+  e.font = '26px "Hiragino Sans",sans-serif'; e.fillStyle = '#4c463c';
+  const intro = fi.intro; let line = '', ly = gh + 146;
+  for (const ch of intro){ if (e.measureText(line + ch).width > EW - 140){ e.fillText(line, EW / 2, ly); ly += 38; line = ''; } line += ch; }
+  if (line) e.fillText(line, EW / 2, ly);
+  e.font = '22px sans-serif'; e.fillStyle = '#a79c86';
+  e.fillText('ハナウタ🌸ガーデン ' + APP_URL + '　©ボーカル道場K\'s VOX', EW / 2, EH - 26);
+  return c;
+}
+let labBloomCtx = null;
+async function labBloom(st){
+  const def = labChildDef(st); if (!def) return;
+  const color = labFinalColor(st);
+  const fi = await labFlowerInfoOf(st, def, color);
+  st.blooms += 1;
+  const serial = st.blooms;
+  /* 満開の儀式（ステージ上でクロスフェード） */
+  const cv = $('labStage'), e = cv.getContext('2d');
+  const t0 = performance.now();
+  await new Promise(done => {
+    const step = () => {
+      const t = Math.min(1, (performance.now() - t0) / 2000);
+      drawLabPlant(e, st, { stage: 5, color, prog: 0.72 + 0.28 * t }).then(() => { if (t < 1) requestAnimationFrame(step); else done(); });
+    };
+    step();
+  });
+  /* 図鑑に登録（初回固定・回数カウントは通常種と同じ作法） */
+  try {
+    const full = await renderLabExport(fi, st, color, serial);
+    const th = document.createElement('canvas'); th.width = 540; th.height = 675;
+    th.getContext('2d').drawImage(full, 30, 30, 1020, 1275, 0, 0, 540, 675);
+    let img = '';
+    try { img = th.toDataURL('image/webp', 0.85); } catch (err) { img = ''; }
+    if (!img || img.length > 500000){ try { img = th.toDataURL('image/jpeg', 0.85); } catch (err) { img = ''; } }
+    if (img){
+      const all = await collDB.getAll();
+      const ex = all.find(r => r.id === def.id);
+      if (ex) await collDB.put({ ...ex, count: (ex.count || 1) + 1 });
+      else await collDB.put({ id: def.id, img, count: 1, bloomNo: 'L' + serial, ts: Date.now() });
+    }
+    labBloomCtx = { fi, st: { ...st }, color, serial, canvas: full };
+  } catch (err) { labBloomCtx = { fi, st: { ...st }, color, serial, canvas: null }; }
+  st.cur = null;
+  st.lastChild = def.id;
+  await labSave(st);
+  flowerInfo = labBloomCtx.fi;
+  $('labBloomName').textContent = '🌸 ' + fi.name + '（' + def.jp + '）が咲きました！';
+  if (labBloomCtx.canvas) $('labBloomImg').src = labBloomCtx.canvas.toDataURL('image/png');
+  $('labBloom').style.display = '';
+  $('labMsg').textContent = '図鑑に加わりました🌸 次の交配は図鑑から始められます。';
+  await renderLabPage();
+  $('labBloom').style.display = '';
+  $('labPage').scrollTop = 0;
+}
+$('btn-lab-save').onclick = async () => {
+  if (!labBloomCtx || !labBloomCtx.canvas) return;
+  try {
+    const b = await new Promise(res => labBloomCtx.canvas.toBlob(res, 'image/png'));
+    if (b){ const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'hanauta-lab-' + labBloomCtx.serial + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+  } catch (e) { /* 保存できない環境では表示画像の長押しで */ }
+};
+$('btn-lab-share').onclick = async () => {
+  if (!labBloomCtx) return;
+  const text = '鼻歌の交配で生まれた私だけの花「' + labBloomCtx.fi.name + '」🌸\nあなたの声でも咲かせてみて。\n' + APP_URL + '\n#ハナウタガーデン';
+  try {
+    const b = labBloomCtx.canvas ? await new Promise(res => labBloomCtx.canvas.toBlob(res, 'image/png')) : null;
+    if (b && navigator.canShare){ const file = new File([b], 'hanauta-lab-' + labBloomCtx.serial + '.png', { type: 'image/png' }); if (navigator.canShare({ files: [file] })){ await navigator.share({ files: [file], text }); return; } }
+    if (navigator.share){ await navigator.share({ text, url: APP_URL }); return; }
+    window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+};
+$('btn-lab-fmsg').onclick = () => {
+  const m = buildFlowerMessage(); if (!m) return;
+  $('fmsg-one').textContent = m.one;
+  $('fmsg-cheer').textContent = m.cheer;
+  $('fmsg-lucky').textContent = m.lucky;
+  $('fmsgFairy').src = A5 + 'fairy-' + m.fairy + '.webp';
+  $('fmsgModal').style.display = 'flex';
+};
+$('btn-lab-zoom').onclick = () => {
+  if (!labBloomCtx) return;
+  const def = labChildDef(labBloomCtx.st); if (!def) return;
+  $('zoomImg').src = A5 + def.id + '-full.webp'; /* 元の白い花のまま（先生の指定） */
+  $('zoomName').textContent = labBloomCtx.fi.name;
+  $('zoomModal').style.display = 'flex';
+  zoomOpen = true;
+};
+$('btn-lab-next').onclick = () => { $('labPage').style.display = 'none'; openCollection(); };
 
 </script>
 </html>
