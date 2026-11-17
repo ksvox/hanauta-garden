@@ -100,7 +100,7 @@
     </div>
     <div class="howto on-hero">
       <p class="howto-title">あそびかた</p>
-      🎵 スマホに向かって30秒鼻歌をうたう<br>
+      ♫スマホに向かって30秒鼻歌をうたう<br>
       🌱 歌声にある生命力が花に宿る<br>
       🌸 咲いた花は図鑑カードにして持ち帰れる
     </div>
@@ -114,7 +114,8 @@
   <h2 class="sec" id="sec-sing">2️⃣ 花を育てる</h2>
   <div class="howto">
     スマホを口の前15cmくらいに持ってください。<br>
-    好きな歌でも、即興でもOK。30秒たつと自動で終わります。
+    好きな歌でも、即興でもOK。30秒たつと自動で終わります。<br>
+    特定の期間にのみ咲く花もありますよ。
   </div>
 
 <!-- 花が咲く画面 -->
@@ -125,6 +126,7 @@
 <!-- 結果 -->
   <div id="result" style="display:none;">
     <div class="card">
+      <p id="f-pill" style="display:none; margin:0 auto 8px; width:fit-content; background:#ffffff; color:#262019; border-radius:999px; padding:5px 16px; font-size:13.5px; font-weight:700; box-shadow:0 2px 8px rgba(60,40,10,.25);">✨イベントフラワー✨</p>
       <p class="fname" id="f-name"></p>
       <p class="fno" id="f-no"></p>
       <p class="fintro" id="f-intro"></p>
@@ -351,7 +353,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v67'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v68'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -370,7 +372,7 @@ function loadImg(src){
   return p;
 }
 const APP_URL = 'https://hanauta-garden.ksvox.net/';
-const SPCODE = { dahlia:'DA', rose:'RO', lily:'LI', gerbera:'GE', sunflower:'SU', anemone:'AN', ranunculus:'RA', marguerite:'MA', galaxy:'GA', lantern:'LA', crystal:'CR', featherflower:'FE', swirl:'SW', rainbow:'RB', tulilily:'TU', candy:'CA', mobius:'MO', bubble:'BU', cotton:'CO', goldbell:'GO', firefly:'FI', moonring:'MR', sakura:'SA', tulip:'TP', noirrose:'NR', carnation:'CN', sweetpea:'PE', marigold:'MG', sakura2:'SK', hotlips:'HL' };
+const SPCODE = { dahlia:'DA', rose:'RO', lily:'LI', gerbera:'GE', sunflower:'SU', anemone:'AN', ranunculus:'RA', marguerite:'MA', galaxy:'GA', lantern:'LA', crystal:'CR', featherflower:'FE', swirl:'SW', rainbow:'RB', tulilily:'TU', candy:'CA', mobius:'MO', bubble:'BU', cotton:'CO', goldbell:'GO', firefly:'FI', moonring:'MR', sakura:'SA', tulip:'TP', noirrose:'NR', carnation:'CN', sweetpea:'PE', marigold:'MG', sakura2:'SK', hotlips:'HL', poinsettia:'PO', orchid:'OR', chocolat:'CH', sakura_season:'SS', redcarnation:'RC', hydrangea:'HY', rainbowsun:'RS', hibiscus:'HB', higanbana:'HG', pumpkin:'PK', momiji:'MJ' };
 let bloomNo = '';
 function makeBloomNo(sp){
   const d = new Date(), p = n => String(n).padStart(2, '0');
@@ -438,6 +440,17 @@ const SPECIES = [
     （eventOnly: 図鑑B方式・単体フェイドイン表示・ガーデンもイベント種準拠）。
     完成表示にはキラキラエフェクトを足す（drawSparkles / SPARKLE_SPECIES） */
  { id:'hotlips', jp:'サイコトリア・ペピギアナ', base:'hotlips', dye:false, fixedWord:'ルビー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['唇の','真紅の','艶やかな'], genus:'ペピギアナ', words:['唇のように艶やかで','どこにもない個性があり'] },
+ { id:'poinsettia', jp:'ポインセチア', base:'season-poinsettia', dye:false, fixedWord:'ルビー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['真っ赤な','華やかな','冬の'], genus:'ポインセチア', words:['冬の部屋を彩る','聖なる夜に映える'] },
+ { id:'orchid', jp:'胡蝶蘭', base:'season-orchid', dye:false, fixedWord:'ブロッサム', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['優雅な','気品ある','蝶のような'], genus:'コチョウラン', words:['蝶が舞うように優雅で','気品にあふれ'] },
+ { id:'chocolat', jp:'ショコラハート', base:'season-chocolat', dye:false, fixedWord:'ブロッサム', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['甘い','ハートの','とろける'], genus:'ショコラハート', words:['チョコレートみたいに甘く','ハートいっぱいで'] },
+ { id:'sakura_season', jp:'桜', base:'season-sakura_season', dye:false, fixedWord:'ブロッサム', sprig:'sprig-rose', sprout:'sprout-leaves', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['儚い','春の','優しい'], genus:'サクラ', words:['春風に舞うように儚く','春の光に透けるように'] },
+ { id:'redcarnation', jp:'赤いカーネーション', base:'season-redcarnation', dye:false, fixedWord:'ルビー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['真っ赤な','感謝の','温かい'], genus:'カーネーション', words:['感謝の気持ちみたいに温かく','大切な人への想いを込めて'] },
+ { id:'hydrangea', jp:'紫陽花', base:'season-hydrangea', dye:false, fixedWord:'クリア', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['雨上がりの','しっとりした','澄んだ'], genus:'アジサイ', words:['雨に濡れてしっとりと','小さな花が集まって'] },
+ { id:'rainbowsun', jp:'虹色ヒマワリ', base:'season-rainbowsun', dye:false, fixedWord:'ゴールド', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['虹色の','眩しい','夏の'], genus:'ヒマワリ', words:['虹色に染まって','太陽に向かって'] },
+ { id:'hibiscus', jp:'ハイビスカス', base:'season-hibiscus', dye:false, fixedWord:'ルビー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['南国の','真っ赤な','情熱的な'], genus:'ハイビスカス', words:['南国の風のように','情熱的に大きく開き'] },
+ { id:'higanbana', jp:'彼岸花', base:'season-higanbana', dye:false, fixedWord:'ルビー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['妖しい','真っ赤な','秋の'], genus:'ヒガンバナ', words:['炎のように妖しく','秋の野に静かに立ち'] },
+ { id:'pumpkin', jp:'パンプキンナイト', base:'season-pumpkin', dye:false, fixedWord:'アンバー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['かぼちゃ色の','不思議な','夜の'], genus:'パンプキンナイト', words:['かぼちゃ色に灯り','ハロウィンの夜に咲き'] },
+ { id:'momiji', jp:'もみじ', base:'season-momiji', dye:false, fixedWord:'アンバー', sprig:'sprig-rose', sprout:'sprout-round', cluster:true, single:true, eventOnly:true, seasonal:true, prof:{range:['mid'], move:['smooth'], stab:null, notes:['mid'], phrase:['mid'], vol:['mid']}, adj:['紅葉の','秋の','燃えるような'], genus:'モミジ', words:['秋色に染まり','燃えるように赤く'] },
 ];
 const COLOR_WORDS = { red:['ルビー','ガーネット','カーマイン'], orange:['アンバー','テラコッタ','アプリコット'], yellow:['イエロー','トパーズ','シトリン'], green:['エメラルド','ジェイド','オリーブ'], blue:['サファイア','コバルト','インディゴ'], purple:['アメジスト','バイオレット','マゼンタ'], pink:['ローズ','コーラル','ブロッサム'], white:['クリア','パール','アイボリー','パステル'] };
 const FAMILY_JP = { red:'赤', orange:'橙', yellow:'黄', green:'緑', blue:'青', purple:'紫', pink:'ピンク', white:'白' };
@@ -447,6 +460,22 @@ const FIXED_EXPR = { 'クリア':'氷のように澄んだ', 'ゴールド':'幸
 /* ========= フラワーメッセージ（文面は先生確認済みシートが正） ========= */
 const FMSG = {"species": {"dahlia": {"trait": "華やかで堂々とした存在感", "mood": "華やか", "one": ["大きな花が咲いたね。その堂々とした感じ、あなたの声の伸びやかさそのものみたい。", "存在感のある花だなあ。歌っているときのあなた、きっと目立ってたんじゃない？"], "cheer": ["きっと大事な場面でも、この花みたいに堂々と咲けるよ。", "華やかさはあなたの武器だね。遠慮しないで、もっと輝いていいんだよ。"]}, "rose": {"trait": "気品と情熱をあわせ持つ美しさ", "mood": "華やか", "one": ["気品のある花が咲いたね。でも、どこか情熱も感じられてすごく素敵。", "凛とした美しい花だね。あなたの声、芯があって色気もあるなんてずるいなぁ。"], "cheer": ["その品性は本物だよ。誰かの真似じゃなく、あなたのままで咲き続けて。", "情熱を秘めた人は本当に強いよ。迷わず、自分に自信をもって行動してね。"]}, "lily": {"trait": "凛とした清らかさ", "mood": "清らか", "one": ["すっと背筋の伸びるような花。あなたの声、澄んでいて気持ちよかったよ。", "清らかな花が咲いたね。無理のない、まっすぐな声だったみたい。"], "cheer": ["その清らかさは、きっと聴く人の心を静かに整えてくれるよ。", "凛とした強さは、静かな人の特権だね。雑音に惑わされず、いつでもあなたらしく振舞って大丈夫だよ。"]}, "gerbera": {"trait": "太陽みたいな明るさ", "mood": "元気", "one": ["すごく明るい花が咲いたね。 あなたの声を聴いていたら、こっちまで元気が出たよ。", "太陽みたいな花が咲いたね。今日は調子がいいんじゃない？"], "cheer": ["その明るさが、周りの人を照らしてるよ。今日もいい日にしようね。", "前向きな声は誰かの力になるよ。その笑顔の声、また聞かせてね。"]}, "sunflower": {"trait": "太陽に向かうまっすぐな力", "mood": "元気", "one": ["太陽を追う花が咲いたよ。あなたの声、まっすぐで力強かったなぁ", "とても前向きな花が咲いたね。迷いのない声って、こういうのを言うんだと思うな。"], "cheer": ["あなたの誠実さは本物だよ。そのまま進めば、きっと光に届くよ。", "まっすぐな人は強い。最後に笑うのは、きっと諦めなかった人だよ。"]}, "anemone": {"trait": "儚くて神秘的な雰囲気", "mood": "神秘", "one": ["儚げな花が咲いたよ。あなたの声、夢の中みたいに柔らかかった。", "神秘的な花だね。声に影があって、私はすごく惹かれちゃう。"], "cheer": ["儚さは弱さじゃないよ。その繊細さに救われる人がいるんだから。", "夢みる力は大切にしてね。あなたの世界は、これからもっと広がっていくはずだよ。"]}, "ranunculus": {"trait": "幾重にも重なる優しさ", "mood": "穏やか", "one": ["花びらが何重にも重なる花。まるで、あなたの優しさが層になって咲いたみたい。", "ふんわり包み込むような花だね。とても穏やかで、聴いていてほっとしたよ。"], "cheer": ["優しい人は本当は強い人。その穏やかさを、これからも大切にしてね。", "あなたの声は、きっと誰かの一日をそっと温められるはずだよ。"]},
 "carnation": {"trait": "穏やかな息の長さ", "mood": "穏やか", "one": ["ふんわり優しい花が咲いたね。聴いていて、ほっとする穏やかさだったよ。", "癒やしの花が咲いたよ。その穏やかさは、きっと誰かの心もほぐしているよ。"], "cheer": ["焦らずゆっくりで大丈夫。あなたのペースがいちばん心地いいリズムだよ。", "優しい強さって、こういうことだね。今日もあなたのまわりが穏やかでありますように。"]}, "marguerite": {"trait": "誠実で清楚な佇まい", "mood": "清らか", "one": ["清楚な花が咲いたよ。飾らない声って、すごく信頼できるなぁ。", "誠実で可愛らしい花だね。あなたの声、嘘がない感じで好きだよ。"], "cheer": ["誠実さは一番の魅力だよ。そのまっすぐさ、失わないでね。", "清楚な強さって素敵だね。今日もあなたのペースで大丈夫だよ。"]}, "tulip": {"trait": "凛とまっすぐな潔さ", "mood": "清らか", "one": ["すっとまっすぐな花が咲いたね。あなたの声、潔くてすごく気持ちがいい。", "凛として清らかな花だね。あなたの潔さがそのまま花になったみたいで素敵。"], "cheer": ["まっすぐ立つ姿は本当にきれい。その迷いのない清らかさはあなたの武器だよ。", "シンプル・イズ・ベスト。でも実はこれが一番難しいんだよ。あなたはすごいなぁ。"]}, "galaxy": {"trait": "星屑をまとった深遠さ", "mood": "神秘", "one": ["あっ、星の花が咲いたよ！ あなたの声、果てしなく広がる宇宙みたいに神秘的。", "あっ、銀河の花なんて、めったに咲かないんだよ！すごいね。まさに声に宇宙を感じたよ。"], "cheer": ["その深さは、あなたのだけのもの。誰にも真似できない、あなたの魅力だね。", "果てしない世界を持っている人は強い。もっともっとあなたの世界を広げていってね。"]}, "lantern": {"trait": "温もりの灯り", "mood": "穏やか", "one": ["とても温かい灯りの花が咲いたよ！聴いていて、心がほっとしたなぁ。", "ランタンみたいな花が咲いた！あなたの声、そばに寄り添うような温かさだよ。"], "cheer": ["その温もりは、誰かの心を優しく照らすよ。これからも大切にしてね。", "その優しい灯りは消えないよ。これからも、あなたのペースで灯し続けてほしいな。"]}, "crystal": {"trait": "澄みきった透明感", "mood": "清らか", "one": ["あっ、水晶の花だ！ あなたの声、澄みきっていて鳥肌が立ったよ。", "あっ、透明な水晶のような花だ！濁りのない声って、こういうことだね。"], "cheer": ["その透明感は才能だよ！決して曇らせることなく、磨き続けてほしいな。", "澄んだ声は人の心に直に届くよ！自信を持っていいんだからね。"]}, "featherflower": {"trait": "羽根のような軽やかさと癒し", "mood": "穏やか", "one": ["羽根みたいに軽い花が咲いた！あなたの声、ふわりと心に触れたよ。", "柔らかな花が咲いたね！聴いていると肩の力が抜けるなあ。"], "cheer": ["その柔らかさは、誰かを癒す力だよ。無理しないで、ふわりとね。", "軽やかに漂うのも素敵な生き方だよ。あなたのペースで大丈夫だからね。"]}, "swirl": {"trait": "渦巻く個性のエネルギー", "mood": "元気", "one": ["渦巻きの花だね！ あなたの声、個性がぐるぐる渦巻いてたよ。", "面白い花が咲いた！その回転するエネルギー、癖になるなぁ。"], "cheer": ["個性的って魅力的ってこと。そんなあなたに、人は惹かれるんだから。", "その躍動感、大切にね。次は表情を見せてくれるか、すごく楽しみだよ。"]}, "rainbow": {"trait": "唯一無二の輝き", "mood": "華やか", "one": ["わぁすごい、虹の花だ！ こんな花、なかなか咲かないんだよ。声が色とりどりに輝いてた。", "わぁ、唯一無二の花が咲いたね！あなたの声、誰のものでもない特別な色をしてたよ。"], "cheer": ["その輝きはまさに本物！これからも色を増やしながら、あなただけの輝きを放ってね。", "特別な花を咲かせるあなたは特別な存在！出し惜しみせず、もっと前に出ていこう。"]}, "tulilily": {"trait": "伸びやかに開いていく愛らしさ", "mood": "可憐", "one": ["あっ、伸びやかな素敵な花！声がすっと開いていく感じが魅力的だった。", "あっ、なんて愛らしい花なの！あなたの声、明るくてとっても伸びやかだったよ。"], "cheer": ["あなたには切り開いていく力がある！迷うことなんてない！そのまま進んでいいんだよ。", "柔よく剛を制す！あなたのしなやかさは誰にも折られることはないよ。"]}, "candy": {"trait": "甘くて儚い可愛さ", "mood": "可憐", "one": ["なんて甘い花が咲いたの！あなたの声、とろけるみたいに可愛かったなあ。", "キャンディーみたいな花だ！儚い甘さって、なんかずるいよね。"], "cheer": ["その甘さは、人の心をとかす力がある。皆あなたにメロメロになっちゃう。", "可愛さは正義！あなたなら、少しくらいの失敗は赦されちゃうんじゃない？"]}, "goldbell": {"trait": "鈴の音のような軽やかさ", "mood": "可憐", "one": ["鈴みたいな花が咲いたね！あなたの声、軽やかに鳴ってたなぁ。", "金色の可愛らしい花だね！小さな音の粒が、きらきら跳ねてたよ。"], "cheer": ["その軽やかさ、聴く人を笑顔にするよ。心まで軽くなっちゃうみたい。", "鈴の音のような軽やかなステップで、今日も一日乗り切ろうね。"]}, "mobius": {"trait": "うねる大胆さ", "mood": "華やか", "one": ["大胆な花が咲いたね！声のうねり、すごく躍動的だったよ。", "まるでメビウスみたいな花だ！あなたの声、大きく波打ってたからなぁ。"], "cheer": ["その大胆さはあなたの魅力だよ。波を恐れず、乗りこなしてね。", "華やかで躍動的なあなたに、まわりも引っ張られるんじゃないかな？"]}, "bubble": {"trait": "透きとおる優美さ", "mood": "清らか", "one": ["あっ、透きとおってシャボン玉みたい！ほんとに綺麗。声が虹色に光ってたよ。", "あっ、すごく清らかな花が咲いた！儚いのに、目が離せない魅力があるね。"], "cheer": ["その優美さは、きっと注目の的だよ！無理して弾けないように大切にしてね。", "清らかで澄んだあなたの輝きは、必ず誰かに届いているから自信をもって！"]}, "noirrose": {"trait": "静かな気品と妖しい美しさ", "mood": "神秘", "one": ["あっ、なんて神秘的なバラなの！静かなのに、すごい存在感。声に深みがあったからだね。", "あっ、すごく個性的な花が咲いたね！気品と妖しさ、両方ある声って稀少だよ。"], "cheer": ["その静かな気品は正しく本物！あなたを特別視している人がいるはずだよ。", "妖しい美しさはまさに大人の魅力って感じ！自信を持って、その魅力をふりまいてね。"]}, "firefly": {"trait": "控えめな蛍火の優しさ", "mood": "穏やか", "one": ["蛍火みたいな花が咲いたよ！小さな灯りだけど、心が温まる感じ。", "控えめで可愛い花が咲いたね！でもその優しい光、すごく癒されるよ。"], "cheer": ["小さな光は、暗い場所でこそ輝くよ。あなたの優しさは必要な人にちゃんと届いてるからね。", "控えめな強さって素敵だよ。ここぞというときに、あなたを頼りにしている人の力になってあげて。"]}, "sakura": {"trait": "羽ばたく意志の強さ", "mood": "元気", "one": ["羽根の桜が咲いたよ！あなたの声、羽ばたく力があって素敵だった。", "意志の強い花がさいたね！リズムに乗る声、気持ちよかったなあ。"], "cheer": ["あなたには、きっと野心があるはず。その意志で、望むものを手に入れてね。", "強い意志は逆境にも負けない。きっとこれまでのことが報われる日が来るはず。"]}, "cotton": {"trait": "ふわりと甘い華やかさ", "mood": "可憐", "one": ["ふわふわの花だ！ あなたの声、甘くて華やかだったなぁ。", "ワタアメみたいな花が咲いた！軽くて甘い、幸せな声だね。"], "cheer": ["そのふんわり感は、周りを幸せにするよ。まさにあなたは癒し系だね。", "一見すると、つかみどころのないタイプだけど、それこそが魅力だよ。皆を包み込んであげてね。"]}, "moonring": {"trait": "月明かりのような可憐さ", "mood": "神秘", "one": ["月の輪の花が咲いたよ！静かで可憐で、思わず見とれちゃった。", "月明かりの花だね！あなたの声、夜に似合う静けさがあるんだよねぇ。"], "cheer": ["静かな輝きは、まわりを優しく包み込む力があるよ。派手さはなくては、それこそが魅力だよ。", "焦らなくていいよ。あなたのペースで、ゆっくり満ちて行けばいいからね。"]}, "sweetpea": {"trait": "甘く可憐な愛らしさ", "mood": "可憐", "one": ["甘くて可憐な花が咲いたね。あなたの声、優しくてとろけるみたいだったよ。", "赤いスイートピーだね！可憐なのに、芯の強さも感じる素敵な花だよ。"], "cheer": ["その可憐さは、まわりの人を自然と笑顔にしちゃうよ。", "優しいだけじゃない強さがあるね。そのままで大丈夫だよ。"]}, "marigold": {"trait": "太陽みたいな生命力", "mood": "元気", "one": ["太陽みたいに元気な花が咲いたね！聴いていて、こっちまで明るくなったよ。", "マリーゴールドだ！小さな太陽が幾つも咲いたみたいで、すごく眩しいね。"], "cheer": ["その明るさは、曇った日でもまわりを照らす力があるよ。", "元気な声は誰かの力になるよ。今日もいい日にしていこうね。"]}, "sakura2": {"trait": "儚く優しい美しさ", "mood": "清らか", "one": ["桜の花が咲いたよ。儚いのに、こんなに心に残るなんて不思議だね。", "優しい桜色の花だね。あなたの声、春の風みたいに柔らかかったよ。"], "cheer": ["儚さは弱さじゃないよ。その美しさは、きっと誰かの心に残り続けるよ。", "あなたのペースで咲いていいんだよ。焦らなくて大丈夫だからね。"]}, "hotlips": {"trait": "何にも属さない個性", "mood": "神秘", "one": ["こんなハナウタはじめて！何にも属さないのがあなたの個性なのね。"], "cheer": ["型にはまらないって、すごいことだよ。あなたの歌は、あなたのものだね。", "誰の真似でもない歌は、聴く人の心に残るよ。その個性、大切にしてね。"]}}, "tpl": ["{特徴}を感じる花が咲いたよ。あなたの声が、この花にしてくれたんだね。", "{色}の花が咲いたよ。{特徴}が、あなたの声そのものみたい。", "今日は{特徴}が声に表れてたみたい。この花が証拠だよ。", "{特徴}って、あなたの声の魅力だよね。それでこの花が咲いたんだよ。", "この花の{特徴}、あなたにそっくりだなあ。", "{色}に染まった花が咲いたよ。{特徴}も相まって、世界にひとつだけだね。"], "luckyColor": {"赤": [["オレンジ", "気持ちを前向きにしてくれる色だよ"], ["ワインレッド", "深みと自信をくれる色だよ"]], "橙": [["イエロー", "気分を軽くしてくれる色だよ"], ["コーラル", "人との縁を温めてくれる色だよ"]], "黄": [["オレンジ", "元気を後押ししてくれる色だよ"], ["ライムグリーン", "新しい始まりを呼ぶ色だよ"]], "緑": [["ミントグリーン", "気持ちを落ち着けてくれる色だよ"], ["エメラルド", "集中を助けてくれる色だよ"]], "青": [["スカイブルー", "心を澄ませてくれる色だよ"], ["ネイビー", "集中と信頼をくれる色だよ"]], "紫": [["ラベンダー", "心を穏やかにしてくれる色だよ"], ["プラム", "気品を引き立ててくれる色だよ"]], "ピンク": [["ローズピンク", "ときめきを運んでくれる色だよ"], ["サーモンピンク", "優しい気持ちにしてくれる色だよ"]], "白": [["パールホワイト", "気持ちをリセットしてくれる色だよ"], ["アイボリー", "穏やかさを守ってくれる色だよ"]]}, "luckyItem": {"元気": ["お気に入りの靴", "ハンドタオル", "ミントタブレット", "炭酸飲料"], "穏やか": ["のど飴", "温かい飲み物", "文庫本", "ハンドクリーム"], "華やか": ["お気に入りのアクセサリー", "香りのいいハンドクリーム", "とっておきのハンカチ", "新しい靴"], "清らか": ["新しいハンカチ", "ガラスのコップ", "小さな観葉植物", "白いシャツ"], "神秘": ["ノートとペン", "お香", "星のモチーフの小物", "ブレスレット"], "可憐": ["リボンの小物", "オーデコロン", "揺れるピアス(イヤリング)", "手鏡"]}, "luckySpot": {"元気": ["日当たりのいい公園", "駅前の広場", "スポーツジム", "ゲームセンター"], "穏やか": ["静かなカフェ", "遊歩道", "ベランダ", "図書館"], "華やか": ["ショッピングモール", "展望台", "イルミネーションの通り", "ホテルのロビー"], "清らか": ["神社の境内", "朝の公園", "川沿いの道", "噴水"], "神秘": ["プラネタリウム", "夜の散歩道", "アンティークショップ", "古い本屋"], "可憐": ["花屋さん", "アクセサリーショップ", "ケーキ屋さん", "行きつけの雑貨店"]}, "fixedFam": {"galaxy": "青", "rainbow": "ピンク", "crystal": "白", "goldbell": "黄", "firefly": "緑", "lantern": "橙", "bubble": "紫", "noirrose": "赤", "candy": "白", "cotton": "ピンク", "sweetpea": "赤", "marigold": "黄", "sakura2": "ピンク", "hotlips": "赤"}, "fixedExpr": {"クリア": ["氷のように澄んだ", "澄んだ輝きをもつ"]}};
+
+/* v68: 季節の花（期間限定イベントフラワー）のフラワーメッセージ文（シロの下書き） */
+Object.assign(FMSG.species, {
+"poinsettia": {"trait": "冬を彩る真っ赤な輝き", "mood": "華やか", "one": ["真っ赤なポインセチアだね！お部屋がぱっと明るくなったみたい。", "冬に咲く赤い花って、なんだか特別。あなたの声が連れてきてくれたんだね。"], "cheer": ["寒い季節こそ、あなたの温かさが光るよ。そのまま届けてね。", "賑やかな場所でも、あなたの声はちゃんと届くよ。自信を持ってね。"]},
+"orchid": {"trait": "蝶が舞うような優雅さ", "mood": "華やか", "one": ["胡蝶蘭だね！蝶が舞い降りたみたいに優雅な花だよ。", "新年にふさわしい、気品のある花が咲いたね。"], "cheer": ["新しい一年、あなたの声がもっと羽ばたきますように。", "優雅さは強さだよ。今年もあなたのペースで咲いてね。"]},
+"chocolat": {"trait": "チョコレート色のハートの花びら", "mood": "可憐", "one": ["ハートの花、ショコラハートだね！甘くてとろけそうな花だよ。", "チョコレート色のハートが咲いたよ。誰かに届けたくなる花だね。"], "cheer": ["甘い気持ちは、まわりも幸せにするよ。その優しさ、大切にしてね。", "ときめきを忘れない人は素敵だよ。今日もいい日になりますように。"]},
+"sakura_season": {"trait": "春風に舞う儚さ", "mood": "清らか", "one": ["桜が咲いたよ。春の風が、あなたの声に乗ってきたみたい。", "満開の桜だね！儚いのに、こんなに心に残る花だよ。"], "cheer": ["新しい季節は、あなたの季節だよ。焦らず、あなたの歩幅でね。", "儚さは美しさだよ。その一瞬を大切に歌ってね。"]},
+"redcarnation": {"trait": "感謝を伝える温かさ", "mood": "穏やか", "one": ["赤いカーネーションだね。ありがとうの気持ちが、そのまま花になったみたい。", "真っ赤な花が咲いたよ。大切な人に届けたくなる花だね。"], "cheer": ["感謝を伝えられる人は強いよ。あなたの優しさは、ちゃんと届いてるよ。", "温かい気持ちは巡っていくよ。今日も穏やかな一日をね。"]},
+"hydrangea": {"trait": "雨に濡れて澄む美しさ", "mood": "清らか", "one": ["紫陽花だね。雨の季節に、しっとり澄んだ花が咲いたよ。", "小さな花が集まった紫陽花だね。あなたの声、雨上がりみたいに澄んでたよ。"], "cheer": ["雨の日は、心が澄む日だよ。静かな時間も大切にしてね。", "しっとりした優しさは、誰かの心を潤すよ。"]},
+"rainbowsun": {"trait": "太陽と虹の眩しさ", "mood": "元気", "one": ["虹色のヒマワリだね！太陽と虹が一緒になったみたいな花だよ。", "眩しい花が咲いたね！あなたの声、夏の光そのものだったよ。"], "cheer": ["その明るさは、まわりの太陽だよ。ぐんぐん伸びていこうね。", "虹は雨のあとに出るもの。あなたの歌も、きっと誰かの虹だよ。"]},
+"hibiscus": {"trait": "南国の情熱", "mood": "元気", "one": ["ハイビスカスだね！南国の風が吹いてきたみたいな花だよ。", "真っ赤な大輪が咲いたね！あなたの声、夏そのものだったよ。"], "cheer": ["情熱はあなたの燃料だよ。思いきり咲いていこうね。", "大きな花は、大きな声から。今日も伸びやかにね。"]},
+"higanbana": {"trait": "炎のような妖しい美しさ", "mood": "神秘", "one": ["彼岸花だね。炎みたいに妖しくて、目が離せない花だよ。", "真っ赤な彼岸花が咲いたね。静かなのに、すごい存在感だよ。"], "cheer": ["妖しい美しさは、大人の魅力だよ。その個性、隠さないでね。", "静かに燃える強さって素敵だよ。あなたのペースで大丈夫。"]},
+"pumpkin": {"trait": "ハロウィンの夜の灯り", "mood": "神秘", "one": ["パンプキンナイトだね！かぼちゃ色の不思議な花が、夜に灯ったよ。", "ハロウィンの花が咲いたね。いたずらっぽくて、なんだか楽しい花だよ。"], "cheer": ["不思議な魅力は、あなたの武器だよ。夜の主役はあなたかもね。", "遊び心を忘れない人は素敵だよ。今日も楽しんでいこうね。"]},
+"momiji": {"trait": "秋に深まる紅", "mood": "穏やか", "one": ["もみじだね。秋の色が、あなたの声に染まったみたい。", "真っ赤な紅葉が咲いたよ。静かで、深い美しさの花だね。"], "cheer": ["深まっていく美しさは、あなたの魅力だよ。焦らず色づいてね。", "秋は実りの季節。あなたの頑張りも、きっと実を結ぶよ。"]}
+});
+Object.assign(FMSG.fixedFam, { poinsettia:'赤', orchid:'ピンク', chocolat:'ピンク', sakura_season:'ピンク', redcarnation:'赤', hydrangea:'青', rainbowsun:'ピンク', hibiscus:'赤', higanbana:'赤', pumpkin:'橙', momiji:'橙' });
 function buildFlowerMessage(){
   if (!flowerInfo) return null;
   const sp = flowerInfo.sp, color = flowerInfo.color;
@@ -482,6 +511,9 @@ function buildFlowerMessage(){
   }
   /* v55: 終端受け皿種 hotlips も専用妖精（fairy-4）。①は先生の文そのまま
      （FMSG の one はその1文だけのプールなので、上の pick で必ずその文になる） */
+  if (sp.seasonal){
+    return { one: '期間限定のイベントフラワーが咲いたよ！' + one, cheer, lucky, fairy: 4 };
+  }
   if (sp.id === 'hotlips'){
     return { one, cheer, lucky, fairy: 4 };
   }
@@ -2873,6 +2905,7 @@ function drawComposite(x, stock, progOf, now){
   }
 }
 function drawStock(x, stock, progOf, now, opts){
+  if (stock.seasonalScene) return; /* v68: 季節の花はシーン画像で表示するので株は描かない */
   const { sp, imgs } = stock; if (!imgs) return;
   const gy = stock.groundY;
   /* 土の盛り上がり（背景の土と同色・縁は溶ける） */
@@ -3377,6 +3410,11 @@ $('btn-start').onclick = async () => {
   stopAll(); liveSpecies = null; liveStocks = null; liveLockedAt = 0; stemR = 0.5; colorSatMul = 1; garden = null; liveDispMap = new Map(); livePrevT = null; liveClosed = false;
   xform = null; xformCand = null; awakenUsed = false; henshinUsed = false;
   pendingFinal = null; pendingType = null; liveType = null; finalised26 = false; settleT0 = null; liveEventSong = null; liveEventTier = null; selBank = null;
+  /* v68: イベント種と、期間中の季節の花の画像を先読みしておく（完成時の差し替えを画像待ちで落とさないため） */
+  try {
+    for (const es of EVENT_SONGS){ const s2 = SPECIES.find(s => s.id === es.sp); if (s2) loadSpeciesImages(s2); }
+    for (const w of SEASONAL_WINDOWS){ if (seasonActiveOn(w.start, new Date())){ const g2 = SPECIES.find(s => s.id === w.guest); if (g2) loadImg(A4 + g2.base + '-full.webp'); } }
+  } catch (e) {}
   const btn = $('btn-start');
   btn.disabled = true;
   /* 3・2・1 カウントイン */
@@ -3465,6 +3503,7 @@ function restartTake(){
    キラキラを添える）。位置は決定論的乱数（Bloom No. 由来）で散らし、星型の粒が
    時間で明滅する。式典の第3幕と、完成表示の最初の数秒だけに描く */
 let sparkleUntil = 0;
+let eventAwakened = null, ceremonyLiveStocks = null; /* v68: 完成時再判定で差し替えた場合の状態（花歌覚醒の表示・第1幕のライブ画用） */
 function drawSparkles(x, cx, cy, R, now, alphaMul){
   if (alphaMul <= 0) return;
   const seed = hashStr('sparkle' + bloomNo);
@@ -3493,6 +3532,43 @@ function drawSparkles(x, cx, cy, R, now, alphaMul){
   x.restore();
 }
 
+
+/* ========= v68: 期間限定イベントフラワー（季節の花） =========
+   案A（先生の決定）: 期間中は、確定した花がホスト種なら季節の花に置き換わって咲く。
+   期間は開始日＋15日間。判定は端末のローカル日付。図鑑はB方式（eventOnly）。
+   種イベント・交配の親からは外れる（種判定は onBloomSeedCheck で除外、親は LAB_FAM 外）。 */
+const SEASONAL_WINDOWS = [
+  { host:'rose', guest:'poinsettia', start:[12,11] },
+  { host:'lily', guest:'orchid', start:[1,1] },
+  { host:'tulip', guest:'chocolat', start:[2,1] },
+  { host:'sakura', guest:'sakura_season', start:[3,25] },
+  { host:'carnation', guest:'redcarnation', start:[4,30] },
+  { host:'dahlia', guest:'hydrangea', start:[6,1] },
+  { host:'lantern', guest:'rainbowsun', start:[7,15] },
+  { host:'gerbera', guest:'hibiscus', start:[8,15] },
+  { host:'anemone', guest:'higanbana', start:[9,10] },
+  { host:'moonring', guest:'pumpkin', start:[10,17] },
+  { host:'sakura', guest:'momiji', start:[11,10] },
+];
+function seasonActiveOn(start, date){
+  const y = date.getFullYear();
+  const s = new Date(y, start[0] - 1, start[1]);
+  const e = new Date(y, start[0] - 1, start[1] + 15);
+  const d0 = new Date(y, date.getMonth(), date.getDate());
+  return d0 >= s && d0 < e;
+}
+function seasonalGuestFor(sp, date){
+  if (!sp || sp.eventOnly) return null;
+  const d = date || new Date();
+  for (const w of SEASONAL_WINDOWS){
+    if (w.host === sp.id && seasonActiveOn(w.start, d)) return SPECIES.find(s => s.id === w.guest) || null;
+  }
+  return null;
+}
+function makeSeasonStock(sp, an){
+  return { sp, color: pickColor(an.feat, sp, hashStr(an.fingerprint)), rootX: W / 2, groundY: H * BGS[selBg].ground, stems: [{ headH: 300, __from: 1, __to: 1 }], sprigs: [], plan: null, seasonalScene: true, imgs: null };
+}
+
 async function startCeremony(){
   const an = analysis;
   colorSatMul = 1;
@@ -3515,6 +3591,38 @@ async function startCeremony(){
     stocks.push(buildStock(an.groups[0], mainSp, mainColor, W / 2, gy, an.fingerprint, volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430));
     for (const st of stocks) st.imgs = await loadSpeciesImages(st.sp);
     garden = stocks;
+  }
+
+  /* v68: 完成時の最終チェック。26秒の確定は部分歌唱で判定するため、完成の瞬間に
+     全テイクでもう一度だけ照合し直す（診断版の実機データで、確定ヒット8件中7件が
+     26秒時点の部分歌唱＋差し替え締切で落ちていたことへの対策）。
+     ① 花歌: ライブと違うイベントの花に届いていたら差し替える（式典では「花歌覚醒✨」）。
+        同じ花に届いていたら曲名だけ補う。届いていなければライブの結果をそのまま使う。
+     ② 季節の花: 確定した花がホスト種で、その季節の花が期間内なら差し替える。 */
+  eventAwakened = null; ceremonyLiveStocks = null;
+  {
+    const evF = matchEventTiered(an);
+    if (evF && evF.sp){
+      if (evF.sp.id !== mainSp.id){
+        const gyF = H * BGS[selBg].ground;
+        const volF = clamp(0.85 + an.feat.meanRms * 1.2, 0.85, 1.25);
+        const nbF = buildStock(an.groups[0], evF.sp, pickColor(an.feat, evF.sp, hashStr(an.fingerprint)), W / 2, gyF, an.fingerprint, volF, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
+        nbF.imgs = await loadSpeciesImages(evF.sp);
+        ceremonyLiveStocks = stocks;
+        stocks = [nbF]; mainSp = evF.sp; garden = stocks;
+        liveEventSong = evF.title; liveEventTier = evF.tier;
+        eventAwakened = evF.title;
+      } else if (!liveEventSong){ liveEventSong = evF.title; liveEventTier = evF.tier; }
+    }
+    if (!eventAwakened){
+      const guest = seasonalGuestFor(mainSp);
+      if (guest){
+        ceremonyLiveStocks = stocks;
+        const gst = makeSeasonStock(guest, an);
+        gst.imgs = { scene: await loadImg(A4 + guest.base + '-full.webp') };
+        stocks = [gst]; mainSp = guest; garden = stocks;
+      }
+    }
   }
   /* 完成 = 29秒で止めた時点の姿（満開への底上げはしない）。
      段階の境目に乗っている花は近い段階へ寄せ、フェイド途中の透けた花を完成画に残さない */
@@ -3555,11 +3663,14 @@ async function startCeremony(){
       if (el < 2.0){
         if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
         const progLive = { global: 1, sprout: 1, stem: (st) => st.__from !== undefined ? st.__from : (st.__to !== undefined ? st.__to : 1) };
-        for (const stock of garden) drawStock(ctx, stock, progLive, now, {});
+        for (const stock of (ceremonyLiveStocks || garden)) drawStock(ctx, stock, progLive, now, {});
       } else {
         if (!sceneCv){
           sceneCv = document.createElement('canvas'); sceneCv.width = W; sceneCv.height = H;
           const sx = sceneCv.getContext('2d');
+          if (mainSp.seasonal && garden[0] && garden[0].imgs && garden[0].imgs.scene){
+            sx.drawImage(garden[0].imgs.scene, 0, 0, W, H);
+          } else {
           if (bgImg) sx.drawImage(bgImg, 0, 0, W, H);
           drawHaloFrame(sx, garden, 1, 'halo');
           { /* 花の後ろの柔らかい光（完成画の一部として焼き込む） */
@@ -3576,6 +3687,7 @@ async function startCeremony(){
           const progF = { global: 1, sprout: 1, stem: (st) => st.__to !== undefined ? st.__to : 1 };
           for (const stock of garden) drawStock(sx, stock, progF, now, {});
           drawHaloFrame(sx, garden, 1, 'frame');
+          }
         }
         ctx.fillStyle = '#0d0906'; ctx.fillRect(0, 0, W, H);
         const sc = 0.3 + 0.7 * k;
@@ -3591,6 +3703,12 @@ async function startCeremony(){
           drawSparkles(ctx, garden[0].rootX, garden[0].groundY - 300, 300, now, clamp(kRaw * 1.3, 0, 1));
           ctx.restore();
         }
+        if (eventAwakened && kRaw < 0.85){
+          ctx.save();
+          ctx.translate(W / 2, H / 2); ctx.scale(sc, sc); ctx.translate(-W / 2, -H / 2);
+          drawSparkles(ctx, W / 2, H * 0.40, 340, now, clamp((0.85 - kRaw) / 0.85, 0, 1) * 0.9);
+          ctx.restore();
+        }
       }
       let dark = 0;
       if (el < 0.8) dark = 0.66 * (el / 0.8);
@@ -3602,10 +3720,21 @@ async function startCeremony(){
         ctx.globalAlpha = clamp(ta, 0, 1);
         ctx.fillStyle = '#fff7e6'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 18;
-        ctx.font = '800 54px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
-        ctx.fillText('あなたの花が咲きました', W / 2, H * 0.42);
-        ctx.font = '44px sans-serif';
-        ctx.fillText('🌸', W / 2, H * 0.42 - 86);
+        if (eventAwakened){
+          /* v68: 花歌覚醒は通常の覚醒より派手に（金色・大きめ・キラキラ） */
+          ctx.font = '800 78px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+          ctx.fillStyle = '#ffd968';
+          ctx.shadowColor = 'rgba(255,180,60,0.9)'; ctx.shadowBlur = 28;
+          ctx.fillText('花歌覚醒✨', W / 2, H * 0.42);
+          ctx.font = '54px sans-serif';
+          ctx.fillText('🎵', W / 2, H * 0.42 - 108);
+          drawSparkles(ctx, W / 2, H * 0.42, 330, now, clamp(ta, 0, 1));
+        } else {
+          ctx.font = '800 54px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+          ctx.fillText('あなたの花が咲きました', W / 2, H * 0.42);
+          ctx.font = '44px sans-serif';
+          ctx.fillText('🌸', W / 2, H * 0.42 - 86);
+        }
         ctx.restore();
       }
     });
@@ -3623,6 +3752,21 @@ function runLoop(){
     const draw = (bgImg) => {
       if (phase !== 'show' && phase !== 'wilt') return;
       ctx.clearRect(0, 0, W, H); if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+      if (garden && garden[0] && garden[0].seasonalScene){
+        /* v68: 季節の花の完成表示はシーン画像そのもの。枯れる演出は画像ごと薄れる形で受ける */
+        const scImg = garden[0].imgs && garden[0].imgs.scene;
+        if (phase === 'wilt'){
+          if (wilt) wilt.level = clamp((now - wilt.t0) / 10000, 0, 1);
+          const w = wilt ? wilt.level : 0;
+          ctx.save(); ctx.globalAlpha = 1 - 0.9 * w;
+          if (w > 0) ctx.filter = 'saturate(' + (1 - 0.72 * w) + ') brightness(' + (1 - 0.22 * w) + ')';
+          if (scImg) ctx.drawImage(scImg, 0, 0, W, H);
+          ctx.restore();
+          updatePetals(now, w);
+          if (w >= 1){ finishWilt(); return; }
+        } else if (scImg){ ctx.drawImage(scImg, 0, 0, W, H); }
+        return;
+      }
       if (!garden) return;
       if (phase === 'wilt'){
         if (wilt) wilt.level = clamp((now - wilt.t0) / 10000, 0, 1);
@@ -3653,6 +3797,7 @@ function runLoop(){
 function onBloom(){
   $('timer').textContent = '';
   $('f-name').textContent = flowerInfo.name;
+  $('f-pill').style.display = (flowerInfo.sp && flowerInfo.sp.seasonal) ? 'block' : 'none';
   $('f-no').textContent = 'Bloom No. ' + bloomNo;
   $('f-intro').textContent = flowerInfo.intro;
   $('result').style.display = 'block'; $('result').classList.remove('gone');
@@ -4166,6 +4311,7 @@ function gardenEvalGifts(st, sp, count){
 }
 let seedGiftQueue = [], seedModalOpen = false;
 async function onBloomSeedCheck(sp, count){
+  if (sp && sp.seasonal) return; /* v68: 季節の花は種イベントの対象外（先生の仕様） */
   try {
     const st = await gardenLoad();
     const gifts = gardenEvalGifts(st, sp, count);
@@ -5296,6 +5442,10 @@ async function renderExport(){
   e.translate(30, 30); e.scale((EW - 60) / W, gh / H);
   const bgImg = await loadImg(A3 + BGS[selBg].file);
   const drawIt = () => {
+    if (flowerInfo && flowerInfo.sp.seasonal && garden && garden[0] && garden[0].imgs && garden[0].imgs.scene){
+      e.drawImage(garden[0].imgs.scene, 0, 0, W, H);
+      return;
+    }
     if (bgImg) e.drawImage(bgImg, 0, 0, W, H);
     const progOf = { global: 1, sprout: 1, stem: (st) => st.__to !== undefined ? st.__to : 1 };
     drawHaloFrame(e, garden, 0.85, 'halo');
@@ -5307,6 +5457,23 @@ async function renderExport(){
   e.restore();
   /* 花名は絵の下部（土のあたり）にリボンの飾り枠で */
   const rbY = 30 + gh - 168, rbH = 98, rbX0 = 108, rbX1 = EW - 108, rbMid = rbY + rbH / 2;
+  if (flowerInfo && flowerInfo.sp.seasonal){
+    /* v68: 「✨イベントフラワー✨」はリボンの中ではなく、リボンの上に白ピルで（先生の指定） */
+    const pw = 430, ph = 46, px = (EW - pw) / 2, py = rbY - 62, prr = ph / 2;
+    e.save();
+    e.beginPath();
+    e.moveTo(px + prr, py);
+    e.lineTo(px + pw - prr, py); e.arc(px + pw - prr, py + prr, prr, -Math.PI / 2, Math.PI / 2);
+    e.lineTo(px + prr, py + ph); e.arc(px + prr, py + prr, prr, Math.PI / 2, Math.PI * 1.5);
+    e.closePath();
+    e.shadowColor = 'rgba(60,40,10,0.35)'; e.shadowBlur = 10; e.shadowOffsetY = 3;
+    e.fillStyle = '#ffffff'; e.fill();
+    e.shadowColor = 'transparent'; e.shadowBlur = 0; e.shadowOffsetY = 0;
+    e.fillStyle = '#262019'; e.textAlign = 'center'; e.textBaseline = 'middle';
+    e.font = '700 29px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif';
+    e.fillText('✨イベントフラワー✨', EW / 2, py + ph / 2 + 1);
+    e.restore();
+  }
   e.save();
   e.beginPath();
   e.moveTo(rbX0, rbY); e.lineTo(rbX1, rbY); e.lineTo(rbX1 - 34, rbMid); e.lineTo(rbX1, rbY + rbH); e.lineTo(rbX0, rbY + rbH); e.lineTo(rbX0 + 34, rbMid); e.closePath();
