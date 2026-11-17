@@ -276,7 +276,7 @@
       <div style="height:10px; background:#e5dcc4; border-radius:999px; overflow:hidden;"><div id="labBar" style="height:100%; width:0%; background:linear-gradient(90deg,#8fae5f,#e88bb0); transition:width .5s;"></div></div>
     </div>
     <p style="font-weight:700; color:#7a5c2e; margin:20px 0 6px;">② 新種を育てる</p>
-    <p style="font-size:13px; line-height:1.7; color:#6b6151; margin:0 0 8px;">お花が求めるメロディーを聴いて、同じようにハナウタしてね。正解率が高いほどポイントが増えて、花が育ちます（満開は50P）。難易度ごとに、1日1回ずつ歌えます。</p>
+    <p style="font-size:13px; line-height:1.7; color:#6b6151; margin:0 0 8px;">お花が求めるメロディーを聴いて、同じようにハナウタしてね。正解率が高いほどポイントが増えて、花が育ちます（満開は71P）。難易度ごとに、1日1回ずつ歌えます。</p>
     <div style="display:flex; flex-direction:column; gap:9px; max-width:420px; margin:0 auto;">
       <button class="btn btn-main" id="btn-lab-t1" style="padding:12px; font-size:15.5px;">初級の鼻歌をうたう</button>
       <button class="btn btn-main" id="btn-lab-t2" style="padding:12px; font-size:15.5px;">中級の鼻歌をうたう</button>
@@ -351,7 +351,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v65'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v67'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -4917,7 +4917,7 @@ async function finishGardenSing(){
     }
   }
   await gardenSave(st);
-  $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + growSec.toFixed(1) + '秒ぶん育ちました' + (wBonus !== 0 ? '・天気ボーナス' + (wBonus > 0 ? '+' : '') + wBonus + '秒' : '') + '）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
+  $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + growSec.toFixed(1) + '秒ぶん育ちました' + (wBonus !== 0 ? '・ボーナス' + (wBonus > 0 ? '+' : '') + wBonus + '秒' : '') + '）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
   await renderGardenPage(st);
 }
 $('btn-garden-sing').onclick = startGardenSing;
@@ -5383,7 +5383,7 @@ const LAB_ROOT = {"granrose":{"bud":{"cx":0.49,"top":0.018,"bottom":0.449,"rootx
    設計: 交配表-v1.md v3（先生の分類・対角線ルール）＋ 2026-11-16 の決定群。
    図鑑15種で解放／親は通常26種のみ（交配種は親にできない＝無限地獄の回避）／
    開発室は1株だけ／トレーニング（BPM84・2小節・難易度3種・各1日1回）で
-   ポイントを貯め、50Pで満開。色は両親の固有色×トレーニング成績で決まる */
+   ポイントを貯め、71Pで満開。色は両親の固有色×トレーニング成績で決まる */
 const LAB_FAM = { rose:'bara', noirrose:'bara', galaxy:'bara', cotton:'bara', candy:'bara', swirl:'bara',
   dahlia:'kiku', mobius:'kiku', sunflower:'kiku', marguerite:'kiku', gerbera:'kiku', carnation:'kiku',
   anemone:'kinpouge', ranunculus:'kinpouge', moonring:'kinpouge', rainbow:'kinpouge',
@@ -5524,7 +5524,7 @@ $('collGrid').addEventListener('click', e => {
 }, true);
 
 /* ===== 開発室ページ ===== */
-const LAB_STAGES = [ { at: 0, name: '種' }, { at: 10, name: '芽' }, { at: 20, name: '双葉' }, { at: 30, name: '蕾' }, { at: 40, name: '半開' }, { at: 50, name: '満開' } ];
+const LAB_STAGES = [ { at: 0, name: '種' }, { at: 6, name: '埋まった種' }, { at: 11, name: '芽' }, { at: 21, name: '双葉' }, { at: 31, name: '育った双葉' }, { at: 41, name: '蕾' }, { at: 51, name: '半開' }, { at: 61, name: '枝と蕾' }, { at: 71, name: '満開' }, { at: 76, name: '満開' } ]; /* 先生の再設計 2026-11-17: 80P制・10段階、71P以上で完成 */
 function labStageOf(points){ let s = 0; for (let i = 0; i < LAB_STAGES.length; i++) if (points >= LAB_STAGES[i].at) s = i; return s; }
 const LAB_IMG = {};
 async function labImg(key, src){ if (!LAB_IMG[key]) LAB_IMG[key] = loadImg(src); return LAB_IMG[key]; }
@@ -5610,11 +5610,13 @@ async function labGetStock(st, color, stage){
   const sp = labProxySp(st, def);
   /* 本編の株と寸法・作りを揃える: ガーデンと同じフレーズ、本編と同じ地面高さ・
      高さガードで組み、株ごと一様に縮小してテラリウムへ収める（比例は本編のまま） */
-  const phrase = { start: 0, durSec: 5, meanRms: 0.12, notes: [] };
+  /* 疑似フレーズの長さが、成長シミュレーションの花の数（＝茎・枝の本数）を決める。
+     先生の決定 2026-11-17「最終は枝3本まで」: 花4つ（主茎＋枝3本）になる長さにする */
+  const phrase = { start: 0, durSec: 13, meanRms: 0.12, notes: [] };
   for (let i = 0; i < 10; i++) phrase.notes.push({ midi: 60, start: i * 0.5, dur: 0.5, dev: 0.05 });
   const saveR = stemR;
-  /* 株の大きさは段階で決まる（先生の定義: 30P=60%で蕾、40P=80%で半開、50P=100%で満開） */
-  stemR = stage === 3 ? 0.62 : stage === 4 ? 0.8 : 1;
+  /* 株の大きさは段階で決まる（先生の再設計 2026-11-17: 41P台=60%で蕾、51P台=80%で半開、61P台=90%で枝と蕾、71P〜=100%で満開） */
+  stemR = stage === 5 ? 0.62 : stage === 6 ? 0.8 : stage === 7 ? 0.9 : 1;
   /* 色は hue/sat/light のみ渡す（fam を渡すと dyeSat が彩度の下限を掛けてベタ塗りになる） */
   const stock = buildStock([phrase], sp, { hue: color.hue, sat: color.sat, light: color.light }, 0, 990, 'lab' + def.id + st.cur.born, 1, { stabCents: 18 }, 430);
   stemR = saveR;
@@ -5637,30 +5639,54 @@ async function drawLabPlant(e, st, opt){
     return;
   }
   if (stage === 1){
-    const spA = SPECIES.find(s => s.id === st.cur.a);
-    const spr = spA ? await labImg('sprout:' + spA.sprout, A4 + spA.sprout + '.webp') : null;
-    if (spr){ const h = 130, w = h * spr.width / spr.height; e.drawImage(spr, LAB_SOIL.x - w / 2, LAB_SOIL.y - h + 14, w, h); }
+    /* 埋まった種（6〜10P）: 種は土の中。土の盛り上がりだけを見せる */
+    drawSoilMound(e, LAB_SOIL.x, LAB_SOIL.y, 128, 20, GARDEN_SOIL_RGB);
     return;
   }
   if (stage === 2){
-    /* 双葉: 本編の芽素材を土の盛り上がりと一緒に（ガーデンと同じ描き方） */
+    /* 小さな芽（11〜20P）: 親Aの芽素材を小さく */
+    const spA = SPECIES.find(s => s.id === st.cur.a);
+    const spr = spA ? await labImg('sprout:' + spA.sprout, A4 + spA.sprout + '.webp') : null;
+    if (spr){ const h = 96, w = h * spr.width / spr.height; e.drawImage(spr, LAB_SOIL.x - w / 2, LAB_SOIL.y - h + 14, w, h); }
+    return;
+  }
+  if (stage === 3){
+    /* 双葉（21〜30P）: 本編の芽素材を土の盛り上がりと一緒に（ガーデンと同じ描き方） */
     const sp2 = labProxySp(st, def);
     drawSoilMound(e, LAB_SOIL.x, LAB_SOIL.y, 104, 15, GARDEN_SOIL_RGB);
     const img = await loadImg(A4 + sp2.sprout + '.webp');
     if (img) drawAnchored(e, img, sp2.sprout, LAB_SOIL.x, LAB_SOIL.y + 3, 130, 0, false, 1);
     return;
   }
-  /* 蕾（30P・株60%）・半開（40P・株80%）・満開（50P・株100%）: 本編の株描画をそのまま使う。
+  if (stage === 4){
+    /* 育った双葉（31〜40P）: 双葉が少し大きくなる */
+    const sp2 = labProxySp(st, def);
+    drawSoilMound(e, LAB_SOIL.x, LAB_SOIL.y, 116, 17, GARDEN_SOIL_RGB);
+    const img = await loadImg(A4 + sp2.sprout + '.webp');
+    if (img) drawAnchored(e, img, sp2.sprout, LAB_SOIL.x, LAB_SOIL.y + 3, 178, 0, false, 1);
+    return;
+  }
+  /* 蕾（41P台・株60%）・半開（51P台・株80%）・枝と蕾（61P台・株90%）・満開（71P〜・株100%）: 本編の株描画をそのまま使う。
      株の大きさは labGetStock の stemR、頭の育ちは進捗P（0.51=蕾、0.72=半開、1=満開） */
   const stock = await labGetStock(st, color, stage);
   if (!stock) return;
-  const P = opt.prog !== undefined ? opt.prog : (stage === 3 ? 0.51 : stage === 4 ? 0.72 : 1);
+  const P = opt.prog !== undefined ? opt.prog : (stage === 5 ? 0.51 : (stage === 6 || stage === 7) ? 0.72 : 1);
   e.save();
   e.translate(LAB_SOIL.x, LAB_SOIL.y); e.scale(LAB_SC, LAB_SC); e.translate(-LAB_SOIL.x, -LAB_SOIL.y);
   /* 開発種だけの規則（先生の決定 2026-11-16）: 満開は中央の主茎1本だけ。
      枝の花は半開（上限0.79）か蕾（上限0.55）までで止める。交配種には角度違いの
-     満開画像が無く、満開が複数並ぶと全部同じ正面絵になってしまうため */
-  drawStock(e, stock, { global: P, stem: (st, idx) => idx === 0 ? P : Math.min(P, idx % 2 === 1 ? 0.79 : 0.55) }, 0);
+     満開画像が無く、満開が複数並ぶと全部同じ正面絵になってしまうため。
+     枝の本数もポイントで増える（先生の決定 2026-11-17: 最終形は最大3本）:
+     41P台=1本目の蕾、51P台=1本目が育つ、61P台=2本目が出て両方蕾、
+     71〜75P=2本が半開、76P〜=3本目が蕾で加わり「満開＋半開＋蕾」になる */
+  const capFor = idx => {
+    if (stage === 5) return idx === 1 ? 0.45 : 0;
+    if (stage === 6) return idx === 1 ? 0.50 : 0;
+    if (stage === 7) return idx <= 2 ? 0.55 : 0;
+    if (stage === 8) return idx <= 2 ? 0.79 : 0;
+    return idx <= 2 ? 0.79 : 0.55;
+  };
+  drawStock(e, stock, { global: P, stem: (st, idx) => idx === 0 ? P : Math.min(P, capFor(idx)) }, 0);
   e.restore();
 }
 async function renderLabStage(){
@@ -5670,7 +5696,7 @@ async function renderLabStage(){
   e.clearRect(0, 0, 900, 1125);
   if (!st.cur){
     /* 満開直後は、収穫した花をそのままステージに残す（ページを開き直すまで） */
-    if (labBloomCtx && labBloomCtx.st && labBloomCtx.st.cur){ await drawLabPlant(e, labBloomCtx.st, { stage: 5, color: labBloomCtx.color }); return; }
+    if (labBloomCtx && labBloomCtx.st && labBloomCtx.st.cur){ await drawLabPlant(e, labBloomCtx.st, { stage: labStageOf(labBloomCtx.st.cur.points), color: labBloomCtx.color }); return; }
     const ter = await labImg('terrarium', A3 + 'lab-terrarium.webp'); if (ter) e.drawImage(ter, 0, 0, 900, 1125); return;
   }
   await drawLabPlant(e, st, {});
@@ -5687,8 +5713,8 @@ async function renderLabPage(){
     $('labParentA').innerHTML = (map[st.cur.a] ? '<img src="' + map[st.cur.a].img + '" style="width:100%; border-radius:10px; display:block;">' : '') + '<div style="margin-top:5px; font-size:13.5px; font-weight:600;">' + (pa ? pa.jp : st.cur.a) + '</div>';
     $('labParentB').innerHTML = (map[st.cur.b] ? '<img src="' + map[st.cur.b].img + '" style="width:100%; border-radius:10px; display:block;">' : '') + '<div style="margin-top:5px; font-size:13.5px; font-weight:600;">' + (pb ? pb.jp : st.cur.b) + '</div>';
     const stage = labStageOf(st.cur.points);
-    $('labPoints').textContent = '現在のポイント: ' + st.cur.points + 'P / 50P（いまは「' + LAB_STAGES[stage].name + '」）';
-    $('labBar').style.width = Math.min(100, st.cur.points * 2) + '%';
+    $('labPoints').textContent = '現在のポイント: ' + st.cur.points + 'P / 80P（いまは「' + LAB_STAGES[stage].name + '」）';
+    $('labBar').style.width = Math.min(100, st.cur.points * 1.25) + '%';
     const today = labTodayStr();
     const used = (st.day && st.day.d === today) ? st.day.used : {};
     for (const lv of [1, 2, 3]){
@@ -5911,12 +5937,12 @@ async function labChallenge(){
   const pts = labPointsOf(acc);
   const st2 = await labLoad();
   if (st2.cur){
-    st2.cur.points = Math.min(50, st2.cur.points + pts);
+    st2.cur.points = Math.min(80, st2.cur.points + pts);
     st2.cur.accSum += acc; st2.cur.accN += 1; st2.cur.tonicSum += mel.tonic; st2.cur.sessions += 1;
     await labSave(st2);
     $('labCount').textContent = '';
     $('labMsg').textContent = '🎉 ' + pts + 'ポイント獲得！（正解率 ' + Math.round(acc * 100) + '％・合計 ' + st2.cur.points + 'P）';
-    if (st2.cur.points >= 50){ await labBloom(st2); return; }
+    if (st2.cur.points >= 71){ await labBloom(st2); return; }
   }
   await renderLabPage();
 }
@@ -5935,7 +5961,7 @@ async function renderLabExport(fi, st, color, serial){
   e.fillStyle = '#fffdf8'; e.fillRect(0, 0, EW, EH);
   const gh = 1275;
   const stage = document.createElement('canvas'); stage.width = 900; stage.height = 1125;
-  await drawLabPlant(stage.getContext('2d'), st, { stage: 5, color });
+  await drawLabPlant(stage.getContext('2d'), st, { stage: labStageOf(st.cur.points), color });
   e.save(); e.beginPath(); e.rect(30, 30, EW - 60, gh); e.clip();
   e.drawImage(stage, 30, 30, EW - 60, gh);
   e.restore();
@@ -5976,7 +6002,7 @@ async function labBloom(st){
   await new Promise(done => {
     const step = () => {
       const t = Math.min(1, (performance.now() - t0) / 2000);
-      drawLabPlant(e, st, { stage: 5, color, prog: 0.72 + 0.28 * t }).then(() => { if (t < 1) requestAnimationFrame(step); else done(); });
+      drawLabPlant(e, st, { stage: labStageOf(st.cur.points), color, prog: 0.72 + 0.28 * t }).then(() => { if (t < 1) requestAnimationFrame(step); else done(); });
     };
     step();
   });
