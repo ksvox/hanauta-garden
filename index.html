@@ -49,6 +49,16 @@
   .bubble p{ margin:0 0 8px; }
   .bubble .btitle{ font-weight:700; color:#a35d7a; margin-bottom:10px; }
   .bubble .blucky{ margin-bottom:2px; }
+  #queenModal .bubble{ background:linear-gradient(165deg,#fffdf4,#fbeec3); border:2.5px solid #c49e54; box-shadow:0 0 0 5px rgba(238,201,106,.30), 0 0 34px rgba(255,214,110,.45), 0 14px 44px rgba(0,0,0,.5); }
+  #queenModal .bubble::after{ border-top-color:#fbeec3; }
+  #queenModal .bubble::before{ content:'✨'; position:absolute; top:-17px; right:-11px; font-size:27px; filter:drop-shadow(0 2px 5px rgba(0,0,0,.35)); }
+  #queenModal .btitle{ color:#8a5f14; font-size:18.5px; text-shadow:0 1px 0 #fff8dc; }
+  #queenModal .bubble, #queenImg, #queenMedal, #btn-queen-main, #btn-queen-close{ position:relative; z-index:1; }
+  .qf{ position:absolute; pointer-events:none; z-index:0; animation:queenPeek 3s ease-in-out infinite alternate; }
+  .qf-r{ animation-name:queenPeekR; }
+  .qf img{ width:100%; display:block; filter:drop-shadow(0 6px 12px rgba(0,0,0,.4)); }
+  @keyframes queenPeek{ from{ transform:translate(0,0); } to{ transform:translate(7px,5px); } }
+  @keyframes queenPeekR{ from{ transform:translate(0,0); } to{ transform:translate(-7px,5px); } }
   .btn:disabled{ opacity:.45; }
   /* v51: マイガーデンのタイトルを木製プレート（看板）風に。画像は増やさず CSS のみで表現する */
   .garden-plate{ max-width:350px; margin:6px auto 12px; text-align:center; padding:13px 20px 14px; border-radius:10px; position:relative;
@@ -163,6 +173,14 @@
   <h2 style="text-align:center; font-size:23px; margin:4px 0 6px; color:#4c3a22;">マイ図鑑コレクション</h2>
   <svg width="300" height="28" viewBox="0 0 320 28" style="display:block; margin:2px auto 4px;" aria-hidden="true"><path d="M4 16 Q 40 7, 80 15 T 160 15 T 240 15 T 316 14" stroke="#7a9a52" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M52 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="64" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 64 6)"/><path d="M118 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="130" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 130 23)"/><path d="M186 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="198" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 198 6)"/><path d="M252 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="264" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 264 23)"/><circle cx="33.8" cy="14.0" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="17.6" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="16.2" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="11.8" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="10.4" r="3.1" fill="#e88bb0"/><circle cx="30" cy="14" r="2.1" fill="#f7d774"/><circle cx="98.8" cy="14.0" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="17.6" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="16.2" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="11.8" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="10.4" r="3.1" fill="#f2b04a"/><circle cx="95" cy="14" r="2.1" fill="#f7d774"/><circle cx="163.8" cy="14.0" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="17.6" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="16.2" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="11.8" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="10.4" r="3.1" fill="#9a7fc9"/><circle cx="160" cy="14" r="2.1" fill="#f7d774"/><circle cx="228.8" cy="14.0" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="17.6" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="16.2" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="11.8" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="10.4" r="3.1" fill="#7fa8d9"/><circle cx="225" cy="14" r="2.1" fill="#f7d774"/><circle cx="293.8" cy="14.0" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="17.6" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="16.2" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="11.8" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="10.4" r="3.1" fill="#ef7d54"/><circle cx="290" cy="14" r="2.1" fill="#f7d774"/></svg>
   <p id="collCount" style="text-align:center; font-size:16px; font-weight:700; color:#7a5c2e; margin:2px 0 10px;"></p>
+  <div id="honorsBanner" style="display:none; text-align:center; background:linear-gradient(135deg,#fdf6d8,#f7e7ae); border:1.5px solid #c49e54; border-radius:14px; padding:13px 12px; margin:0 2px 16px;">
+    <div style="font-size:17px; font-weight:800; color:#7a5a20;">👑 全40種 制覇！</div>
+    <div id="honorsDate" style="font-size:12.5px; color:#8a6f3c; margin-top:3px;"></div>
+    <div style="margin-top:9px;">
+      <button class="btn btn-main" id="btn-end-replay" style="padding:9px 18px; font-size:14px;">🎬 エンドロール再生</button>
+      <button class="btn btn-sub" id="btn-end-cert" style="padding:9px 18px; font-size:14px; margin-left:6px;">🏅 制覇認定証</button>
+    </div>
+  </div>
   <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 14px;">ここに残るのは花種の記録だけ。色や形の組み合わせは世界にひとつだけ。あなたの花は、いつもあなただけの特別です。</p>
   <div style="background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.75; color:#6b6151; margin:0 2px 18px;">
     ⚠ご注意ください！<br>
@@ -340,6 +358,43 @@
   <button class="btn btn-sub" id="btn-fmsg-close" style="margin-top:14px;">閉じる</button>
 </div>
 
+<div id="queenModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.93); z-index:66; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
+  <canvas id="queenFx" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;"></canvas>
+  <div id="queenFairies" style="display:none;">
+    <div class="qf" style="left:-30px; top:23%; width:124px;"><img id="qf1" style="transform:rotate(22deg);" alt=""></div>
+    <div class="qf qf-r" style="right:-30px; top:21%; width:124px; animation-delay:-1.1s;"><img id="qf3" style="transform:scaleX(-1) rotate(22deg);" alt=""></div>
+    <div class="qf" style="left:-36px; bottom:5%; width:134px; animation-delay:-2s;"><img id="qf4" style="transform:rotate(18deg);" alt=""></div>
+    <div class="qf qf-r" style="right:-36px; bottom:5%; width:134px; animation-delay:-.6s;"><img id="qf2" style="transform:scaleX(-1) rotate(18deg);" alt=""></div>
+  </div>
+  <div class="bubble">
+    <p class="btitle" id="queenTitle">👑 女王からの授与</p>
+    <p id="queenLine"></p>
+  </div>
+  <img id="queenImg" style="height:225px; margin-top:16px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));" alt="妖精の女王">
+  <img id="queenMedal" style="height:118px; margin-top:8px; filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));" alt="マスターの勲章">
+  <button class="btn btn-main" id="btn-queen-main" style="margin-top:15px;">🏅 認定証を見る</button>
+  <button class="btn btn-sub" id="btn-queen-close" style="margin-top:10px;">閉じる</button>
+</div>
+<div id="certModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.93); z-index:67; align-items:center; justify-content:center; flex-direction:column; padding:20px; overflow-y:auto;">
+  <img id="certImg" style="max-height:74vh; max-width:94vw; border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,.55); display:block;" alt="認定証">
+  <div style="margin-top:14px; text-align:center;">
+    <button class="btn btn-share" id="btn-cert-save">💾 保存する</button>
+    <button class="btn btn-share" id="btn-cert-share" style="background:linear-gradient(135deg,#5b7fa6,#42648c); box-shadow:0 6px 18px rgba(66,100,140,.3); margin-left:8px;">📤 シェアする</button>
+    <button class="btn btn-sub" id="btn-cert-close" style="margin-left:8px;">閉じる</button>
+  </div>
+</div>
+<div id="endingOverlay" style="display:none; position:fixed; inset:0; background:#14100c; z-index:68; overflow:hidden;">
+  <div id="endingCredits" style="position:absolute; left:0; right:0; top:0; will-change:transform; padding:0 18px;"></div>
+  <div id="endingBarRoll" style="position:absolute; left:0; right:0; bottom:16px; text-align:center; z-index:2;">
+    <button class="btn btn-main" id="btn-ending-cert" style="padding:10px 20px;">🏅 制覇認定証を見る</button>
+    <button class="btn btn-sub" id="btn-ending-close" style="padding:10px 20px; margin-left:8px;">閉じる</button>
+  </div>
+  <div id="endingBarFinal" style="display:none; position:absolute; left:0; right:0; bottom:16px; text-align:center; z-index:2;">
+    <button class="btn btn-main" id="btn-ending-continue" style="padding:11px 22px;">🌸 このまま続ける</button>
+    <button class="btn btn-sub" id="btn-ending-reset" style="padding:11px 22px; margin-left:8px;">はじめから集め直す</button>
+  </div>
+</div>
+
 <script>
 'use strict';
 /* ========= ユーティリティ ========= */
@@ -353,7 +408,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v69'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v70'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -3644,7 +3699,7 @@ async function startCeremony(){
   if (flowerInfo){ flowerInfo.eventSong = liveEventSong || null; flowerInfo.eventTier = liveEventTier || null; } /* イベントの花なら一致した曲名を持たせる（フラワーメッセージ用） */
   /* マイ図鑑コレクションへ記録（失敗しても本体は止めない）。
      v47: 記録できたら新しい開花回数をマイガーデンの「種」判定へ渡す */
-  recordCollection().then(nc => { if (nc) onBloomSeedCheck(mainSp, nc); }).catch(() => {});
+  recordCollection().then(nc => { if (nc){ onBloomSeedCheck(mainSp, nc); honorsAfterBloom(mainSp, nc).catch(() => {}); } }).catch(() => {});
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
   $('timer').textContent = '花が咲きました 🌸';
   phase = 'ceremony'; const t0 = performance.now();
@@ -4138,6 +4193,9 @@ async function openCollection(){
   const totalKinds = SPECIES.filter(sp => !sp.eventOnly).length + SPECIES.filter(sp => sp.eventOnly && map[sp.id]).length + hybGot.length;
   $('collCount').textContent = `これまでにあなたが咲かせた花種⋯${SPECIES.filter(sp => map[sp.id]).length + hybGot.length}／${totalKinds}種`;
   setupHints(SPECIES.filter(sp => map[sp.id]).length);
+  const compRec70 = map['__completion'];
+  $('honorsBanner').style.display = compRec70 ? 'block' : 'none';
+  if (compRec70) $('honorsDate').textContent = '達成日　' + honorsDateJP(compRec70.date);
   const grid = $('collGrid');
   grid.innerHTML = '';
   for (const sp of SPECIES){
@@ -4163,8 +4221,10 @@ async function openCollection(){
       /* v47: 2回目以降は「何回咲いたか」の数字を出す（先生の希望。初回は従来どおり「初」バッジのみ） */
       if ((rec.count || 1) >= 2){
         const cb = document.createElement('span');
-        cb.textContent = (rec.count || 1) + '回';
-        cb.style.cssText = 'position:absolute; top:6px; right:6px; background:rgba(66,48,20,.85); color:#ffe9a8; font-weight:700; font-size:12.5px; padding:2px 8px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
+        const cnt70 = rec.count || 1;
+        cb.textContent = cnt70 >= 50 ? '極' : cnt70 + '回';
+        cb.style.cssText = 'position:absolute; top:6px; right:6px; font-weight:700; font-size:12.5px; padding:2px 8px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3); ' + (cnt70 >= 30 ? 'background:linear-gradient(135deg,#eec96a,#b8860b); color:#fff8dc;' : cnt70 >= 10 ? 'background:linear-gradient(135deg,#f0f0f4,#a9abb6); color:#3c3f46;' : 'background:rgba(66,48,20,.85); color:#ffe9a8;');
+        if (rec.master){ const mb = document.createElement('span'); mb.textContent = '👑'; mb.style.cssText = 'position:absolute; bottom:6px; right:6px; font-size:15px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));'; wrap.appendChild(mb); }
         wrap.appendChild(cb);
       }
       cell.appendChild(wrap);
@@ -4173,7 +4233,7 @@ async function openCollection(){
       nm.style.cssText = 'margin-top:5px; font-size:13.5px; font-weight:600; color:#4c463c;';
       cell.appendChild(nm);
       cell.style.cursor = 'pointer';
-      cell.onclick = () => { $('zoomImg').src = rec.img; $('zoomName').textContent = sp.jp; zoomOpen = true; $('zoomModal').style.display = 'flex'; };
+      cell.onclick = () => { if (rec.master){ openMasterCert(sp, rec); } else { $('zoomImg').src = rec.img; $('zoomName').textContent = sp.jp; zoomOpen = true; $('zoomModal').style.display = 'flex'; } };
     } else {
       const box = document.createElement('div');
       box.style.cssText = 'aspect-ratio:4/5; border:1.5px solid #ddd0b4; border-radius:10px; background:#efe7d3; display:flex; align-items:center; justify-content:center;';
@@ -4214,8 +4274,10 @@ async function openCollection(){
     }
     if ((rec.count || 1) >= 2){
       const cb = document.createElement('span');
-      cb.textContent = (rec.count || 1) + '回';
-      cb.style.cssText = 'position:absolute; top:6px; right:6px; background:rgba(66,48,20,.85); color:#ffe9a8; font-weight:700; font-size:12.5px; padding:2px 8px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3);';
+      const cnt70 = rec.count || 1;
+      cb.textContent = cnt70 >= 50 ? '極' : cnt70 + '回';
+      cb.style.cssText = 'position:absolute; top:6px; right:6px; font-weight:700; font-size:12.5px; padding:2px 8px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.3); ' + (cnt70 >= 30 ? 'background:linear-gradient(135deg,#eec96a,#b8860b); color:#fff8dc;' : cnt70 >= 10 ? 'background:linear-gradient(135deg,#f0f0f4,#a9abb6); color:#3c3f46;' : 'background:rgba(66,48,20,.85); color:#ffe9a8;');
+      if (rec.master){ const mb = document.createElement('span'); mb.textContent = '👑'; mb.style.cssText = 'position:absolute; bottom:6px; right:6px; font-size:15px; filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));'; wrap.appendChild(mb); }
       wrap.appendChild(cb);
     }
     cell.appendChild(wrap);
@@ -4224,12 +4286,348 @@ async function openCollection(){
     nm.style.cssText = 'margin-top:5px; font-size:13.5px; font-weight:600; color:#4c463c;';
     cell.appendChild(nm);
     cell.style.cursor = 'pointer';
-    cell.onclick = () => { $('zoomImg').src = rec.img; $('zoomName').textContent = h.jp; zoomOpen = true; $('zoomModal').style.display = 'flex'; };
+    cell.onclick = () => { if (rec.master){ openMasterCert(h, rec); } else { $('zoomImg').src = rec.img; $('zoomName').textContent = h.jp; zoomOpen = true; $('zoomModal').style.display = 'flex'; } };
     grid.appendChild(cell);
   }
   labOnCollection(map);
 }
 $('btn-coll-open').onclick = openCollection;
+
+/* ========= v70 称号（マスター）と全種制覇エンドロール =========
+   先生の決定（2026-11-18）: 10回 銀の印 / 30回 金の印 / 50回で「極」カンスト。
+   カンスト時は妖精の女王が登場して称号を授与し、勲章の認定証（保存可）を進呈。
+   全種制覇の対象は基本26＋花歌3＋季節11＝40種（ホットリップスは番外）。
+   エンドロールの締めは先生本人のメッセージ（文言は先生の確定稿）。 */
+const MASTER_COUNT = 50;
+const HONORS_SET = SPECIES.filter(sp => sp.id !== 'hotlips');
+const ENDING_MESSAGE = ['完全制覇おめでとうございます！', 'よくぞここまで歌い続けてくれました。', '歌も花も、儚いから美しい✨', 'それでも命ある限り、', 'これからもあなたらしく咲き続けてください。'];
+let certCanvas = null, certFileBase = 'hanauta-cert';
+function honorsDateStr(d){ return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function honorsDateJP(v){
+  if (!v) return '';
+  if (typeof v === 'number'){ const d = new Date(v); return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
+  const p = String(v).split('-'); return p.length === 3 ? p[0] + '年' + (+p[1]) + '月' + (+p[2]) + '日' : '';
+}
+function loadRawImg(src){ return new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
+async function honorsAfterBloom(spLike, nc){
+  if (!spLike || !nc) return;
+  const all = await collDB.getAll();
+  const rec = all.find(r => r.id === spLike.id);
+  if (!rec) return;
+  if (nc >= MASTER_COUNT && !rec.master){
+    const today = honorsDateStr(new Date());
+    await collDB.put({ ...rec, master: today });
+    setTimeout(() => openQueenAward({ kind: 'master', sp: spLike, rec: { ...rec, master: today } }), 5200);
+    return;
+  }
+  if (SPECIES.some(sp => sp.id === spLike.id) && !all.find(r => r.id === '__completion')
+      && HONORS_SET.every(sp => all.some(r => r.id === sp.id))){
+    const today = honorsDateStr(new Date());
+    await collDB.put({ id: '__completion', date: today });
+    setTimeout(() => openQueenAward({ kind: 'completion', date: today }), 5200);
+  }
+}
+let queenCtx = null;
+function openQueenAward(ctx){
+  if ($('queenModal').style.display === 'flex') return;
+  queenCtx = ctx;
+  $('queenImg').src = A5 + 'fairy-queen.webp?av=' + ASSET_V;
+  $('queenMedal').src = A5 + 'master-medal.webp?av=' + ASSET_V;
+  $('queenMedal').style.display = ctx.kind === 'master' ? 'block' : 'none';
+  if (ctx.kind === 'master'){
+    $('queenTitle').textContent = '👑 女王からの授与';
+    $('queenLine').textContent = 'あなたの根気強さには脱帽よ。あなたには「' + ctx.sp.jp + 'マスター」の称号を授けるわ！';
+    $('btn-queen-main').textContent = '🏅 認定証を見る';
+  } else {
+    $('queenTitle').textContent = '👑 全種制覇！';
+    $('queenLine').textContent = '見事よ。全40種の花が、あなたの歌で咲いたわ。庭の女王から、最高の称賛を贈るわね。';
+    $('btn-queen-main').textContent = '🎬 エンドロールを見る';
+  }
+  $('qf1').src = A5 + 'fairy-1.webp?av=' + ASSET_V;
+  $('qf2').src = A5 + 'fairy-2.webp?av=' + ASSET_V;
+  $('qf3').src = A5 + 'fairy-3.webp?av=' + ASSET_V;
+  $('qf4').src = A5 + 'fairy-4.webp?av=' + ASSET_V;
+  const festive = ctx.kind === 'completion';
+  $('queenModal').style.background = festive
+    ? 'radial-gradient(circle at 50% 36%, rgba(255,196,84,.50), rgba(64,44,14,.96) 60%, rgba(26,20,12,.985))'
+    : 'rgba(24,18,10,.93)';
+  $('queenFairies').style.display = festive ? 'block' : 'none';
+  $('queenModal').style.display = 'flex';
+  if (festive) queenFxStart(); else queenFxStop();
+}
+/* 制覇画面だけの花びらとキラキラ（軽量キャンバス。閉じたら止まる） */
+let queenFxRun = false;
+function queenFxStart(){
+  const cv = $('queenFx');
+  if (!cv || !cv.getContext) return;
+  try {
+    const e = cv.getContext('2d');
+    const W2 = cv.width = cv.offsetWidth || window.innerWidth || 360;
+    const H2 = cv.height = cv.offsetHeight || window.innerHeight || 640;
+    const petals = [];
+    for (let i = 0; i < 26; i++) petals.push({ x: Math.random() * W2, y: Math.random() * H2, s: 5 + Math.random() * 6, vy: 15 + Math.random() * 22, vx: -6 + Math.random() * 12, a: Math.random() * 6.3, va: -1 + Math.random() * 2, ph: Math.random() * 6.3 });
+    const sparks = [];
+    for (let i = 0; i < 16; i++) sparks.push({ x: Math.random() * W2, y: Math.random() * H2, r: 1.6 + Math.random() * 2.4, ph: Math.random() * 6.3 });
+    queenFxRun = true;
+    let last = performance.now();
+    const step = (now) => {
+      if (!queenFxRun) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      e.clearRect(0, 0, W2, H2);
+      for (const p of petals){
+        p.y += p.vy * dt; p.x += (p.vx + Math.sin(now / 900 + p.ph) * 9) * dt; p.a += p.va * dt;
+        if (p.y > H2 + 14){ p.y = -14; p.x = Math.random() * W2; }
+        e.save(); e.translate(p.x, p.y); e.rotate(p.a);
+        e.fillStyle = 'rgba(250,183,205,.75)';
+        e.beginPath(); e.ellipse(0, 0, p.s, p.s * 0.58, 0, 0, 6.3); e.fill(); e.restore();
+      }
+      for (const sp2 of sparks){
+        const tw = 0.3 + 0.7 * Math.abs(Math.sin(now / 700 + sp2.ph));
+        e.save(); e.translate(sp2.x, sp2.y); e.globalAlpha = tw; e.fillStyle = '#ffe28c';
+        const r = sp2.r * 3;
+        e.beginPath(); e.moveTo(0, -r); e.quadraticCurveTo(0, 0, r, 0); e.quadraticCurveTo(0, 0, 0, r); e.quadraticCurveTo(0, 0, -r, 0); e.quadraticCurveTo(0, 0, 0, -r); e.fill(); e.restore();
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  } catch (err) { /* 効果が動かない環境でも授与画面は表示する */ }
+}
+function queenFxStop(){ queenFxRun = false; }
+function closeQueen(){ $('queenModal').style.display = 'none'; queenFxStop(); }
+$('btn-queen-close').onclick = closeQueen;
+$('btn-queen-main').onclick = async () => {
+  const ctx = queenCtx; closeQueen();
+  if (!ctx) return;
+  if (ctx.kind === 'master') openCert(await renderMasterCert(ctx.sp, ctx.rec), 'master-' + ctx.sp.id);
+  else playEndingRoll();
+};
+/* --- 認定証（1080×1600。花カードと同じ保存・共有の作法） --- */
+function certBase(){
+  const cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1600;
+  const e = cv.getContext('2d');
+  e.fillStyle = '#faf4e3'; e.fillRect(0, 0, 1080, 1600);
+  e.strokeStyle = '#9a7636'; e.lineWidth = 5; e.strokeRect(36, 36, 1008, 1528);
+  e.strokeStyle = '#c49e54'; e.lineWidth = 2; e.strokeRect(56, 56, 968, 1488);
+  return [cv, e];
+}
+const CERT_FONT = '"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif';
+function certText(e, text, y, px, color, bold){
+  e.fillStyle = color; e.textAlign = 'center'; e.textBaseline = 'middle';
+  e.font = (bold ? '700 ' : '400 ') + px + 'px ' + CERT_FONT;
+  e.fillText(text, 540, y);
+}
+function certTitle(e, text, y){
+  let px = 76;
+  e.textAlign = 'center'; e.textBaseline = 'middle';
+  while (px > 28){ e.font = '700 ' + px + 'px ' + CERT_FONT; if (e.measureText(text).width <= 900) break; px -= 4; }
+  e.fillStyle = '#5e4212'; e.fillText(text, 540, y);
+  return px;
+}
+async function certMedalHead(e, headText, titleText, medalW, gapAfter){
+  certText(e, headText, 130, 44, '#7a5a20', true);
+  const medal = await loadImg(A5 + 'master-medal.webp');
+  const mw = medalW || 440, mh = Math.round(medal.height * mw / medal.width);
+  e.drawImage(medal, (1080 - mw) / 2, 168, mw, mh);
+  const titleY = 168 + mh + 60;
+  certTitle(e, titleText, titleY);
+  e.strokeStyle = '#c49e54'; e.lineWidth = 2;
+  e.beginPath(); e.moveTo(250, titleY + 60); e.lineTo(830, titleY + 60); e.stroke();
+  return titleY + (gapAfter || 96);
+}
+async function renderMasterCert(sp, rec){
+  const [cv, e] = certBase();
+  const discY = await certMedalHead(e, 'マスター認定証', sp.jp + 'マスター');
+  const discS = 470, cx = 540, cy = discY + discS / 2;
+  e.save();
+  e.beginPath(); e.arc(cx, cy, discS / 2, 0, Math.PI * 2); e.clip();
+  e.fillStyle = '#fffcf4'; e.fillRect(cx - discS / 2, discY, discS, discS);
+  if (rec && rec.img){
+    const im = await loadRawImg(rec.img);
+    if (im){ const sc = Math.max(discS / im.width, discS / im.height); e.drawImage(im, cx - im.width * sc / 2, cy - im.height * sc / 2, im.width * sc, im.height * sc); }
+  }
+  e.restore();
+  e.strokeStyle = '#c49e54'; e.lineWidth = 3;
+  e.beginPath(); e.arc(cx, cy, discS / 2, 0, Math.PI * 2); e.stroke();
+  const ty = discY + discS + 58;
+  certText(e, sp.jp + 'を50回咲かせた証として', ty, 36, '#463a28');
+  certText(e, 'この称号を授与します', ty + 50, 36, '#463a28');
+  certText(e, '認定日　' + honorsDateJP(rec && rec.master), ty + 120, 29, '#7a643c');
+  certText(e, 'ハナウタ🌸ガーデン', 1518, 26, '#a08c66');
+  return cv;
+}
+async function renderCompletionCert(dateStr){
+  const [cv, e] = certBase();
+  const discY = await certMedalHead(e, '全種制覇認定証', '全40種制覇', 396, 84);
+  const discS = 436, cx = 540, cy = discY + discS / 2;
+  e.save();
+  e.beginPath(); e.arc(cx, cy, discS / 2, 0, Math.PI * 2); e.clip();
+  e.fillStyle = '#fffcf4'; e.fillRect(cx - discS / 2, discY, discS, discS);
+  const queen = await loadImg(A5 + 'fairy-queen.webp');
+  const qh = discS - 24, qw = Math.round(queen.width * qh / queen.height);
+  e.drawImage(queen, cx - qw / 2, cy - qh / 2, qw, qh);
+  e.restore();
+  e.strokeStyle = '#c49e54'; e.lineWidth = 3;
+  e.beginPath(); e.arc(cx, cy, discS / 2, 0, Math.PI * 2); e.stroke();
+  const ty = discY + discS + 58;
+  certText(e, '基本の花26種・花歌3種・季節の花11種', ty, 34, '#463a28');
+  certText(e, 'すべての花を咲かせた証として', ty + 48, 34, '#463a28');
+  certText(e, 'この称号を授与します', ty + 96, 34, '#463a28');
+  certText(e, '達成日　' + honorsDateJP(dateStr), ty + 158, 29, '#7a643c');
+  certText(e, 'ハナウタ🌸ガーデン', 1518, 26, '#a08c66');
+  return cv;
+}
+function openCert(cv, base){
+  certCanvas = cv; certFileBase = base;
+  $('certImg').src = cv.toDataURL('image/png');
+  $('certModal').style.display = 'flex';
+}
+async function openMasterCert(sp, rec){ openCert(await renderMasterCert(sp, rec), 'master-' + sp.id); }
+$('btn-cert-close').onclick = () => { $('certModal').style.display = 'none'; };
+$('btn-cert-save').onclick = async () => {
+  if (!certCanvas) return;
+  try {
+    const b = await new Promise(res => certCanvas.toBlob(res, 'image/png'));
+    if (b){
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = 'hanauta-' + certFileBase + '.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+  } catch (err) { /* 保存できない環境では表示された画像の長押しで保存できる */ }
+};
+$('btn-cert-share').onclick = async () => {
+  if (!certCanvas) return;
+  const text = 'ハナウタ🌸ガーデンで称号を獲得しました！' + String.fromCharCode(10) + APP_URL;
+  try {
+    const b = await new Promise(res => certCanvas.toBlob(res, 'image/png'));
+    if (b && navigator.canShare){
+      const file = new File([b], 'hanauta-' + certFileBase + '.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })){ await navigator.share({ files: [file], text }); return; }
+    }
+    if (navigator.share) await navigator.share({ text, url: APP_URL });
+  } catch (err) { /* キャンセル時は何もしない */ }
+};
+/* --- エンドロール --- */
+function endingBlock(build){
+  const d = document.createElement('div');
+  d.style.cssText = 'text-align:center; margin:0 auto 36px; max-width:420px;';
+  build(d);
+  return d;
+}
+async function playEndingRoll(){
+  const all = await collDB.getAll();
+  const map = {}; for (const r of all) map[r.id] = r;
+  const box = $('endingCredits');
+  box.innerHTML = '';
+  box.style.transition = 'none';
+  box.style.transform = 'translateY(100vh)';
+  const spacer = document.createElement('div'); spacer.style.height = '6vh'; box.appendChild(spacer);
+  box.appendChild(endingBlock(d => {
+    const im = document.createElement('img');
+    im.src = A5 + 'fairy-queen.webp?av=' + ASSET_V;
+    im.style.cssText = 'height:190px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));';
+    d.appendChild(im);
+    const t = document.createElement('div');
+    t.textContent = 'あなたの歌で咲いた花たち';
+    t.style.cssText = 'color:#f7ead0; font-size:24px; font-weight:800; margin-top:14px;';
+    d.appendChild(t);
+  }));
+  for (const sp of HONORS_SET){
+    const rec = map[sp.id];
+    if (!rec) continue;
+    box.appendChild(endingBlock(d => {
+      const im = document.createElement('img');
+      im.src = rec.img; im.alt = sp.jp;
+      im.style.cssText = 'width:150px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.5);';
+      d.appendChild(im);
+      const nm = document.createElement('div');
+      nm.textContent = sp.jp;
+      nm.style.cssText = 'color:#f7ead0; font-size:21px; font-weight:700; margin-top:8px;';
+      d.appendChild(nm);
+      const sb = document.createElement('div');
+      sb.textContent = 'Bloom No. ' + (rec.bloomNo || '') + '　' + honorsDateJP(rec.ts);
+      sb.style.cssText = 'color:#b8a888; font-size:13px; margin-top:3px;';
+      d.appendChild(sb);
+    }));
+  }
+  box.appendChild(endingBlock(d => {
+    const im = document.createElement('img');
+    im.src = A5 + 'master-medal.webp?av=' + ASSET_V;
+    im.style.cssText = 'height:170px; filter:drop-shadow(0 8px 18px rgba(0,0,0,.5));';
+    d.appendChild(im);
+    const t = document.createElement('div');
+    t.textContent = '全40種制覇';
+    t.style.cssText = 'color:#ffd968; font-size:30px; font-weight:800; margin-top:12px;';
+    d.appendChild(t);
+    for (const line of ENDING_MESSAGE){
+      const p = document.createElement('div');
+      p.textContent = line;
+      p.style.cssText = 'color:#f7ead0; font-size:17.5px; line-height:1.65; margin-top:10px;';
+      d.appendChild(p);
+    }
+    const from = document.createElement('div');
+    from.textContent = 'NOBUより';
+    from.style.cssText = 'color:#f7ead0; font-size:17.5px; text-align:right; margin-top:14px;';
+    d.appendChild(from);
+    const dt = document.createElement('div');
+    dt.textContent = '達成日　' + honorsDateJP(map['__completion'] && map['__completion'].date);
+    dt.style.cssText = 'color:#b8a888; font-size:13.5px; margin-top:16px;';
+    d.appendChild(dt);
+  }));
+  const tail = document.createElement('div'); tail.style.height = '38vh'; box.appendChild(tail);
+  $('endingBarRoll').style.display = 'block';
+  $('endingBarFinal').style.display = 'none';
+  endingResetDisarm();
+  $('endingOverlay').style.display = 'block';
+  const rollId = ++endingRollSeq;
+  const fin = () => { if (rollId === endingRollSeq && $('endingOverlay').style.display !== 'none') showEndingFinale(); };
+  box.addEventListener('transitionend', function h(ev){ if (ev.propertyName === 'transform'){ box.removeEventListener('transitionend', h); fin(); } });
+  const dist = box.offsetHeight + window.innerHeight * 0.4;
+  const dur = Math.min(95, Math.max(40, dist / 95));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    box.style.transition = 'transform ' + dur + 's linear';
+    box.style.transform = 'translateY(-' + Math.max(0, box.offsetHeight - window.innerHeight * 0.32) + 'px)';
+  }));
+  setTimeout(fin, dur * 1000 + 800);
+}
+$('btn-ending-close').onclick = () => { $('endingOverlay').style.display = 'none'; $('endingCredits').style.transition = 'none'; };
+let endingRollSeq = 0, endingResetArmed = false, endingResetTimer = null;
+function showEndingFinale(){ $('endingBarRoll').style.display = 'none'; $('endingBarFinal').style.display = 'block'; }
+function endingResetDisarm(){
+  endingResetArmed = false;
+  if (endingResetTimer) clearTimeout(endingResetTimer);
+  const b = $('btn-ending-reset');
+  if (b){ b.textContent = 'はじめから集め直す'; b.style.color = ''; b.style.fontWeight = ''; }
+}
+$('btn-ending-continue').onclick = () => { $('endingOverlay').style.display = 'none'; $('endingCredits').style.transition = 'none'; };
+$('btn-ending-reset').onclick = async () => {
+  const b = $('btn-ending-reset');
+  if (!endingResetArmed){
+    endingResetArmed = true;
+    b.textContent = '本当にすべて削除する？';
+    b.style.color = '#e88'; b.style.fontWeight = '700';
+    endingResetTimer = setTimeout(endingResetDisarm, 3500);
+    return;
+  }
+  endingResetDisarm();
+  await collDB.clear();
+  try { const g = await gardenLoad(); g.giftBase = {}; g.srSeen = []; await gardenSave(g); } catch (e) { /* ガーデン側の初期化に失敗しても図鑑のリセットは完了とする */ }
+  $('endingOverlay').style.display = 'none';
+  $('endingCredits').style.transition = 'none';
+  if ($('collectionPage').style.display !== 'none') openCollection();
+};
+$('btn-ending-cert').onclick = async () => {
+  const all = await collDB.getAll();
+  const comp = all.find(r => r.id === '__completion');
+  openCert(await renderCompletionCert(comp ? comp.date : ''), 'completion');
+};
+$('btn-end-replay').onclick = () => playEndingRoll();
+$('btn-end-cert').onclick = async () => {
+  const all = await collDB.getAll();
+  const comp = all.find(r => r.id === '__completion');
+  openCert(await renderCompletionCert(comp ? comp.date : ''), 'completion');
+};
+
 
 /* ========= v47 マイガーデン（種を植えて10秒の鼻歌で育てる花壇。保存は図鑑と同じ端末内IndexedDB） ========= */
 /* v51: 株スケールを拡大（先生の実機所見「花が小さそう」を実測で確認して是正）。
@@ -6187,6 +6585,7 @@ async function labBloom(st){
       const ex = all.find(r => r.id === def.id);
       if (ex) await collDB.put({ ...ex, count: (ex.count || 1) + 1 });
       else await collDB.put({ id: def.id, img, count: 1, bloomNo: 'L' + serial, ts: Date.now() });
+      honorsAfterBloom(def, ex ? (ex.count || 1) + 1 : 1).catch(() => {});
     }
     labBloomCtx = { fi, st: { ...st }, color, serial, canvas: full };
   } catch (err) { labBloomCtx = { fi, st: { ...st }, color, serial, canvas: null }; }
