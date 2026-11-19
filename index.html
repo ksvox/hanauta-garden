@@ -29,7 +29,12 @@
   .hero-sub span{ display:inline-block; animation:catchWave 2.8s ease-in-out infinite; }
   @keyframes catchWave{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-2.6px); } }
   @media (prefers-reduced-motion: reduce){ .hero-sub span{ animation:none; } }
-  .season-banner{ display:inline-block; margin:10px auto 0; padding:6px 14px; background:rgba(255,253,248,.92); color:#5a4632; font-size:13.5px; font-weight:700; border-radius:999px; box-shadow:0 3px 12px rgba(30,20,5,.3); letter-spacing:.02em; }
+  .season-banner{ display:block; overflow:hidden; margin:10px auto 0; padding:6px 0; background:rgba(255,253,248,.92); color:#5a4632; font-size:13.5px; font-weight:700; border-radius:999px; box-shadow:0 3px 12px rgba(30,20,5,.3); letter-spacing:.02em; }
+  .sb-track{ display:inline-flex; white-space:nowrap; will-change:transform; animation:sbFlow 18s linear infinite; }
+  .sb-half{ display:inline-flex; }
+  .sb-item{ padding:0 14px; white-space:nowrap; }
+  @keyframes sbFlow{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce){ .sb-track{ animation:none; } }
   .howto.on-hero{ position:relative; background:rgba(255,253,248,.9); margin:0; box-shadow:0 4px 18px rgba(30,20,5,.25); }
   .howto-title{ text-align:center; font-weight:800; margin:0 0 4px; font-size:14px; letter-spacing:.14em; }
   h2.sec{ font-size:22px; margin:26px 0 2px; }
@@ -410,7 +415,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v71'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v72'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -3641,7 +3646,18 @@ function initSeasonBanner(){
   if (!el) return;
   const act = seasonActiveGuest(new Date());
   if (!act){ el.style.display = 'none'; return; }
-  el.textContent = '✨期間限定イベントフラワー✨ ' + act.sp.jp + 'が咲く季節です（' + act.lastMonth + '月' + act.lastDay + '日まで）';
+  const msg = '✨期間限定イベントフラワー✨ ' + act.sp.jp + 'が咲く季節です（' + act.lastMonth + '月' + act.lastDay + '日まで）';
+  el.textContent = '';
+  const track = document.createElement('span'); track.className = 'sb-track';
+  for (let h = 0; h < 2; h++){
+    const half = document.createElement('span'); half.className = 'sb-half';
+    for (let r = 0; r < 2; r++){
+      const it = document.createElement('span'); it.className = 'sb-item'; it.textContent = msg;
+      half.appendChild(it);
+    }
+    track.appendChild(half);
+  }
+  el.appendChild(track);
   el.style.display = '';
 }
 initSeasonBanner();
