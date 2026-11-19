@@ -29,6 +29,7 @@
   .hero-sub span{ display:inline-block; animation:catchWave 2.8s ease-in-out infinite; }
   @keyframes catchWave{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-2.6px); } }
   @media (prefers-reduced-motion: reduce){ .hero-sub span{ animation:none; } }
+  .season-banner{ display:inline-block; margin:10px auto 0; padding:6px 14px; background:rgba(255,253,248,.92); color:#5a4632; font-size:13.5px; font-weight:700; border-radius:999px; box-shadow:0 3px 12px rgba(30,20,5,.3); letter-spacing:.02em; }
   .howto.on-hero{ position:relative; background:rgba(255,253,248,.9); margin:0; box-shadow:0 4px 18px rgba(30,20,5,.25); }
   .howto-title{ text-align:center; font-weight:800; margin:0 0 4px; font-size:14px; letter-spacing:.14em; }
   h2.sec{ font-size:22px; margin:26px 0 2px; }
@@ -107,6 +108,7 @@
       <a class="badge" href="https://www.ksvox.net" target="_blank" rel="noopener">K's VOX オリジナルアプリ</a>
       <h1 class="hero-title">ハナウタ<span class="t-flower">🌸</span>ガーデン</h1>
       <p class="hero-sub">鼻歌で咲く、世界にひとつの花</p>
+      <p id="seasonBanner" class="season-banner" style="display:none"></p>
     </div>
     <div class="howto on-hero">
       <p class="howto-title">あそびかた</p>
@@ -408,7 +410,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v70'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v71'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -3621,6 +3623,28 @@ function seasonalGuestFor(sp, date){
   }
   return null;
 }
+function seasonActiveGuest(date){
+  const d = date || new Date();
+  for (const w of SEASONAL_WINDOWS){
+    if (seasonActiveOn(w.start, d)){
+      const g = SPECIES.find(s2 => s2.id === w.guest);
+      if (g){
+        const last = new Date(d.getFullYear(), w.start[0] - 1, w.start[1] + 14);
+        return { sp: g, lastMonth: last.getMonth() + 1, lastDay: last.getDate() };
+      }
+    }
+  }
+  return null;
+}
+function initSeasonBanner(){
+  const el = document.getElementById('seasonBanner');
+  if (!el) return;
+  const act = seasonActiveGuest(new Date());
+  if (!act){ el.style.display = 'none'; return; }
+  el.textContent = '✨期間限定イベントフラワー✨ ' + act.sp.jp + 'が咲く季節です（' + act.lastMonth + '月' + act.lastDay + '日まで）';
+  el.style.display = '';
+}
+initSeasonBanner();
 function makeSeasonStock(sp, an){
   return { sp, color: pickColor(an.feat, sp, hashStr(an.fingerprint)), rootX: W / 2, groundY: H * BGS[selBg].ground, stems: [{ headH: 300, __from: 1, __to: 1 }], sprigs: [], plan: null, seasonalScene: true, imgs: null };
 }
@@ -4931,9 +4955,9 @@ $('btn-plant-right').onclick = () => gardenPlant('right');
    出さない）。押すとエリアの株を全部片付けて更地に戻し、通常フローで植え直せる。
    種は戻らない（植えた時点で消費済みの原則どおり）。誤操作防止は図鑑の初期化と同じ
    2タップ確認（1回目でボタンが確認文に変わり、3.5秒以内にもう一度押すと実行） */
-function gardenAreaHasFull(area){
-  if (!area || !area.stocks) return false;
-  return area.stocks.some(s2 => gardenStageOf(Math.max(0, area.areaSec - s2.born)) === 'full');
+function gardenAreaAllFull(area){
+  if (!area || !area.stocks || !area.stocks.length) return false;
+  return area.stocks.every(s2 => gardenStageOf(Math.max(0, area.areaSec - s2.born)) === 'full');
 }
 function gardenDisarmReplant(){
   for (const k of ['left', 'center', 'right']){
@@ -4944,7 +4968,7 @@ function gardenDisarmReplant(){
 function updateReplantButtons(st){
   let any = false;
   for (const k of ['left', 'center', 'right']){
-    const show = gardenAreaHasFull(st.areas[k]);
+    const show = gardenAreaAllFull(st.areas[k]); /* v71: 全部の株が満開になってから植え替え可 */
     $('btn-replant-' + k).style.display = show ? '' : 'none';
     if (show) any = true;
   }
