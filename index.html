@@ -458,7 +458,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v76'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v77'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -1259,7 +1259,7 @@ const GRID_DEV_MAX = 16;
    ルート → SR レスキュールート（水晶・銀河）→ 壁 → ユリ受け皿（最後尾）→ 出力にも壁 →
    終端受け皿（hotlips）。詳細は selectSpeciesNew と srClaimsOf の注記参照。
    検証 route58/wall57: 行き場なし 0 件、受け皿発火 0/1066 */
-const WALL_ROB_MIN = 12;
+const WALL_ROB_MIN = 16; /* v77: wide-song line (somen redesign) */
 const N_SET = new Set(['dahlia','rose','lily','gerbera','sunflower','anemone','ranunculus','marguerite','tulip','carnation']);
 function wallDestOf(type, f, x){
   switch (type){
@@ -1288,6 +1288,8 @@ function tierRankOf(sp){
    安定して大きく、T4 への引き込みの誤発動はライン 2.0 で日常520中3件（1.5 では9件）だったため 2.0 を採用。
    ascRuns5≥2 の形はドレミで発動 0%（連続は1本の長い上行として現れる）だったため不採用 */
 const TESS_RISE_LINE = 2.0;
+const SWIRL_TURNS_MIN = 14; /* v77: swirl dedicated switch (many fine turns) */
+const GOLDBELL_GAP_MIN = 0.5; /* v77: goldbell needs a pause between phrases (sec) */
 /* T2 の分け方（先生の方式）: 物差しは「同じ音の繰り返し回数」（音程0の個数）の一本のみ。
    9回以下はマーガレット、10回以上はホタルスズラン。スキルは関与しない。
    較正（v44で再較正）: キラキラ星はクリーンで18回だが、少し荒い歌い方では完全な同音が崩れて
@@ -1683,7 +1685,7 @@ function pickSpeciesInType(type, f, x){
       if (A && tess >= 63 && thick <= 0.50) return 'bubble';
       if (x.maxDur >= UNIQUE_LONG_SEC) return 'carnation'; /* 唯一の条件: 全音符級の長い音が1つでもある（ランタン帯・月輪草帯より優先） */
       if (x.ltRel15 >= CARNATION_BAND_MIN && x.ltRel15 < 0.30) return 'carnation'; /* v55: 正の帯 [0.10, 0.30) = 「短い音と長い音の組合せ」がカーネーションの固有条件（先生の設計イメージ。従来は消去法の受け皿だった） */
-      if (x.ltRel15 >= 0.30) return 'lantern'; /* v44: 相対ロングトーン（自分の音長中央値の1.5倍以上の音の時間割合）。絶対LTはテンポで崩れるため置き換え（クリーン判定は不変） */
+      if (x.ltRel15 >= 0.40) return 'lantern'; /* v77: lantern = long tones >= 40% overall */ /* v44: 相対ロングトーン（自分の音長中央値の1.5倍以上の音の時間割合）。絶対LTはテンポで崩れるため置き換え（クリーン判定は不変） */
       if (tess <= 58) return 'moonring';
       return 'carnation'; /* 帯の下の残余: 基本種として静かに受ける（帯の明示と併存させる） */
     case 'T10': return noirGate(f, x) ? 'noirrose' : 'featherflower'; /* v49: 専用ゲートに統一（上の注記参照）。旧 B＋太さ＋ビブラート経路は廃止 */
@@ -1705,7 +1707,7 @@ function srClaimsOf(f, x){
   const A = skillA(f), B = skillB(f), vib = f.vibSec || 0;
   return {
     rainbow: (f.keyCov || 0) >= 0.78 && B && vib >= VIB_NEED.rainbow,
-    crystal: A && vib >= VIB_NEED.crystal,
+    crystal: A && B && vib >= VIB_NEED.crystal, /* v77: crystal needs key AND tempo */
     tulilily: A && B && x.gridDev !== null && x.gridDev !== undefined && x.gridDev <= GRID_DEV_MAX,
     galaxy: A && vib >= VIB_NEED.galaxy,
     bubble: A && (f.tessitura || 60) >= 63 && (f.thickness || 0) <= 0.50,
@@ -1745,51 +1747,50 @@ function selectSpeciesNew(an, ov){
   const f = (ov && ov.f) || an.feat;
   const x = (ov && ov.x) || noteFeaturesOf(an);
   const type = (ov && ov.type) || classifyType(f, x);
-  let id = pickSpeciesInType(type, f, x);
   const cl = (ov && ov.cl) || srClaimsOf(f, x);
-  /* v57: 銀行済みの主張は型の中でも蒸発しない。チューリリー（T4）とシャボンアヤメ（T9）は
-     専用ルートが無く、主張の保護はこの2行が担う（スキル脚は銀行済み特徴量からも立つため
-     通常は pickSpeciesInType が先に返す。これは平均系の脚＝声域・太さが、最終時点の
-     全体平均で崩れた場合の保険で、主張そのものは「最も良い窓」で評価して銀行してある） */
-  if (ov && ov.cl){
-    if (type === 'T4' && cl.tulilily) id = 'tulilily';
-    else if (type === 'T9' && cl.bubble) id = 'bubble';
-  }
-  /* v56 憲法の完全実施（判定順序は SSR→SR→R→N）:
-     イベント同定（この関数の外・最優先）→ 型内（SR>R>N）→ 虹ルート（SSR:
-     主張+形が立てば何よりも優先）→ ノワールルート（v52 確定ゲート。虹だけは
-     奪わない）→ SR レスキュールート（水晶→銀河: 着地が SR/SSR 未満の時だけ発火し、
-     型内で正当に着地した SR は奪わない）→ オクターブの壁 → ユリ受け皿（最後尾）→
-     受け皿の出力にも壁。終端受け皿は hotlips（壁の行き先が無い場合のみ）。
-     花名曲イベントの同定は、この後段で別途優先される（従来どおり）。検証 design56/verify56 */
-  if (id !== 'rainbow' && cl.rainbow && rainbowShape(f)) id = 'rainbow';
-  if (id !== 'noirrose' && id !== 'rainbow' && cl.noir) id = 'noirrose';
-  if (!SR_SET.has(id) && id !== 'rainbow'){
-    if (cl.crystal && crystalShape(x)) id = 'crystal';
-    else if (cl.galaxy && galaxyShape(f, x)) id = 'galaxy';
-  }
-  /* v57: 壁とユリ受け皿の音域判定だけ、物差しを max(rob, p98long) に差し替える
-     （p98longOf の注記参照。rob は実音域を系統的に狭く読み、広いバラードが
-     「1オクターブ未満＋ロングトーン主体」の受け皿に吸われていた） */
+  const A = skillA(f), B = skillB(f);
   const rob = Math.max((x.robRange !== undefined ? x.robRange : (f.rangeSemis || 0)), x.p98long || 0);
-  const wallStep = () => { if (N_SET.has(id) && id !== 'dahlia' && rob >= WALL_ROB_MIN) id = wallDestOf(type, f, x) || 'hotlips'; };
-  wallStep();
-  /* v56 ユリ受け皿マーカー（最後尾）: v55 では型内判定の直後・壁より前に座り、
-     あらゆる基本種（N）の着地を奪ったため、実機で「ほぼユリかチューリップ」の
-     洪水になった（調査 lilyinv: ファズのユリは 100% が受け皿製で、その大半に SR の
-     主張が立っていた = 憲法違反）。順序を最後尾へ移し、二つのガードを足す:
-     (1) 強い SR の主張（チューリリー/水晶/虹/ノワール）が立つ歌には黙る
-     (2) ダリア（先生の例外）は奪わない。
-     脚は v55 検証 (i) の定義で: 頑健音域 <12 かつロングトーン主体。出力にも壁を通す。
-     v59: 脚を M9 に変更（調査 legato58）。レガート下では絶対LT脚（≥0.50）は中央値
-     0.24 で死に、発火は実質 ltRel15 の単独脚になっていた。ltRel15 ≥0.48 に
-     LT率 ≥0.15 の下限を足すと、狭い賛美歌の生息地（7/20）を全量保持したまま、
-     ポップスバラード『奏』の横取りが 4/20→0 になった（ファズのユリも 1→0）。
-     LT率は低いラインで使えば末尾保持の回数差（賛美歌 0.18〜0.45 vs バラード
-     0.07〜0.10）を拾えるため、絶滅側には倒れない */
+  let id = null, exempt = false;
+  /* v77 somen cascade: switches ordered hardest-first (SSR -> SR -> R -> N).
+     Each switch asks "is this that flower's way of singing?". Songs that pass
+     every switch reach the bottom: tempo-known songs are sorted to the
+     nearest shape; tempo-unknown songs land on carnation. */
+  if (cl.rainbow && rainbowShape(f)) id = 'rainbow';
+  else if (cl.noir) id = 'noirrose';
+  else if (cl.crystal && crystalShape(x)) id = 'crystal';
+  else if (cl.galaxy && galaxyShape(f, x)) id = 'galaxy';
+  else if (cl.bubble) id = 'bubble';
+  else if (type === 'T4' && cl.tulilily) id = 'tulilily';
+  else if (type === 'T4') id = 'sunflower';
+  else if ((x.stepRun || 0) >= 5 && (x.tessRise || 0) < TESS_RISE_LINE && rob > TULIP_RANGE_MAX){ id = 'gerbera'; exempt = true; }
+  else if (A && (f.tessitura || 60) >= COTTON_TESS_MIN && rob < 12) id = 'cotton';
+  else if ((type === 'T3' || type === 'T5') && A && (x.majorMargin || 0) >= MAJOR_MARGIN_MIN) id = 'candy';
+  else if (type === 'T8' && cl.galaxy) id = 'galaxy';
+  else if (type === 'T8' && (x.turnAmp || 0) >= 3.40) id = 'mobius';
+  else if ((x.turns || 0) >= SWIRL_TURNS_MIN && (x.turnAmp || 0) < 3.40) id = 'swirl';
+  else if (type === 'T8') id = 'swirl';
+  else if (type === 'T2') id = pickSpeciesInType('T2', f, x);
+  else if (type === 'T10') id = 'featherflower';
+  else if (type === 'T7') id = 'featherflower';
+  else if (type === 'T6') id = ((x.thirdShare || 0) >= 0.20 && (f.leaps || 0) >= 2 && (x.maxGap || 0) >= GOLDBELL_GAP_MIN) ? 'goldbell' : 'sakura';
+  else if ((f.tessitura || 60) <= 58 && (x.ltRel15 || 0) < 0.10) id = 'moonring';
+  else if (rob < 12 && (x.ltRel15 || 0) >= 0.40) id = 'lantern';
+  else if (type === 'T1'){ id = pickSpeciesInType('T1', f, x); if (id === 'ranunculus') exempt = true; }
+  else if (type === 'T11' && cl.rainbow) id = 'rainbow';
+  else if (type === 'T11') id = 'dahlia';
+  else if (type === 'T3'){ id = 'anemone'; exempt = true; }
+  else if (type === 'T5') id = 'rose';
+  if (!id){
+    if (B) id = pickSpeciesInType(type, f, x);
+    else id = 'carnation';
+  }
+  /* wide-song rule: a wide song that landed on a basic flower is diverted.
+     Flowers reached by their own positive condition are exempt. */
+  if (!exempt && N_SET.has(id) && id !== 'dahlia' && rob >= WALL_ROB_MIN) id = wallDestOf(type, f, x) || 'hotlips';
+  /* lily tray: a basic-flower song whose phrase endings keep coming back
+     long (long tones under 40% overall, not a wide song) becomes lily. */
   const strongSR = cl.tulilily || cl.crystal || cl.rainbow || cl.noir;
-  if (rob < 12 && (x.ltRel15 || 0) >= 0.48 && (f.longToneRatio || 0) >= 0.15 && N_SET.has(id) && id !== 'lily' && id !== 'dahlia' && !strongSR) id = 'lily';
-  wallStep();
+  if (rob < 12 && (x.ltRel15 || 0) < 0.40 && (x.phraseEndRaw || 0) >= 3 && N_SET.has(id) && id !== 'lily' && id !== 'dahlia' && !strongSR) id = 'lily';
   return { sp: SPECIES.find(s => s.id === id) || SPECIES[0], type, x };
 }
 /* ========= v43 花名曲スペシャルイベント =========
@@ -2021,7 +2022,7 @@ function decoyGate2(qz){ let best = null; for (const d of EVENT_DECOY_REFS_Z){ c
    合わせて チューリップは 上級A 10/10・B 9/10 に改善し、誤発動は全セル 0（ドレミ含む）。
    通常ゲートが（別種でも）同定に成功した場合はそちらを優先し、この路では上書きしない */
 function tulipFragFallback(qz, tulipWhole){
-  if ((tulipWhole || 0) < 0.70) return null;
+  if ((tulipWhole || 0) < 0.75) return null; /* v77: hedge tightened */
   const tz = EVENT_REFS_Z.find(r => r.from === 'tulip');
   const dz = EVENT_DECOY_REFS_Z[0];
   if (!tz || !dz) return null;
@@ -2047,7 +2048,7 @@ function tulipFragFallback(qz, tulipWhole){
 function sakuraFragFallback(qz){
   const sz = EVENT_REFS_Z.find(r => r.from === 'sakura_ikimono');
   if (!sz) return null;
-  if (levRateScore(qz, sz.seq) < 0.70) return null;
+  if (levRateScore(qz, sz.seq) < 0.75) return null; /* v77: hedge tightened */
   const S = sz.seq;
   const frags = [S.slice(0, 6), S.slice(23)];
   for (const f of frags){
@@ -2303,7 +2304,7 @@ function committeeStandalone(an){
   if (fents.length > 1 && fents[0][1] <= fents[1][1]) return null;
   const wk = fents[0][0];
   const ev = eventEvidenceW(an);
-  if ((ev.perKey[wk] || 0) < 0.65) return null;
+  if ((ev.perKey[wk] || 0) < 0.70) return null; /* v77: hedge tightened */
   if (ev.decoyW > (ev.perKey[wk] || 0)) return null;
   const song = EVENT_SONGS.find(s => s.key === wk);
   const sp = song ? SPECIES.find(s => s.id === song.sp) : null;
@@ -2314,7 +2315,7 @@ function bandStandalone(an){
   const ents = Object.entries(ev.perKey).sort((a, b) => b[1] - a[1]);
   if (!ents.length) return null;
   const wk = ents[0][0], top = ents[0][1];
-  if (top < 0.65) return null;
+  if (top < 0.70) return null; /* v77: hedge tightened */
   if (ents.length > 1 && top - ents[1][1] < 0.05) return null;
   if (ev.decoyW > top) return null;
   const song = EVENT_SONGS.find(s => s.key === wk);
@@ -2327,7 +2328,7 @@ function bandStandalone(an){
    発火条件は実測（ev72、Dev 120テイク）で決めた素の形: 署名スコア ≥0.90 かつ
    その曲の全体スコア ≥0.65。マージンや囮の追加条件は実測で差が出なかったため
    置かない。実測: 正解 hedge +6（計 59/120）、誤名 +0、非対象 hedge +5 */
-const EV_SIG_LEN = 12, EV_SIG_MIN = 0.90, EV_SIG_WHOLE_MIN = 0.65;
+const EV_SIG_LEN = 12, EV_SIG_MIN = 0.90, EV_SIG_WHOLE_MIN = 0.70; /* v77: hedge tightened (whole 0.65->0.70) */
 function signatureStandalone(an){
   const rawNotes = [];
   for (const g of (an.phrases || [])) for (const n of (g.notes || [])) if (n.midi > 0) rawNotes.push({ midi: Math.round(n.midi), start: n.start || 0 });
