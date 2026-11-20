@@ -415,7 +415,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v73'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v74'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -4843,10 +4843,11 @@ async function refreshGardenBtn(st){
   $('gardenBtnWrap').style.display = (s && s.everSeed) ? 'block' : 'none';
 }
 refreshGardenBtn();
-/* 枯れ: 満開の株だけが対象。最後に歌ってから24時間以上で消え、エリアは元の土に戻る */
+/* 枯れ: 満開の株だけが対象。昨日一日歌わなかった場合に消え、エリアは元の土に戻る（v74: 判定をカレンダーに統一） */
 function gardenApplyWilt(st){
   let wilted = false;
-  if (st.lastSungAt && Date.now() - st.lastSungAt >= GARDEN_WILT_MS){
+  const yStart = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime() - 86400000; })(); /* 昨日の始まり */
+  if (st.lastSungAt && st.lastSungAt < yStart){
     for (const k of ['left', 'center', 'right']){
       const area = st.areas[k];
       if (!area) continue;
@@ -5445,6 +5446,7 @@ async function startGardenSing(){
     gstream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
   } catch (e) { $('gardenMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; return; }
   st.day.n += 1; /* 歌い始めた時点で1回消費（先生の確定仕様）。途中でやめても戻らない */
+  st.lastSungAt = Date.now(); /* v74: 世話時刻も歌い始めで更新（途中で落ちても、その日来たことになる） */
   await gardenSave(st);
   $('gardenDayInfo').textContent = gardenDayInfo(st);
   gardenSinging = true;
