@@ -463,7 +463,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v79'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v80'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればトップページ最下部に静かに知らせる。読み直しはキャッシュ回避の
    クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
