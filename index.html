@@ -173,6 +173,11 @@
     <button class="btn btn-sub" id="btn-garden-open" style="padding:11px 22px; font-size:15px;">🌷 マイガーデンに行く</button>
   </div>
 
+  <div id="updBar" style="display:none; text-align:center; margin:16px 0 0;">
+    <span style="font-size:13px; color:#8a6f3c;">新しい版があります</span>
+    <button class="btn btn-sub" id="btn-upd" style="padding:7px 16px; font-size:13.5px; margin-left:8px;">🔄 更新する</button>
+  </div>
+
   <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
 
 </div>
@@ -458,7 +463,21 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v77'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v78'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+/* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
+   出ていればトップページ最下部に静かに知らせる。読み直しはキャッシュ回避の
+   クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
+   通常の再読み込みでは新しいページが届かないため）。失敗時は無言で諦める */
+function updInit(){
+  const btn = document.getElementById('btn-upd');
+  if (btn) btn.addEventListener('click', () => { location.replace(location.pathname + '?u=' + Date.now()); });
+  if (typeof fetch !== 'function') return;
+  fetch('version.json?u=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if (j && typeof j.v === 'string' && j.v && j.v !== ASSET_V){ const b = document.getElementById('updBar'); if (b) b.style.display = 'block'; } })
+    .catch(() => {});
+}
+try { updInit(); } catch (e) {}
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
