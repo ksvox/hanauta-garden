@@ -103,6 +103,7 @@
   .brand{ text-align:center; font-size:11px; color:#a79c86; margin-top:18px; }
   .brand a{ color:#a79c86; }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Yomogi&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="wrap">
@@ -328,11 +329,53 @@
     </div>
     <div style="margin-top:12px;"><button class="btn btn-sub" id="btn-lab-next" style="padding:11px 22px;">🌱 次の交配を始める</button></div>
   </div>
+  <div style="max-width:420px; margin:26px auto 0; text-align:center;">
+    <button class="btn btn-main" id="btn-lab-note" style="padding:12px 26px; font-size:15.5px; background:linear-gradient(135deg,#a5823f,#7c6125);">③ 開発ノートを見る</button>
+    <p style="font-size:13px; color:#6b6151; margin:8px 0 0;">これまでの交配記録が参照できます。</p>
+  </div>
   <div style="text-align:center; margin-top:26px;">
     <button class="btn btn-sub" id="btn-lab-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
   </div>
 </div>
 
+
+<div id="noteModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.93); z-index:66; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
+  <div id="noteBook" style="width:min(92vw,430px); min-height:540px; background:repeating-linear-gradient(180deg, rgba(255,255,255,0) 0 33px, rgba(91,132,173,.22) 33px 34px), linear-gradient(160deg,#e9f1f8,#ccdcee); border-left:16px solid #5b84ad; border-radius:6px 14px 14px 6px; box-shadow:0 16px 40px rgba(0,0,0,.5); padding:30px 26px; position:relative; cursor:pointer; color:#33475e;">
+    <div id="noteCover" style="text-align:center;">
+      <p style="font-size:12px; letter-spacing:.28em; color:#5b84ad; margin:2px 0 0; font-weight:700;">ハナウタ・ガーデン開発室</p>
+      <div style="background:#fffdf6; border:2px solid #5b84ad; border-radius:8px; padding:15px 10px 12px; margin:104px auto 0; max-width:320px; box-shadow:0 3px 8px rgba(51,71,94,.18);">
+        <p style="font-family:'Yomogi','Hiragino Maru Gothic ProN',cursive; font-size:38px; margin:0; color:#2f4a68;">開発記録🖊</p>
+      </div>
+      <p id="noteCoverDate" style="font-family:'Yomogi','Hiragino Maru Gothic ProN',cursive; font-size:21px; margin:24px 0 0; color:#2f4a68;"></p>
+    </div>
+    <div id="notePage" style="display:none; text-align:center;">
+      <img id="noteImg" style="width:62%; border-radius:10px; box-shadow:0 6px 18px rgba(60,40,20,.3);" alt="咲いた花のカード">
+      <p id="noteChild" style="font-size:21px; font-weight:800; color:#2f4a68; margin:12px 0 2px;"></p>
+      <p id="noteName" style="font-size:13.5px; color:#5a6d82; margin:0 0 12px;"></p>
+      <div style="text-align:left; font-size:14.5px; line-height:2; color:#33475e; padding:0 8px; background-image:repeating-linear-gradient(180deg, rgba(255,255,255,0) 0 28px, rgba(91,132,173,.30) 28px 29px);">
+        <p id="noteStart" style="margin:0;"></p>
+        <p id="noteParents" style="margin:0;"></p>
+        <p id="noteBloomLine" style="margin:0;"></p>
+      </div>
+    </div>
+    <p id="noteCount" style="position:absolute; left:0; right:0; bottom:16px; text-align:center; font-size:12.5px; color:#7d99b5; margin:0;"></p>
+  </div>
+  <div id="noteNav" style="display:none; margin-top:16px; gap:8px; justify-content:center;">
+    <button class="btn btn-sub" id="btn-note-prev" style="padding:11px 16px;">◀︎前のページ</button>
+    <button class="btn btn-sub" id="btn-note-close" style="padding:11px 16px;">■閉じる</button>
+    <button class="btn btn-sub" id="btn-note-next" style="padding:11px 16px;">次のページ▶</button>
+  </div>
+  <p id="noteHint" style="color:#e8dcc0; font-size:13px; margin-top:12px;">ノートをタップすると、ページめくりのボタンが出ます</p>
+</div>
+<div id="labHonorModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.93); z-index:66; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
+  <div class="bubble">
+    <p class="btitle" id="labHonorTitle">🎓 学位授与</p>
+    <p id="labHonorLine"></p>
+  </div>
+  <img id="labHonorImg" style="height:225px; margin-top:16px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));" alt="博士妖精">
+  <button class="btn btn-main" id="btn-labhonor-main" style="margin-top:15px;">🏅 学位記を見る</button>
+  <button class="btn btn-sub" id="btn-labhonor-close" style="margin-top:10px;">閉じる</button>
+</div>
 <div id="seedModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:65; align-items:center; justify-content:center; flex-direction:column; padding:22px; overflow-y:auto;">
   <div class="bubble">
     <p class="btitle">🎁 特別なプレゼント</p>
@@ -415,7 +458,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v74'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v76'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
@@ -460,7 +503,7 @@ function drawSoilMound(x, cx, gy, rx, ry, rgb){
   gr.addColorStop(1, 'rgba(' + r + ',' + g + ',' + b + ',0)');
   x.fillStyle = gr; x.beginPath(); x.arc(0, 0, rx, 0, 6.29); x.fill(); x.restore();
 }
-const ANCH = {"tulip-full":{"w":957,"h":1964,"root":[0.535,0.996],"head":[0.497,0.074],"hb":[0.005,0.182]},"tulip-bud":{"w":953,"h":1952,"root":[0.535,0.996],"head":[0.528,0.07],"hb":[0.005,0.159]},"tulip-half":{"w":956,"h":1962,"root":[0.535,0.996],"head":[0.515,0.08],"hb":[0.005,0.178]},"tulilily-full":{"w":880,"h":1220,"root":[0.397,0.992],"head":[0.636,0.274],"hb":[0.007,0.316]},"tulilily-fullb":{"w":880,"h":1150,"root":[0.695,0.991],"head":[0.451,0.294],"hb":[0.009,0.323]},"tulilily-bud":{"w":664,"h":1647,"root":[0.483,0.991],"head":[0.632,0.223],"hb":[0.009,0.25]},"tulilily-half":{"w":880,"h":1172,"root":[0.4,0.991],"head":[0.622,0.267],"hb":[0.008,0.311]},"mobius-full":{"w":880,"h":1086,"root":[0.197,0.996],"head":[0.489,0.312],"hb":[0.008,0.378]},"mobius-fullb":{"w":880,"h":981,"root":[0.755,0.991],"head":[0.458,0.308],"hb":[0.009,0.361]},"mobius-bud":{"w":628,"h":1732,"root":[0.28,0.996],"head":[0.508,0.181],"hb":[0.008,0.185]},"mobius-half":{"w":880,"h":1318,"root":[0.252,0.998],"head":[0.486,0.295],"hb":[0.008,0.324]},"candy-full":{"w":880,"h":999,"root":[0.269,0.991],"head":[0.505,0.3],"hb":[0.008,0.352]},"candy-fullb":{"w":880,"h":1010,"root":[0.764,0.998],"head":[0.458,0.298],"hb":[0.008,0.352]},"candy-bud":{"w":880,"h":1394,"root":[0.39,0.991],"head":[0.503,0.255],"hb":[0.009,0.26]},"candy-half":{"w":880,"h":938,"root":[0.274,0.99],"head":[0.559,0.299],"hb":[0.009,0.342]},"cotton-full":{"w":880,"h":1306,"root":[0.43,0.993],"head":[0.503,0.255],"hb":[0.008,0.276]},"cotton-fullb":{"w":880,"h":1481,"root":[0.684,0.999],"head":[0.438,0.245],"hb":[0.006,0.252]},"cotton-bud":{"w":615,"h":2537,"root":[0.253,0.994],"head":[0.539,0.15],"hb":[0.007,0.131]},"cotton-half":{"w":880,"h":1239,"root":[0.397,0.994],"head":[0.558,0.231],"hb":[0.012,0.248]},"bubble-full":{"w":880,"h":1901,"root":[0.527,0.999],"head":[0.514,0.251],"hb":[0.005,0.258]},"bubble-bud":{"w":443,"h":3019,"root":[0.42,0.995],"head":[0.668,0.241],"hb":[0.004,0.329]},"goldbell-full":{"w":880,"h":750,"root":[0.558,0.984],"head":[0.433,0.245],"hb":[0.008,0.631]},"goldbell-bud":{"w":880,"h":991,"root":[0.611,0.99],"head":[0.433,0.197],"hb":[0.01,0.654]},"goldbell-half":{"w":880,"h":703,"root":[0.647,0.989],"head":[0.422,0.276],"hb":[0.01,0.622]},"firefly-full":{"w":880,"h":728,"root":[0.515,0.967],"head":[0.394,0.232],"hb":[0.01,0.607]},"firefly-bud":{"w":880,"h":1169,"root":[0.566,0.981],"head":[0.479,0.227],"hb":[0.009,0.498]},"firefly-half":{"w":880,"h":707,"root":[0.529,0.986],"head":[0.422,0.243],"hb":[0.008,0.614]},"feather-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"feather-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"feather-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"moonring-full":{"w":880,"h":904,"root":[0.476,0.989],"head":[0.48,0.304],"hb":[0.01,0.459]},"moonring-bud":{"w":880,"h":885,"root":[0.454,0.988],"head":[0.458,0.289],"hb":[0.011,0.437]},"moonring-half":{"w":880,"h":851,"root":[0.435,0.989],"head":[0.488,0.309],"hb":[0.009,0.418]},"dahlia-full":{"w":880,"h":985,"root":[0.301,0.991],"head":[0.517,0.307],"hb":[0.009,0.37]},"rose-full":{"w":880,"h":807,"root":[0.297,0.99],"head":[0.614,0.297],"hb":[0.01,0.362]},"lily-full":{"w":880,"h":1283,"root":[0.29,0.993],"head":[0.612,0.304],"hb":[0.007,0.341]},"gerbera-full":{"w":880,"h":1100,"root":[0.3,0.991],"head":[0.526,0.243],"hb":[0.008,0.266]},"sunflower-full":{"w":880,"h":859,"root":[0.553,0.999],"head":[0.556,0.314],"hb":[0.01,0.444]},"anemone-full":{"w":880,"h":1358,"root":[0.365,0.995],"head":[0.505,0.265],"hb":[0.008,0.275]},"ranunculus-full":{"w":880,"h":1003,"root":[0.251,0.99],"head":[0.5,0.29],"hb":[0.01,0.323]},"marguerite-full":{"w":880,"h":877,"root":[0.263,0.99],"head":[0.52,0.236],"hb":[0.009,0.25]},"sprig-tulilily":{"w":880,"h":639,"root":[0.545,0.998],"head":[0.536,0.329],"hb":[0.016,0.08]},"sprig-mobius":{"w":880,"h":660,"root":[0.505,0.998],"head":[0.521,0.324],"hb":[0.017,0.08]},"sprig-rose":{"w":880,"h":608,"root":[0.49,0.998],"head":[0.471,0.338],"hb":[0.026,0.08]},"sprig-carnation":{"w":880,"h":890,"root":[0.49,0.998],"head":[0.471,0.32],"hb":[0.016,0.08]},"sprout-round":{"w":880,"h":474,"root":[0.499,0.998],"head":[0.591,0.288],"hb":[0.015,0.382]},"sprout-slender":{"w":880,"h":690,"root":[0.499,0.999],"head":[0.571,0.217],"hb":[0.041,0.08]},"sprout-red":{"w":880,"h":539,"root":[0.499,0.998],"head":[0.491,0.201],"hb":[0.017,0.241]},"sprout-leaves":{"w":880,"h":438,"root":[0.501,0.998],"head":[0.526,0.302],"hb":[0.014,0.08]},"galaxy-full":{"w":880,"h":1854,"root":[0.495,0.999],"head":[0.49,0.233],"hb":[0.005,0.296]},"galaxy-bud":{"w":880,"h":2245,"root":[0.316,0.995],"head":[0.46,0.185],"hb":[0.005,0.164]},"lantern-full":{"w":880,"h":1709,"root":[0.476,0.992],"head":[0.475,0.253],"hb":[0.007,0.283]},"lantern-bud":{"w":668,"h":1392,"root":[0.498,0.991],"head":[0.522,0.249],"hb":[0.009,0.248]},"crystal-full":{"w":880,"h":1204,"root":[0.462,0.999],"head":[0.53,0.298],"hb":[0.007,0.356]},"featherflower-full":{"w":880,"h":1227,"root":[0.321,0.993],"head":[0.48,0.289],"hb":[0.007,0.339]},"sakura-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"sakura-fullb":{"a":0.371,"b":0.98,"ar":0.914},"sakura-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"sakura-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"swirl-full":{"w":880,"h":1230,"root":[0.251,0.998],"head":[0.549,0.288],"hb":[0.007,0.313]},"rainbow-full":{"w":880,"h":746,"root":[0.189,0.989],"head":[0.611,0.302],"hb":[0.009,0.429]},"dahlia-bud":{"w":880,"h":1488,"root":[0.307,0.991],"head":[0.526,0.226],"hb":[0.009,0.226]},"rose-bud":{"w":688,"h":1081,"root":[0.4,0.988],"head":[0.505,0.296],"hb":[0.016,0.34]},"lily-bud":{"w":880,"h":1655,"root":[0.362,0.992],"head":[0.594,0.223],"hb":[0.008,0.253]},"gerbera-bud":{"w":738,"h":1517,"root":[0.513,0.991],"head":[0.666,0.192],"hb":[0.009,0.225]},"sunflower-bud":{"w":816,"h":1417,"root":[0.271,0.991],"head":[0.57,0.222],"hb":[0.009,0.241]},"anemone-bud":{"w":708,"h":1731,"root":[0.398,0.992],"head":[0.54,0.266],"hb":[0.008,0.28]},"ranunculus-bud":{"w":749,"h":1367,"root":[0.245,0.99],"head":[0.459,0.216],"hb":[0.01,0.252]},"marguerite-bud":{"w":639,"h":1365,"root":[0.356,0.99],"head":[0.71,0.234],"hb":[0.01,0.325]},"dahlia-half":{"w":880,"h":1191,"root":[0.313,0.991],"head":[0.574,0.258],"hb":[0.009,0.281]},"rose-half":{"w":880,"h":810,"root":[0.285,0.99],"head":[0.608,0.28],"hb":[0.01,0.351]},"lily-half":{"w":880,"h":1287,"root":[0.324,0.992],"head":[0.607,0.263],"hb":[0.007,0.291]},"gerbera-half":{"w":880,"h":1363,"root":[0.395,0.991],"head":[0.607,0.209],"hb":[0.009,0.255]},"sunflower-half":{"w":880,"h":963,"root":[0.305,0.991],"head":[0.584,0.298],"hb":[0.009,0.34]},"anemone-half":{"w":850,"h":1866,"root":[0.431,0.994],"head":[0.55,0.286],"hb":[0.008,0.364]},"ranunculus-half":{"w":880,"h":1126,"root":[0.252,0.99],"head":[0.502,0.283],"hb":[0.01,0.298]},"marguerite-half":{"w":880,"h":1012,"root":[0.272,0.99],"head":[0.551,0.221],"hb":[0.01,0.239]},"galaxy-half":{"w":880,"h":1771,"root":[0.227,0.994],"head":[0.548,0.224],"hb":[0.006,0.228]},"lantern-half":{"w":880,"h":950,"root":[0.574,0.992],"head":[0.638,0.279],"hb":[0.008,0.318]},"crystal-bud":{"w":533,"h":1989,"root":[0.489,0.993],"head":[0.631,0.252],"hb":[0.007,0.263]},"crystal-half":{"w":880,"h":1010,"root":[0.327,0.991],"head":[0.624,0.286],"hb":[0.009,0.328]},"featherflower-bud":{"w":650,"h":1842,"root":[0.398,0.992],"head":[0.494,0.181],"hb":[0.008,0.172]},"featherflower-half":{"w":880,"h":936,"root":[0.342,0.991],"head":[0.551,0.275],"hb":[0.009,0.299]},"swirl-bud":{"w":880,"h":1317,"root":[0.199,0.991],"head":[0.388,0.228],"hb":[0.008,0.222]},"swirl-half":{"w":880,"h":863,"root":[0.172,0.991],"head":[0.566,0.302],"hb":[0.009,0.379]},"rainbow-bud":{"w":535,"h":1829,"root":[0.343,0.992],"head":[0.504,0.173],"hb":[0.007,0.15]},"rainbow-half":{"w":880,"h":1166,"root":[0.214,0.991],"head":[0.534,0.284],"hb":[0.008,0.314]},"sweetpea-full":{"w":880,"h":1872,"root":[0.52,0.993],"head":[0.501,0.139],"hb":[0.442,0.287]},"marigold-full":{"w":880,"h":2166,"root":[0.499,0.993],"head":[0.5,0.118],"hb":[0.835,0.369]},"sakura2-full":{"w":880,"h":982,"root":[0.449,0.995],"head":[0.505,0.334],"hb":[0.977,0.987]},"hotlips-full":{"w":880,"h":1228,"root":[0.509,0.993],"head":[0.477,0.098],"hb":[0.327,0.191]}};
+const ANCH = {"tulip-full":{"w":957,"h":1964,"root":[0.535,0.996],"head":[0.497,0.074],"hb":[0.005,0.182]},"tulip-bud":{"w":953,"h":1952,"root":[0.535,0.996],"head":[0.528,0.07],"hb":[0.005,0.159]},"tulip-half":{"w":956,"h":1962,"root":[0.535,0.996],"head":[0.515,0.08],"hb":[0.005,0.178]},"tulilily-full":{"w":880,"h":1220,"root":[0.397,0.992],"head":[0.636,0.274],"hb":[0.007,0.316]},"tulilily-fullb":{"w":880,"h":1150,"root":[0.695,0.991],"head":[0.451,0.294],"hb":[0.009,0.323]},"tulilily-bud":{"w":664,"h":1647,"root":[0.483,0.991],"head":[0.632,0.223],"hb":[0.009,0.25]},"tulilily-half":{"w":880,"h":1172,"root":[0.4,0.991],"head":[0.622,0.267],"hb":[0.008,0.311]},"mobius-full":{"w":880,"h":1086,"root":[0.197,0.996],"head":[0.489,0.312],"hb":[0.008,0.378]},"mobius-fullb":{"w":880,"h":981,"root":[0.755,0.991],"head":[0.458,0.308],"hb":[0.009,0.361]},"mobius-bud":{"w":628,"h":1732,"root":[0.28,0.996],"head":[0.508,0.181],"hb":[0.008,0.185]},"mobius-half":{"w":880,"h":1318,"root":[0.252,0.998],"head":[0.486,0.295],"hb":[0.008,0.324]},"candy-full":{"w":880,"h":999,"root":[0.269,0.991],"head":[0.505,0.3],"hb":[0.008,0.352]},"candy-fullb":{"w":880,"h":1010,"root":[0.764,0.998],"head":[0.458,0.298],"hb":[0.008,0.352]},"candy-bud":{"w":880,"h":1394,"root":[0.39,0.991],"head":[0.503,0.255],"hb":[0.009,0.26]},"candy-half":{"w":880,"h":938,"root":[0.274,0.99],"head":[0.559,0.299],"hb":[0.009,0.342]},"cotton-full":{"w":880,"h":1306,"root":[0.43,0.993],"head":[0.503,0.255],"hb":[0.008,0.276]},"cotton-fullb":{"w":880,"h":1481,"root":[0.684,0.999],"head":[0.438,0.245],"hb":[0.006,0.252]},"cotton-bud":{"w":615,"h":2537,"root":[0.253,0.994],"head":[0.539,0.15],"hb":[0.007,0.131]},"cotton-half":{"w":880,"h":1239,"root":[0.397,0.994],"head":[0.558,0.231],"hb":[0.012,0.248]},"bubble-full":{"w":880,"h":1901,"root":[0.527,0.999],"head":[0.514,0.251],"hb":[0.005,0.258]},"bubble-bud":{"w":443,"h":3019,"root":[0.42,0.995],"head":[0.668,0.241],"hb":[0.004,0.329]},"goldbell-full":{"w":880,"h":750,"root":[0.558,0.984],"head":[0.433,0.245],"hb":[0.008,0.631]},"goldbell-bud":{"w":880,"h":991,"root":[0.611,0.99],"head":[0.433,0.197],"hb":[0.01,0.654]},"goldbell-half":{"w":880,"h":703,"root":[0.647,0.989],"head":[0.422,0.276],"hb":[0.01,0.622]},"firefly-full":{"w":880,"h":728,"root":[0.515,0.967],"head":[0.394,0.232],"hb":[0.01,0.607]},"firefly-bud":{"w":880,"h":1169,"root":[0.566,0.981],"head":[0.479,0.227],"hb":[0.009,0.498]},"firefly-half":{"w":880,"h":707,"root":[0.529,0.986],"head":[0.422,0.243],"hb":[0.008,0.614]},"feather-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"feather-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"feather-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"moonring-full":{"w":880,"h":904,"root":[0.476,0.989],"head":[0.48,0.304],"hb":[0.01,0.459]},"moonring-bud":{"w":880,"h":885,"root":[0.454,0.988],"head":[0.458,0.289],"hb":[0.011,0.437]},"moonring-half":{"w":880,"h":851,"root":[0.435,0.989],"head":[0.488,0.309],"hb":[0.009,0.418]},"dahlia-full":{"w":880,"h":985,"root":[0.301,0.991],"head":[0.517,0.307],"hb":[0.009,0.37]},"rose-full":{"w":880,"h":807,"root":[0.297,0.99],"head":[0.614,0.297],"hb":[0.01,0.362]},"lily-full":{"w":880,"h":1283,"root":[0.29,0.993],"head":[0.612,0.304],"hb":[0.007,0.341]},"gerbera-full":{"w":880,"h":1100,"root":[0.3,0.991],"head":[0.526,0.243],"hb":[0.008,0.266]},"sunflower-full":{"w":880,"h":859,"root":[0.553,0.999],"head":[0.556,0.314],"hb":[0.01,0.444]},"anemone-full":{"w":880,"h":1358,"root":[0.365,0.995],"head":[0.505,0.265],"hb":[0.008,0.275]},"ranunculus-full":{"w":880,"h":1003,"root":[0.251,0.99],"head":[0.5,0.29],"hb":[0.01,0.323]},"marguerite-full":{"w":880,"h":877,"root":[0.263,0.99],"head":[0.52,0.236],"hb":[0.009,0.25]},"sprig-tulilily":{"w":880,"h":639,"root":[0.545,0.998],"head":[0.536,0.329],"hb":[0.016,0.08]},"sprig-mobius":{"w":880,"h":660,"root":[0.505,0.998],"head":[0.521,0.324],"hb":[0.017,0.08]},"sprig-rose":{"w":880,"h":608,"root":[0.49,0.998],"head":[0.471,0.338],"hb":[0.026,0.08]},"sprig-carnation":{"w":880,"h":890,"root":[0.49,0.998],"head":[0.471,0.32],"hb":[0.016,0.08]},"sprout-round":{"w":880,"h":474,"root":[0.499,0.998],"head":[0.591,0.288],"hb":[0.015,0.382]},"sprout-slender":{"w":880,"h":690,"root":[0.499,0.999],"head":[0.571,0.217],"hb":[0.041,0.08]},"sprout-red":{"w":880,"h":539,"root":[0.499,0.998],"head":[0.491,0.201],"hb":[0.017,0.241]},"sprout-leaves":{"w":880,"h":438,"root":[0.501,0.998],"head":[0.526,0.302],"hb":[0.014,0.08]},"galaxy-full":{"w":880,"h":1854,"root":[0.495,0.999],"head":[0.49,0.233],"hb":[0.005,0.296]},"galaxy-bud":{"w":880,"h":2245,"root":[0.316,0.995],"head":[0.46,0.185],"hb":[0.005,0.164]},"lantern-full":{"w":880,"h":1709,"root":[0.476,0.992],"head":[0.475,0.253],"hb":[0.007,0.283]},"lantern-bud":{"w":668,"h":1392,"root":[0.498,0.991],"head":[0.522,0.249],"hb":[0.009,0.248]},"crystal-full":{"w":880,"h":1204,"root":[0.462,0.999],"head":[0.53,0.298],"hb":[0.007,0.356]},"featherflower-full":{"w":880,"h":1227,"root":[0.321,0.993],"head":[0.48,0.289],"hb":[0.007,0.339]},"sakura-full":{"w":1029,"h":2100,"root":[0.517,0.997],"head":[0.493,0.275],"hb":[0.008,0.465]},"sakura-fullb":{"a":0.371,"b":0.98,"ar":0.914},"sakura-half":{"w":922,"h":2068,"root":[0.524,0.997],"head":[0.489,0.262],"hb":[0.008,0.452]},"sakura-bud":{"w":868,"h":2091,"root":[0.532,0.997],"head":[0.463,0.264],"hb":[0.008,0.433]},"swirl-full":{"w":880,"h":1230,"root":[0.251,0.998],"head":[0.549,0.288],"hb":[0.007,0.313]},"rainbow-full":{"w":880,"h":746,"root":[0.189,0.989],"head":[0.611,0.302],"hb":[0.009,0.429]},"dahlia-bud":{"w":880,"h":1488,"root":[0.307,0.991],"head":[0.526,0.226],"hb":[0.009,0.226]},"rose-bud":{"w":688,"h":1081,"root":[0.4,0.988],"head":[0.505,0.296],"hb":[0.016,0.34]},"lily-bud":{"w":880,"h":1655,"root":[0.362,0.992],"head":[0.594,0.223],"hb":[0.008,0.253]},"gerbera-bud":{"w":738,"h":1517,"root":[0.513,0.991],"head":[0.666,0.192],"hb":[0.009,0.225]},"sunflower-bud":{"w":816,"h":1417,"root":[0.271,0.991],"head":[0.57,0.222],"hb":[0.009,0.241]},"anemone-bud":{"w":708,"h":1731,"root":[0.398,0.992],"head":[0.54,0.266],"hb":[0.008,0.28]},"ranunculus-bud":{"w":749,"h":1367,"root":[0.245,0.99],"head":[0.459,0.216],"hb":[0.01,0.252]},"marguerite-bud":{"w":639,"h":1365,"root":[0.356,0.99],"head":[0.71,0.234],"hb":[0.01,0.325]},"dahlia-half":{"w":880,"h":1191,"root":[0.313,0.991],"head":[0.574,0.258],"hb":[0.009,0.281]},"rose-half":{"w":880,"h":810,"root":[0.285,0.99],"head":[0.608,0.28],"hb":[0.01,0.351]},"lily-half":{"w":880,"h":1287,"root":[0.324,0.992],"head":[0.607,0.263],"hb":[0.007,0.291]},"gerbera-half":{"w":880,"h":1363,"root":[0.395,0.991],"head":[0.607,0.209],"hb":[0.009,0.255]},"sunflower-half":{"w":880,"h":963,"root":[0.305,0.991],"head":[0.584,0.298],"hb":[0.009,0.34]},"anemone-half":{"w":850,"h":1866,"root":[0.431,0.994],"head":[0.55,0.286],"hb":[0.008,0.364]},"ranunculus-half":{"w":880,"h":1126,"root":[0.252,0.99],"head":[0.502,0.283],"hb":[0.01,0.298]},"marguerite-half":{"w":880,"h":1012,"root":[0.272,0.99],"head":[0.551,0.221],"hb":[0.01,0.239]},"galaxy-half":{"w":880,"h":1771,"root":[0.227,0.994],"head":[0.548,0.224],"hb":[0.006,0.228]},"lantern-half":{"w":880,"h":950,"root":[0.574,0.992],"head":[0.638,0.279],"hb":[0.008,0.318]},"crystal-bud":{"w":533,"h":1989,"root":[0.489,0.993],"head":[0.631,0.252],"hb":[0.007,0.263]},"crystal-half":{"w":880,"h":1010,"root":[0.327,0.991],"head":[0.624,0.286],"hb":[0.009,0.328]},"featherflower-bud":{"w":650,"h":1842,"root":[0.398,0.992],"head":[0.494,0.181],"hb":[0.008,0.172]},"featherflower-half":{"w":880,"h":936,"root":[0.342,0.991],"head":[0.551,0.275],"hb":[0.009,0.299]},"swirl-bud":{"w":880,"h":1317,"root":[0.199,0.991],"head":[0.388,0.228],"hb":[0.008,0.222]},"swirl-half":{"w":880,"h":863,"root":[0.172,0.991],"head":[0.566,0.302],"hb":[0.009,0.379]},"rainbow-bud":{"w":535,"h":1829,"root":[0.343,0.992],"head":[0.504,0.173],"hb":[0.007,0.15]},"rainbow-half":{"w":880,"h":1166,"root":[0.214,0.991],"head":[0.534,0.284],"hb":[0.008,0.314]},"sweetpea-full":{"w":880,"h":1872,"root":[0.52,0.993],"head":[0.501,0.139],"hb":[0.442,0.287]},"marigold-full":{"w":880,"h":2166,"root":[0.499,0.993],"head":[0.5,0.118],"hb":[0.835,0.369]},"sakura2-full":{"w":880,"h":983,"root":[0.449,0.995],"head":[0.505,0.334],"hb":[0.977,0.987]},"hotlips-full":{"w":880,"h":1228,"root":[0.509,0.993],"head":[0.477,0.098],"hb":[0.327,0.191]}};
 const P5 = {"noirrose-full":{"a":0.409,"b":0.986,"ar":1.067},"noirrose-fullb":{"a":0.498,"b":0.92,"ar":1.453},"noirrose-bud":{"a":0.359,"b":0.962,"ar":0.889},"noirrose-half":{"a":0.47,"b":0.992,"ar":1.35},"stem-rose":{"rx":0.529,"tx":0.514,"ar":0.217},"branch-rose":{"rx":0.553,"tx":0.634,"ar":0.371},"stem-lily":{"rx":0.503,"tx":0.493,"ar":0.48},"branch-lily":{"rx":0.478,"tx":0.497,"ar":1.068},"stem-dahlia":{"rx":0.471,"tx":0.422,"ar":0.188},"branch-dahlia":{"rx":0.241,"tx":0.637,"ar":0.132},"stem-carnation":{"rx":0.496,"tx":0.496,"ar":0.259},"branch-carnation":{"rx":0.657,"tx":0.382,"ar":0.283},"stem-gerbera":{"rx":0.499,"tx":0.5,"ar":0.462},"branch-gerbera":{"rx":0.392,"tx":0.5,"ar":1.026},"stem-sunflower":{"rx":0.462,"tx":0.447,"ar":0.43},"branch-sunflower":{"rx":0.218,"tx":0.412,"ar":0.258},"stem-iris":{"rx":0.555,"tx":0.567,"ar":0.179},"branch-iris":{"rx":0.538,"tx":0.567,"ar":0.399},"stem-cherry":{"rx":0.45,"tx":0.429,"ar":0.366},"branch-cherry":{"rx":0.457,"tx":0.429,"ar":0.814},"stem-anemone":{"rx":0.483,"tx":0.498,"ar":0.526},"branch-anemone":{"rx":0.462,"tx":0.426,"ar":0.395},"tulilily-full":{"a":0.44,"b":0.62,"ar":0.965},"tulilily-fullb":{"a":0.52,"b":0.6,"ar":1.39},"tulilily-bud":{"a":0.386,"b":0.993,"ar":0.799},"tulilily-half":{"a":0.49,"b":0.82,"ar":1.094},"mobius-full":{"a":0.46,"b":0.82,"ar":1.011},"mobius-fullb":{"a":0.565,"b":0.86,"ar":0.89},"mobius-bud":{"a":0.505,"b":0.992,"ar":0.974},"mobius-half":{"a":0.493,"b":0.87,"ar":0.964},"carnation-full":{"a":0.50,"b":0.97,"ar":1.114},"carnation-fullb":{"a":0.504,"b":0.986,"ar":1.100},"carnation-bud":{"a":0.18,"b":0.97,"ar":0.626},"carnation-half":{"a":0.26,"b":0.97,"ar":1.031},"candy-full":{"a":0.47,"b":0.972,"ar":1.007},"candy-fullb":{"a":0.494,"b":0.976,"ar":1.036},"candy-bud":{"a":0.514,"b":0.993,"ar":0.994},"candy-half":{"a":0.467,"b":0.993,"ar":0.949},"cotton-full":{"a":0.483,"b":0.994,"ar":1.001},"cotton-fullb":{"a":0.494,"b":0.868,"ar":1.013},"cotton-bud":{"a":0.606,"b":0.993,"ar":0.981},"cotton-half":{"a":0.51,"b":0.987,"ar":1.018},"bubble-full":{"a":0.36,"b":0.99,"ar":0.911},"bubble-bud":{"a":0.5,"b":0.994,"ar":0.567},"dahlia-full":{"a":0.469,"b":0.899,"ar":0.887},"rose-full":{"a":0.449,"b":0.994,"ar":1.042},"lily-full":{"a":0.5,"b":0.62,"ar":0.992},"gerbera-full":{"a":0.49,"b":0.86,"ar":0.907},"sunflower-full":{"a":0.483,"b":0.909,"ar":0.811},"anemone-full":{"a":0.542,"b":0.994,"ar":0.942},"ranunculus-full":{"a":0.535,"b":0.993,"ar":1.008},"marguerite-full":{"a":0.47,"b":0.82,"ar":0.867},"galaxy-full":{"a":0.594,"b":0.983,"ar":0.988},"galaxy-bud":{"a":0.484,"b":0.993,"ar":0.846},"crystal-full":{"a":0.578,"b":0.99,"ar":1.017},"featherflower-full":{"a":0.524,"b":0.891,"ar":0.971},"sakura-full":{"a":0.513,"b":0.988,"ar":0.667},"sakura-fullb":{"a":0.509,"b":0.990,"ar":0.747},"sakura-half":{"a":0.559,"b":0.98,"ar":0.662},"sakura-bud":{"a":0.609,"b":0.98,"ar":0.364},"swirl-full":{"a":0.513,"b":0.988,"ar":0.939},"rainbow-full":{"a":0.563,"b":0.892,"ar":0.999},"dahlia-bud":{"a":0.485,"b":0.993,"ar":0.887},"rose-bud":{"a":0.489,"b":0.993,"ar":0.921},"lily-bud":{"a":0.284,"b":0.988,"ar":0.969},"gerbera-bud":{"a":0.5,"b":0.991,"ar":1.083},"sunflower-bud":{"a":0.629,"b":0.993,"ar":0.933},"anemone-bud":{"a":0.54,"b":0.99,"ar":1.02},"ranunculus-bud":{"a":0.409,"b":0.992,"ar":0.975},"marguerite-bud":{"a":0.54,"b":0.991,"ar":1.043},"dahlia-half":{"a":0.48,"b":0.68,"ar":0.9},"rose-half":{"a":0.48,"b":0.8,"ar":0.982},"lily-half":{"a":0.52,"b":0.6,"ar":0.946},"gerbera-half":{"a":0.48,"b":0.85,"ar":0.893},"sunflower-half":{"a":0.49,"b":0.82,"ar":0.828},"anemone-half":{"a":0.556,"b":0.993,"ar":0.874},"ranunculus-half":{"a":0.5,"b":0.75,"ar":1.026},"marguerite-half":{"a":0.504,"b":0.899,"ar":0.986},"galaxy-half":{"a":0.46,"b":0.85,"ar":1.116},"crystal-bud":{"a":0.307,"b":0.99,"ar":0.575},"crystal-half":{"a":0.621,"b":0.99,"ar":1.057},"featherflower-bud":{"a":0.386,"b":0.99,"ar":0.921},"featherflower-half":{"a":0.471,"b":0.981,"ar":1.141},"swirl-bud":{"a":0.483,"b":0.992,"ar":0.883},"swirl-half":{"a":0.46,"b":0.78,"ar":0.95},"rainbow-bud":{"a":0.495,"b":0.992,"ar":0.954},"rainbow-half":{"a":0.486,"b":0.994,"ar":0.949},"anemone-fullb":{"a":0.48,"b":0.75,"ar":1.043},"bubble-fullb":{"a":0.297,"b":0.993,"ar":0.751},"crystal-fullb":{"a":0.564,"b":0.99,"ar":0.825},"dahlia-fullb":{"a":0.493,"b":0.82,"ar":1.067},"featherflower-fullb":{"a":0.44,"b":0.74,"ar":0.792},"galaxy-fullb":{"a":0.47,"b":0.82,"ar":1.106},"gerbera-fullb":{"a":0.498,"b":0.982,"ar":0.858},"lily-fullb":{"a":0.48,"b":0.58,"ar":0.976},"lily-fullc":{"a":0.84,"b":0.44,"ar":1.042},"marguerite-fullb":{"a":0.488,"b":0.868,"ar":0.933},"rainbow-fullb":{"a":0.53,"b":0.978,"ar":1.008},"ranunculus-fullb":{"a":0.499,"b":0.978,"ar":1.009},"rose-fullb":{"a":0.46,"b":0.78,"ar":1.026},"sunflower-fullb":{"a":0.47,"b":0.84,"ar":0.86},"swirl-fullb":{"a":0.494,"b":0.971,"ar":0.857}};
 for (const k of ['full','fullb','half','bud']) if (P5['crystal-' + k]) P5['crystalx-' + k] = P5['crystal-' + k]; /* 水晶ヘッドは改名してキャッシュを切り替える */
 
@@ -5209,15 +5252,26 @@ function gardenDrawAnimal(x, t, back){
   if (st.nxt){ draw(st.cur, 1 - st.f); draw(st.nxt, st.f); } else draw(st.cur, 1);
 }
 /* v61 虹: 庭の奥に柔らかい弧を重ねる（手続き描画。素材は増やさない） */
+let gardenRainbowCv = null;
 function gardenDrawRainbow(x){
-  const cols = ['255,110,110', '255,175,95', '255,240,150', '150,230,160', '130,190,255', '190,150,255'];
-  x.save();
-  x.lineWidth = 16;
-  for (let i = 0; i < 6; i++){
-    x.strokeStyle = 'rgba(' + cols[i] + ',0.20)';
-    x.beginPath(); x.arc(450, 690, 148 + i * 17, Math.PI * 1.06, Math.PI * 1.94); x.stroke();
+  if (!gardenRainbowCv){
+    const cols = ['255,110,110', '255,175,95', '255,240,150', '150,230,160', '130,190,255', '190,150,255'];
+    gardenRainbowCv = document.createElement('canvas'); gardenRainbowCv.width = 900; gardenRainbowCv.height = 1125;
+    const o = gardenRainbowCv.getContext('2d');
+    const R0 = 814.5, R1 = 1044;
+    const g = o.createRadialGradient(450, 1080, R0, 450, 1080, R1);
+    g.addColorStop(0, 'rgba(' + cols[0] + ',0)');
+    const ctr = [864, 890, 916, 942, 968, 994];
+    for (let i = 0; i < 6; i++){ g.addColorStop((ctr[i] - 7 - R0) / (R1 - R0), 'rgba(' + cols[i] + ',1)'); g.addColorStop((ctr[i] + 7 - R0) / (R1 - R0), 'rgba(' + cols[i] + ',1)'); }
+    g.addColorStop(1, 'rgba(' + cols[5] + ',0)');
+    o.strokeStyle = g; o.lineWidth = R1 - R0;
+    o.beginPath(); o.arc(450, 1080, (R0 + R1) / 2, Math.PI, Math.PI * 2); o.stroke();
+    o.globalCompositeOperation = 'destination-in';
+    const m = o.createLinearGradient(0, 60, 0, 800);
+    m.addColorStop(0, 'rgba(0,0,0,0.28)'); m.addColorStop(0.5, 'rgba(0,0,0,0.17)'); m.addColorStop(0.78, 'rgba(0,0,0,0.05)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+    o.fillStyle = m; o.fillRect(0, 0, 900, 1125);
   }
-  x.restore();
+  x.drawImage(gardenRainbowCv, 0, 0);
 }
 function gardenDrawFrame(t){
   const c = $('gardenStage');
@@ -5523,8 +5577,9 @@ const HINTS = [
   { at: 5, sub: '同じ花ばかり咲く？', items: ['同じ高さや速さで歌ってない？', '音符やフレーズの長さも大事！', '同じ花が咲いても良い事あるかも!?'] },
   { at: 10, sub: '違う色の花を咲かせたい？', items: ['背景画像も影響するよ！', '声域も変えてみよう！', '音域も変えると…!?'] },
   { at: 15, sub: '珍しい花を咲かせたい？', items: ['テンポを安定させてみよう！', '調性(キー)を安定させよう！', 'ロングトーンや“間”も工夫して！'] },
+  { at: 20, sub: '特別な花はまだあるよ！', items: ['花の名前が入った有名曲を歌ったら!?', '1年に15日間だけ咲く花がある!?', '開発できる新種は20種以上!?'] },
 ];
-const HINT_NUM = ['1️⃣', '2️⃣', '3️⃣'];
+const HINT_NUM = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
 function setupHints(found){
   const btn = $('btn-hint'), note = $('hintNote'), panel = $('hintPanel');
   if (!btn || !note || !panel) return;
@@ -5541,7 +5596,7 @@ function setupHints(found){
   btn.disabled = false;
   btn.textContent = '💡 ヒント' + HINT_NUM[stage - 1];
   btn.style.background = ''; btn.style.color = ''; btn.style.boxShadow = '';
-  note.textContent = stage === 1 ? '(10種集めると次のヒント公開)' : stage === 2 ? '(15種集めると次のヒント公開)' : '(最後のヒント)';
+  note.textContent = stage === 1 ? '(10種集めると次のヒント公開)' : stage === 2 ? '(15種集めると次のヒント公開)' : stage === 3 ? '(20種集めると次のヒント公開)' : '(最後のヒント)';
   panel.innerHTML = '<div class="hint-roll"></div><div class="hint-paper">' +
     HINTS.slice(0, stage).map((h, i) => `<div class="hint-sec"><div class="hint-title">ヒント${HINT_NUM[i]}</div><div class="hint-sub">${h.sub}</div><ol class="hint-items">${h.items.map(t => `<li>${t}</li>`).join('')}</ol></div>`).join('') +
     '</div><div class="hint-roll"></div>';
@@ -6057,7 +6112,7 @@ collDB.putLab = async function(state){
   const db = await collDB.open(); if (!db) return;
   return new Promise(res => { try { const tx = db.transaction('garden', 'readwrite'); tx.objectStore('garden').put({ key: 'lab', ...state }); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch (e) { res(); } });
 };
-function labDefaultState(){ return { unlocked: false, unlockShown: false, cur: null, day: { d: '', used: {} }, blooms: 0, lastChild: null }; }
+function labDefaultState(){ return { unlocked: false, unlockShown: false, cur: null, day: { d: '', used: {} }, blooms: 0, lastChild: null, history: [], honors: { doctor: '', prof: '' } }; }
 async function labLoad(){
   try { const s = await collDB.getLab(); if (s && typeof s === 'object'){ const d = labDefaultState(); return { ...d, ...s, day: (s.day && typeof s.day === 'object') ? s.day : d.day }; } } catch (e) { /* DBが無い環境では既定値 */ }
   return labDefaultState();
@@ -6375,7 +6430,10 @@ function labGenMelody(level){
   for (let attempt = 0; attempt < 300; attempt++){
     const durs = [...pats[Math.floor(Math.random() * pats.length)], ...pats[Math.floor(Math.random() * pats.length)]];
     if (durs.length < 4) continue;
-    const degs = [0];
+    let startDeg = 0;
+    if (level === 2) startDeg = [0, 0, 1, 2, 3, 4][Math.floor(Math.random() * 6)];
+    else if (level === 3) startDeg = Math.floor(Math.random() * 8);
+    const degs = [startDeg];
     for (let i = 1; i < durs.length; i++){
       const prev = degs[i - 1];
       const steps = [];
@@ -6607,6 +6665,7 @@ async function renderLabExport(fi, st, color, serial){
   return c;
 }
 let labBloomCtx = null;
+let labLastBloomImg = '';
 async function labBloom(st){
   const def = labChildDef(st); if (!def) return;
   const color = labFinalColor(st);
@@ -6631,6 +6690,7 @@ async function labBloom(st){
     let img = '';
     try { img = th.toDataURL('image/webp', 0.85); } catch (err) { img = ''; }
     if (!img || img.length > 500000){ try { img = th.toDataURL('image/jpeg', 0.85); } catch (err) { img = ''; } }
+    labLastBloomImg = img;
     if (img){
       const all = await collDB.getAll();
       const ex = all.find(r => r.id === def.id);
@@ -6640,9 +6700,11 @@ async function labBloom(st){
     }
     labBloomCtx = { fi, st: { ...st }, color, serial, canvas: full };
   } catch (err) { labBloomCtx = { fi, st: { ...st }, color, serial, canvas: null }; }
+  labRecordHistory(st, def, fi, labLastBloomImg);
   st.cur = null;
   st.lastChild = def.id;
   await labSave(st);
+  labCheckHonors(st).catch(() => {});
   flowerInfo = labBloomCtx.fi;
   $('labBloomName').textContent = '🌸 ' + fi.name + '（' + def.jp + '）が咲きました！';
   if (labBloomCtx.canvas) $('labBloomImg').src = labBloomCtx.canvas.toDataURL('image/png');
@@ -6651,6 +6713,117 @@ async function labBloom(st){
   await renderLabPage();
   $('labBloom').style.display = '';
   $('labPage').scrollTop = 0;
+}
+
+/* ===== 開発ノートと任命イベント（先生の要望 2026-11-20） ===== */
+function labRecordHistory(st, def, fi, img){
+  if (!st || !st.cur || !def) return;
+  st.history = Array.isArray(st.history) ? st.history : [];
+  const pa = SPECIES.find(s => s.id === st.cur.a), pb = SPECIES.find(s => s.id === st.cur.b);
+  st.history.push({ start: st.cur.born, a: st.cur.a, b: st.cur.b, aJp: pa ? pa.jp : st.cur.a, bJp: pb ? pb.jp : st.cur.b, date: Date.now(), points: st.cur.points, child: def.id, jp: def.jp, name: fi ? fi.name : def.jp, img: img || '' });
+}
+let noteHist = [], notePageIdx = 0;
+function noteRender(){
+  const hist = noteHist, total = hist.length;
+  $('noteCover').style.display = notePageIdx === 0 ? '' : 'none';
+  $('notePage').style.display = notePageIdx === 0 ? 'none' : '';
+  if (notePageIdx === 0){
+    $('noteCoverDate').textContent = total ? honorsDateJP(hist[0].start) + '～' : '最初の開花から記録が始まります';
+    $('noteCount').textContent = total ? '全' + total + '件の記録' : 'まだ記録がありません';
+    return;
+  }
+  const rec = hist[notePageIdx - 1];
+  $('noteImg').src = rec.img || '';
+  $('noteImg').style.display = rec.img ? '' : 'none';
+  $('noteChild').textContent = rec.jp || '';
+  $('noteName').textContent = rec.name || '';
+  $('noteStart').textContent = '交配を始めた日：' + honorsDateJP(rec.start);
+  $('noteParents').textContent = '交配した花：' + (rec.aJp || '') + ' ✖ ' + (rec.bJp || '');
+  $('noteBloomLine').textContent = '開花した日：' + honorsDateJP(rec.date) + '（' + rec.points + 'ポイント）';
+  $('noteCount').textContent = notePageIdx + ' / ' + total;
+}
+async function openNoteBook(){
+  const st = await labLoad();
+  noteHist = (st && Array.isArray(st.history)) ? st.history : [];
+  notePageIdx = 0;
+  $('noteNav').style.display = 'none';
+  $('noteHint').style.display = '';
+  noteRender();
+  $('noteModal').style.display = 'flex';
+}
+$('btn-lab-note').onclick = openNoteBook;
+$('noteBook').onclick = () => { $('noteNav').style.display = 'flex'; $('noteHint').style.display = 'none'; };
+$('btn-note-prev').onclick = () => { if (notePageIdx > 0){ notePageIdx--; noteRender(); } };
+$('btn-note-next').onclick = () => { if (notePageIdx < noteHist.length){ notePageIdx++; noteRender(); } };
+$('btn-note-close').onclick = () => { $('noteModal').style.display = 'none'; };
+function labMaybeAward(st, distinct){
+  st.honors = (st.honors && typeof st.honors === 'object') ? st.honors : { doctor: '', prof: '' };
+  const d = new Date();
+  const today = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  if (distinct >= 21 && !st.honors.prof){ st.honors.prof = today; if (!st.honors.doctor) st.honors.doctor = today; return 'prof'; }
+  if (distinct >= 11 && !st.honors.doctor){ st.honors.doctor = today; return 'doctor'; }
+  return null;
+}
+async function labCheckHonors(st){
+  const all = await collDB.getAll();
+  const distinct = new Set(all.filter(r => HYBRID_BY_ID[r.id]).map(r => r.id)).size;
+  const kind = labMaybeAward(st, distinct);
+  if (!kind) return;
+  await labSave(st);
+  setTimeout(() => openLabHonor(kind, st.honors[kind]), 2800);
+}
+let labHonorCtx = null;
+function openLabHonor(kind, dateStr){
+  labHonorCtx = { kind, date: dateStr };
+  $('labHonorTitle').textContent = kind === 'doctor' ? '🎓 学位授与' : '🎓 教授任命';
+  $('labHonorLine').textContent = kind === 'doctor'
+    ? 'まあ、11種もの新種を開発するなんて見事だわ！あなたに「フラワー博士」の学位を授与します。'
+    : '全21種の開発を成し遂げるなんて…！あなたをハナウタ・ガーデン開発室の「教授」に任命します。';
+  $('labHonorImg').src = A5 + 'fairy-doctor.webp?av=' + ASSET_V;
+  $('btn-labhonor-main').textContent = kind === 'doctor' ? '🏅 学位記を見る' : '📜 任命状を見る';
+  $('labHonorModal').style.display = 'flex';
+}
+$('btn-labhonor-close').onclick = () => { $('labHonorModal').style.display = 'none'; };
+$('btn-labhonor-main').onclick = async () => {
+  const ctx = labHonorCtx;
+  $('labHonorModal').style.display = 'none';
+  if (!ctx) return;
+  openCert(await renderLabCert(ctx.kind, ctx.date), ctx.kind === 'doctor' ? 'lab-doctor' : 'lab-professor');
+};
+async function renderLabCert(kind, dateStr){
+  const [cv, e] = certBase();
+  const doctor = kind === 'doctor';
+  certText(e, 'ハナウタ・ガーデン開発室', 118, 40, '#7a5a20', true);
+  const ttl = doctor ? '学 位 記' : '教授任命状';
+  const tpx = certTitle(e, ttl, 323);
+  e.strokeStyle = '#c49e54'; e.lineWidth = 2;
+  e.beginPath(); e.moveTo(250, 387); e.lineTo(830, 387); e.stroke();
+  e.font = '700 ' + tpx + 'px ' + CERT_FONT;
+  const sealX = 540 + e.measureText(ttl).width / 2 + 54;
+  e.strokeStyle = '#b23c30'; e.lineWidth = 4;
+  e.beginPath(); e.arc(sealX, 323, 36, 0, Math.PI * 2); e.stroke();
+  e.fillStyle = '#b23c30'; e.font = '700 36px ' + CERT_FONT; e.textAlign = 'center'; e.textBaseline = 'middle';
+  e.fillText(doctor ? '博' : '教', sealX, 325);
+  const fd = await loadImg(A5 + 'fairy-doctor.webp');
+  const fh = 440, fw = Math.round(fd.width * fh / fd.height);
+  e.drawImage(fd, (1080 - fw) / 2, 421, fw, fh);
+  const lines = doctor
+    ? ['新種の花を 11種も開発した', 'その探究心と努力を称え', 'ここに フラワー博士 の学位を授与します']
+    : ['新種の花 全21種の開発を成し遂げた', 'その偉業を称え あなたを', 'ハナウタ・ガーデン開発室 教授 に任命します'];
+  lines.forEach((ln, i) => certText(e, ln, 977 + i * 72, 41, '#463a28'));
+  const dateStr2 = (doctor ? '授与日　' : '任命日　') + honorsDateJP(dateStr);
+  certText(e, dateStr2, 1285, 32, '#7a643c');
+  e.font = '400 32px ' + CERT_FONT;
+  const dateSealX = 540 + e.measureText(dateStr2).width / 2 + 82;
+  e.save();
+  e.translate(dateSealX, 1285);
+  e.fillStyle = '#b23c30'; e.fillRect(-48, -48, 96, 96);
+  e.strokeStyle = 'rgba(253,246,236,.6)'; e.lineWidth = 2; e.strokeRect(-41, -41, 82, 82);
+  e.fillStyle = '#fdf6ec'; e.font = '700 33px ' + CERT_FONT; e.textAlign = 'center'; e.textBaseline = 'middle';
+  e.fillText('ハ', 24, -23); e.fillText('ナ', 24, 25); e.fillText('ウ', -24, -23); e.fillText('タ', -24, 25);
+  e.restore();
+  certText(e, 'ハナウタ・ガーデン開発室', 1518, 26, '#a08c66');
+  return cv;
 }
 $('btn-lab-save').onclick = async () => {
   if (!labBloomCtx || !labBloomCtx.canvas) return;
