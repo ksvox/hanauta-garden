@@ -463,7 +463,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v78'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v79'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればトップページ最下部に静かに知らせる。読み直しはキャッシュ回避の
    クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
@@ -2323,7 +2323,7 @@ function committeeStandalone(an){
   if (fents.length > 1 && fents[0][1] <= fents[1][1]) return null;
   const wk = fents[0][0];
   const ev = eventEvidenceW(an);
-  if ((ev.perKey[wk] || 0) < 0.70) return null; /* v77: hedge tightened */
+  if ((ev.perKey[wk] || 0) < 0.75) return null; /* v79: hedge line 0.70->0.75 (『さくら』を『春よ、来い』と誤る対策) */
   if (ev.decoyW > (ev.perKey[wk] || 0)) return null;
   const song = EVENT_SONGS.find(s => s.key === wk);
   const sp = song ? SPECIES.find(s => s.id === song.sp) : null;
@@ -2334,7 +2334,7 @@ function bandStandalone(an){
   const ents = Object.entries(ev.perKey).sort((a, b) => b[1] - a[1]);
   if (!ents.length) return null;
   const wk = ents[0][0], top = ents[0][1];
-  if (top < 0.70) return null; /* v77: hedge tightened */
+  if (top < 0.75) return null; /* v79: hedge line 0.70->0.75 */
   if (ents.length > 1 && top - ents[1][1] < 0.05) return null;
   if (ev.decoyW > top) return null;
   const song = EVENT_SONGS.find(s => s.key === wk);
@@ -2347,7 +2347,7 @@ function bandStandalone(an){
    発火条件は実測（ev72、Dev 120テイク）で決めた素の形: 署名スコア ≥0.90 かつ
    その曲の全体スコア ≥0.65。マージンや囮の追加条件は実測で差が出なかったため
    置かない。実測: 正解 hedge +6（計 59/120）、誤名 +0、非対象 hedge +5 */
-const EV_SIG_LEN = 12, EV_SIG_MIN = 0.90, EV_SIG_WHOLE_MIN = 0.70; /* v77: hedge tightened (whole 0.65->0.70) */
+const EV_SIG_LEN = 12, EV_SIG_MIN = 0.90, EV_SIG_WHOLE_MIN = 0.75; /* v79: hedge line 0.70->0.75 */
 function signatureStandalone(an){
   const rawNotes = [];
   for (const g of (an.phrases || [])) for (const n of (g.notes || [])) if (n.midi > 0) rawNotes.push({ midi: Math.round(n.midi), start: n.start || 0 });
@@ -2628,7 +2628,7 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
       const p = phrases[Math.min(i, phrases.length - 1)];
       const c = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
       stock.stems.push({
-        rot: c * (sp.tall3 ? 5 : 21) + (r() * 6 - 3), flip: r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb',
+        rot: sp.id === 'sakura2' ? 0 : c * (sp.tall3 ? 5 : 21) + (r() * 6 - 3), flip: sp.id === 'sakura2' ? false : r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb', /* v79: さくらの木は傾き・反転くじなし（先生の承認した絵のまま出す） */
         headH: clamp(140 + p.durSec * 12, 150, 212) * sf * volScale * 0.8 * flowerCurve(R) * [1, 0.85, 0.94, 0.79, 0.9, 0.83][i % 6] * (0.95 + r() * 0.1) * (sp.tall3 ? 1.42 : 1) * SS,
         birth: p.start, hueJ: (r() * 10 - 5), satJ: (r() * 0.1 - 0.05), lightJ: (r() * 0.12 - 0.06), headPos: null,
       });
@@ -2643,7 +2643,7 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
           if (!fa || !fa.hb) continue;
           /* v37: 配置の見積もりを実際の描画式（満開時）に一致させる（従来は描画より小さく見積もっていた） */
           let imgH = Math.max(st.headH / Math.max(0.12, fa.hb[1]), st.headH * 2.6) * 1.45;
-          const maxW2 = W * 0.58; if (imgH * fa.w / fa.h > maxW2) imgH = maxW2 * fa.h / fa.w;
+          const maxW2 = W * (sp.id === 'sakura2' ? 0.75 : 0.58); if (imgH * fa.w / fa.h > maxW2) imgH = maxW2 * fa.h / fa.w; /* v79: さくらは幅上限を広げる */
           if (fa.root && fa.head){ const needF2 = (fa.root[1] - fa.head[1]) + fa.hb[1] * 0.5; if (needF2 > 0.2) imgH = Math.min(imgH, (groundY - 26) / needF2); }
           if (sp.id === 'lantern') imgH = Math.min(imgH, 760);
           const th = st.rot * Math.PI / 180;
@@ -2962,7 +2962,11 @@ function drawComposite(x, stock, progOf, now){
      左右合わせて約3px太らせる（満開時の軸 約6.5px → 約9.5px）。当初案の「同系色の芯を
      直線で敷く」方式は、茶色い茎に緑の帯が浮いて描き足し感が強かったため検証で不採用にし、
      同じ画像をずらして重ねる方式に替えた */
-  const stemBold = (sp.stemFam === 'rose' || sp.stemFam === 'dahlia') ? (dh) => clamp(dh * 0.0022, 0.8, 1.6) : null;
+  /* v79: 茎の太さの見直し（先生の決定）。バラ系は茎・枝の絵そのものを描き直したので、ここの補強はしない。
+     ユリ系（ユリ・水晶の花・チューリリー）とマーガレットは対象外。それ以外の茎の仲間は、実測で軸が約2割太くなる
+     倍率を茎の種類ごとに持つ。開発室の花も、受け継いだ茎の種類で同じように効く */
+  const STEM_BOLD_MUL = { dahlia: 1.92, gerbera: 3.42, sunflower: 1.61, carnation: 1.39, anemone: 1.11, cherry: 1.80, iris: 1.55 };
+  const stemBold = (STEM_BOLD_MUL[sp.stemFam] && sp.id !== 'marguerite') ? (dh) => clamp(dh * 0.0022, 0.8, 1.6) * STEM_BOLD_MUL[sp.stemFam] : null;
   /* 枝（主茎より先に描き、付け根を主茎で隠す） */
   const tips = [{ st: stock.stems[0], idx: 0, rot: sway * 0.3, pos: null }];
   for (const br of plan.branches){
@@ -3060,7 +3064,7 @@ function drawStock(x, stock, progOf, now, opts){
     let imgH = st.headH * scaleF / Math.max(0.12, fullHb);
     if (sp.cluster) imgH = Math.max(imgH, st.headH * 2.6) * 1.45; /* 穂型は株全体で見せる（小さくなりすぎないよう引き上げ） */
     const fa = ANCH[fullName0];
-    if (fa && fa.w > 0){ const maxW = W * 0.58; if (imgH * fa.w / fa.h > maxW) imgH = maxW * fa.h / fa.w; }
+    if (fa && fa.w > 0){ const maxW = W * (sp.id === 'sakura2' ? 0.75 : 0.58); if (imgH * fa.w / fa.h > maxW) imgH = maxW * fa.h / fa.w; } /* v79: さくらは幅上限0.75 */
     /* 背の高い株（頭の位置が上の方にある素材）は、頭のてっぺんが画面外へ出ないよう imgH を上限する */
     if (fa && fa.root && fa.head && fa.hb){
       const needF = (fa.root[1] - fa.head[1]) + fa.hb[1] * 0.5;
