@@ -463,7 +463,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v80'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v81'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればトップページ最下部に静かに知らせる。読み直しはキャッシュ回避の
    クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
@@ -508,7 +508,7 @@ const BGS = {
   window:{ file:'bg-window-3.jpg', label:'昼の窓辺', ground:0.745, soilRGB:[53,40,34], soilHalf:205, mood:'bright' },
   night: { file:'bg-night-4.jpg', label:'夜の庭', ground:0.83, soilRGB:[43,42,49], soilHalf:330, mood:'deep' },
   city:  { file:'bg-city-1.jpg', label:'街の花壇', ground:0.765, soilRGB:[55,45,39], soilHalf:166, mood:'bright' },
-  party: { file:'bg-party-3.jpg', label:'パーティー', ground:0.64, soilRGB:[51,36,27], soilHalf:153, sproutLift:46, mood:'pale' },
+  party: { file:'bg-party-4.jpg', label:'パーティー', ground:0.727, soilRGB:[54,39,28], soilHalf:136, mood:'pale' },
   sky:   { file:'bg-skywindow-1.jpg', label:'夜の窓辺', ground:0.728, soilRGB:[30,23,17], soilHalf:136, mood:'deep' },
 };
 /* 芽・株の根元の土: 背景写真の土そのものの色（芽が出る場所を実測）を使い、縁を透明に溶かすので境目が出ない */
@@ -2565,7 +2565,45 @@ async function loadSpeciesImages(sp){
 /* ========= 成長シミュレーション ========= */
 /* 歌っている間、花に成長が流れ込む。1輪が満開（上限到達）になると次の花が育ち始める。
    花の上限サイズは「育て始めたフレーズの長さ」、成長の速さは声量と音程の安定で決まる。 */
-function simulateGrowth(phrases, feat){
+function simulateGrowth(phrases, feat, songMode){
+  /* v81 本編の歌専用（先生の設計）: 花の数はフレーズの数、咲き具合は「生まれてから後に
+     どれだけ歌が続いたか」で決まる。主花（最初の花）は必ず満開になるよう仕組みで保証する。
+     開発室・ガーデンの疑似フレーズは従来の貯める方式のまま（songModeなし） */
+  if (songMode){
+    const sizeOf = p => clamp(0.75 + p.durSec * 0.22, 0.8, 1.5);
+    const rateOf = p => {
+      const ns = p.notes.filter(n => n.dur >= 0.22);
+      const pStab = ns.length ? ns.reduce((sm, n) => sm + n.dev * 100 * n.dur, 0) / ns.reduce((sm, n) => sm + n.dur, 0) : (feat.stabCents || 20);
+      return (0.55 + (p.meanRms || 0.1) * 2.2) * clamp(1.22 - pStab / 200, 0.8, 1.3);
+    };
+    const sup = phrases.map(p => p.durSec * rateOf(p));
+    const flowers = [];
+    const nB = Math.min(6, phrases.length);
+    for (let i = 0; i < nB; i++){
+      const p = phrases[i];
+      const size = sizeOf(p), cap = 2.6 * size;
+      let gain = 0.5 * sup[i];
+      const curve = [[p.start, 0], [p.start + p.durSec, Math.min(cap, gain)]];
+      let fullT = gain >= cap ? p.start + p.durSec : null;
+      for (let j = i + 1; j < phrases.length; j++){
+        gain += sup[j];
+        const tEnd = phrases[j].start + phrases[j].durSec;
+        curve.push([tEnd, Math.min(cap, gain)]);
+        if (gain >= cap && !fullT) fullT = tEnd;
+      }
+      flowers.push({ startT: p.start, cap, size, acc: Math.min(cap, gain), curve, fullT, finalProg: clamp(gain / cap, 0, 1) });
+    }
+    if (flowers.length){
+      const m = flowers[0];
+      m.finalProg = 1; /* 主花は必ず満開 */
+      if (m.acc < m.cap){
+        if (m.acc > 0){ const k = m.cap / m.acc; m.curve = m.curve.map(pt => [pt[0], Math.min(m.cap, pt[1] * k)]); }
+        else m.curve = [[m.startT, 0], [m.startT + 1, m.cap]];
+        m.acc = m.cap; if (!m.fullT) m.fullT = m.curve[m.curve.length - 1][0];
+      }
+    }
+    return flowers;
+  }
   const flowers = [];
   let cur = null;
   const sizeOf = p => clamp(0.75 + p.durSec * 0.22, 0.8, 1.5);
@@ -2603,11 +2641,20 @@ function flowerProgAt(fl, t){
    頭だけでなく茎・枝・葉芽まで株全体に効かせ、既存の個別調整（scaleF・headScale・主花1.2倍・
    ランタンの高さ上限760等）の上に掛ける。はみ出しは高さガードと既存の幅ガード／描画側キャップで吸収する */
 function stockScaleOf(sp){ return (sp.id === 'tulip' || sp.id === 'lantern') ? 1 : 1.3; }
-function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, soilHalfW, fitTopY){
+function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, soilHalfW, fitTopY, songMode){
   const r = rng(hashStr(seedStr));
   const sf = sp.scaleF || 1;
   if (sp.rootDy) groundY += sp.rootDy; /* v69: 種別の植え位置（奥行き）調整。ガード計算にも効かせるため buildStock で寄せる */
   const SS = stockScaleOf(sp);
+  /* v81: 花全体の大きさは「使った音域」で天井が決まる（先生の設計）: 長6度（9半音）以下は最大の80%、
+     完全8度（12半音）までは90%、それを超えたら100%。音域データのない株（開発室・ガーデン）は従来どおり */
+  let robF = 0, hasRob = false;
+  if (feat && (feat.robRange !== undefined || feat.p98long !== undefined)){ robF = Math.max(feat.robRange || 0, feat.p98long || 0); hasRob = true; }
+  else if (songMode){ /* 本編の feat には音域物差しが載っていないため、選定と同じ物差しでフレーズの音符から測る */
+    const nsAll = []; for (const p of group) for (const n of (p.notes || [])) nsAll.push(n);
+    if (nsAll.length){ robF = Math.max(robustRangeOf(nsAll), p98longOf(nsAll)); hasRob = true; }
+  }
+  const sizeMul = hasRob ? (robF <= 9 ? 0.8 : robF <= 12 ? 0.9 : 1) : 1;
   let phrases = group.slice(0, 6);
   const sprigCount = clamp(Math.round(group.reduce((sm,p)=>sm+p.notes.length,0) / 3.5), 3, 9);
   const sprigs = [];
@@ -2655,10 +2702,11 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
         if (!over) break;
       }
     }
+    if (sizeMul !== 1) for (const st of stock.stems) st.headH *= sizeMul; /* v81: 音域の天井は収めた後に掛ける */
     return stock;
   }
   /* 組み立て方式：花の数と育ち具合は成長シミュレーションで決まる */
-  const flowers = simulateGrowth(group, feat || { stabCents: 20 });
+  const flowers = simulateGrowth(group, feat || { stabCents: 20 }, songMode);
   const MHbase = Math.min(clamp(615 * sf, 545, 745), Math.max(430, groundY - 205));
   let MH = MHbase * R * (sp.mhScale || 1) * SS;
   const nodeFs = [0.32, 0.48, 0.40, 0.58, 0.52], lenFs = [0.40, 0.34, 0.37, 0.30, 0.33];
@@ -2693,6 +2741,14 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
       for (const br of branches) br.len *= f;
       for (const sg of sprigs) sg.len *= f;
     }
+  }
+  /* v81: 音域による大きさの天井は、舞台に収めた後に掛ける（先生の「最大の80%まで」の設計どおり、
+     収める前の倍率は高さガードに吸収されてしまうため） */
+  if (sizeMul !== 1){
+    MH *= sizeMul;
+    for (const st of stock.stems) st.headH *= sizeMul;
+    for (const br of branches) br.len *= sizeMul;
+    for (const sg of sprigs) sg.len *= sizeMul;
   }
   /* 花どうしの重なりを抑える: 候補手（角度・節・長さ）から最も離れる手を選ぶ局所探索 */
   /* v32: 先端位置は描画時と同じ計算（パーツ内の茎の傾き込み）で求める。
@@ -3126,7 +3182,7 @@ function refitGardenToBg(){
   const old = garden && garden[0]; if (!old || !analysis) return;
   const gy = H * BGS[selBg].ground;
   const volScale = clamp(0.85 + analysis.feat.meanRms * 1.2, 0.85, 1.25);
-  const nb = buildStock(analysis.groups[0], old.sp, old.color, W / 2, gy, old.seedStr, volScale, analysis.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
+  const nb = buildStock(analysis.groups[0], old.sp, old.color, W / 2, gy, old.seedStr, volScale, analysis.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430, undefined, true);
   nb.imgs = old.imgs;
   nb.stems.forEach((st, i) => { const o = old.stems[i]; if (o && o.__to !== undefined){ st.__to = o.__to; st.__from = o.__from; } else { st.__to = 1; st.__from = 1; } });
   garden = [nb];
@@ -3250,7 +3306,7 @@ async function refreshLiveInner(t){
     if (altType) preloadIds.add(pickSpeciesInType(altType, an.feat, sel.x));
     for (const pid of preloadIds){ if (pid === sp.id) continue; const s2 = SPECIES.find(s => s.id === pid); if (s2) loadSpeciesImages(s2); }
     const color = pickColor(an.feat, sp, hashStr(an.fingerprint));
-    liveStocks = [buildStock(an.groups[0], sp, color, W / 2, gy, an.fingerprint, volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430)];
+    liveStocks = [buildStock(an.groups[0], sp, color, W / 2, gy, an.fingerprint, volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430, undefined, true)];
     for (const st of liveStocks) st.imgs = await loadSpeciesImages(st.sp);
     if (liveClosed) return; /* ロード中に録音が終わっていたら、完成側の株を邪魔しない */
     garden = liveStocks;
@@ -3305,7 +3361,7 @@ async function refreshLiveInner(t){
       return;
     }
     const color = pickColor(an.feat, target, hashStr(an.fingerprint + 'x'));
-    const nb = buildStock(an.groups[0], target, color, W / 2, gy, an.fingerprint + 'x', volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
+    const nb = buildStock(an.groups[0], target, color, W / 2, gy, an.fingerprint + 'x', volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430, undefined, true);
     nb.imgs = await loadSpeciesImages(target);
     if (liveClosed) return; /* 確定処理が終了を跨いだら、完成側の株を邪魔しない */
     const landT = frames.length ? frames[frames.length - 1].t : nowT; /* 読み込みを待った分だけ歌が進んでいる */
@@ -3347,7 +3403,7 @@ async function refreshLiveInner(t){
   if (finalised26) return;
   /* 歌が進むたびに株を作り直し、成長カーブを最新の歌へ追随させる（配置・色・画像は維持） */
   const keep0 = liveStocks[0];
-  const nb0 = buildStock(an.groups[0], liveSpecies, keep0.color, W / 2, gy, keep0.seedStr || 'live', volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
+  const nb0 = buildStock(an.groups[0], liveSpecies, keep0.color, W / 2, gy, keep0.seedStr || 'live', volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430, undefined, true);
   nb0.imgs = keep0.imgs || await loadSpeciesImages(nb0.sp);
   if (liveClosed) return;
   liveStocks[0] = nb0;
@@ -3752,7 +3808,7 @@ async function startCeremony(){
     mainSp = (ev && ev.sp) || liveSpecies || selectSpeciesNew(an).sp;
     if (ev && mainSp === ev.sp){ liveEventSong = ev.title; liveEventTier = ev.tier; } /* フォールバック経路でも、イベントの花が咲くなら曲名を記録 */
     const mainColor = pickColor(an.feat, mainSp, hashStr(an.fingerprint));
-    stocks.push(buildStock(an.groups[0], mainSp, mainColor, W / 2, gy, an.fingerprint, volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430));
+    stocks.push(buildStock(an.groups[0], mainSp, mainColor, W / 2, gy, an.fingerprint, volScale, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430, undefined, true));
     for (const st of stocks) st.imgs = await loadSpeciesImages(st.sp);
     garden = stocks;
   }
@@ -3770,7 +3826,7 @@ async function startCeremony(){
       if (evF.sp.id !== mainSp.id){
         const gyF = H * BGS[selBg].ground;
         const volF = clamp(0.85 + an.feat.meanRms * 1.2, 0.85, 1.25);
-        const nbF = buildStock(an.groups[0], evF.sp, pickColor(an.feat, evF.sp, hashStr(an.fingerprint)), W / 2, gyF, an.fingerprint, volF, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430);
+        const nbF = buildStock(an.groups[0], evF.sp, pickColor(an.feat, evF.sp, hashStr(an.fingerprint)), W / 2, gyF, an.fingerprint, volF, an.feat, (BGS[selBg] && BGS[selBg].soilHalf) || 430, undefined, true);
         nbF.imgs = await loadSpeciesImages(evF.sp);
         ceremonyLiveStocks = stocks;
         stocks = [nbF]; mainSp = evF.sp; garden = stocks;
