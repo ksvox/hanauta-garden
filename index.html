@@ -463,7 +463,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v81'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v82'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればトップページ最下部に静かに知らせる。読み直しはキャッシュ回避の
    クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
@@ -2671,12 +2671,21 @@ function buildStock(group, sp, color, rootX, groundY, seedStr, volScale, feat, s
     if (sp.tall3) n = Math.min(n, 2); /* v48 スズラン系: 最大2本まで（先生の決定）。本数を絞る代わりに
        大きさは今まで通り（lantern ×1.0／他3種 ×1.3）に保ち、傾きも絞って横に広げない。
        v47 のプランター適合規則（土幅への縮小）は、ランタンがミニサイズ化したため撤去した */
+    /* v82: スズラン系2本の傾きは株ごとの抽選にする（左右に開く／同じ向きに流れる／1本まっすぐ＋1本傾く）。
+       従来は1本目=左・2本目=右の固定ペアで、毎回同じ形になっていた（先生の指摘） */
+    let pairRot = null;
+    if (sp.tall3 && n === 2){
+      const mode = r(), sgn = r() < 0.5 ? -1 : 1;
+      if (mode < 0.5) pairRot = [-5, 5];
+      else if (mode < 0.75) pairRot = [sgn * 3, sgn * 6.5];
+      else pairRot = r() < 0.5 ? [0, sgn * 7] : [sgn * 7, 0];
+    }
     for (let i = 0; i < n; i++){
       const p = phrases[Math.min(i, phrases.length - 1)];
       const c = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
       stock.stems.push({
-        rot: sp.id === 'sakura2' ? 0 : c * (sp.tall3 ? 5 : 21) + (r() * 6 - 3), flip: sp.id === 'sakura2' ? false : r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb', /* v79: さくらの木は傾き・反転くじなし（先生の承認した絵のまま出す） */
-        headH: clamp(140 + p.durSec * 12, 150, 212) * sf * volScale * 0.8 * flowerCurve(R) * [1, 0.85, 0.94, 0.79, 0.9, 0.83][i % 6] * (0.95 + r() * 0.1) * (sp.tall3 ? 1.42 : 1) * SS,
+        rot: sp.id === 'sakura2' ? 0 : (pairRot ? pairRot[i] : c * (sp.tall3 ? 5 : 21)) + (r() * 6 - 3), flip: sp.id === 'sakura2' ? false : r() < 0.5, ind: i % 2 === 0 ? 'full' : 'fullb', /* v79: さくらの木は傾き・反転くじなし（先生の承認した絵のまま出す） */
+        headH: clamp(140 + p.durSec * 12, 150, 212) * sf * volScale * 0.8 * flowerCurve(R) * (sp.tall3 ? 1 : [1, 0.85, 0.94, 0.79, 0.9, 0.83][i % 6]) * (0.95 + r() * 0.1) * (sp.tall3 ? 1.42 : 1) * SS, capF: (sp.tall3 && i > 0) ? 0.82 + r() * 0.12 : undefined, /* v82: スズラン系2本目の大きさの差は capF に分離し、描画時の上限の後に付ける */
         birth: p.start, hueJ: (r() * 10 - 5), satJ: (r() * 0.1 - 0.05), lightJ: (r() * 0.12 - 0.06), headPos: null,
       });
     }
@@ -3129,6 +3138,7 @@ function drawStock(x, stock, progOf, now, opts){
     /* v37: ランタンは一輪の花。花の帯の割合で割り戻すと株だけが巨大化するので、高さに上限を設ける
        （上限760px＝先生の選択。なお一輪の大きさは約215pxで、全種の中でも大きいまま） */
     if (sp.id === 'lantern') imgH = Math.min(imgH, 760);
+    if (sp.tall3 && st.capF) imgH *= st.capF; /* v82: 大きさの差は上限で切りそろえた後に付ける（従来は上限に潰れて2本とも同じ大きさになっていた） */
     for (const layer of sf){
       let img = imgs[layer.k], name = imgs[layer.k + 'Name'];
       if (layer.k === 'full'){
@@ -3137,7 +3147,7 @@ function drawStock(x, stock, progOf, now, opts){
       }
       if (!img) continue;
       const dyed = dyeImage(img, sp, stock.color.hue + st.hueJ, dyeSat(stock, st, i === 0), clamp(stock.color.light + st.lightJ, 0, 1), name);
-      const head = drawAnchored(x, dyed, name, stock.rootX, gy + (sp.cluster ? imgH * 0.06 : 0), imgH, st.rot + sway, st.flip, layer.a);
+      const head = drawAnchored(x, dyed, name, stock.rootX, gy + (sp.cluster ? imgH * (sp.tall3 ? 0.02 : 0.06) : 0) /* v82: スズラン系の沈めは浅く（0.06では根元が鉢の縁まで出た） */, imgH, st.rot + sway, st.flip, layer.a);
       if (layer.k === 'full' && layer.a > 0.5) st.headPos = head;
     }
   });
@@ -3146,7 +3156,7 @@ function drawStock(x, stock, progOf, now, opts){
     stock.sprigs.slice(0, 3).forEach((sg) => {
       const p = clamp((progOf.global - sg.delay) / 0.6, 0, 1);
       if (p <= 0) return;
-      drawAnchored(x, imgs.sprig, sp.sprig, stock.rootX, gy + 7, sg.len * 0.55 * (0.4 + 0.6 * easeOut(p)), sg.rot + sway * 0.5, sg.flip, Math.min(1, p * 1.6) * 0.95);
+      drawAnchored(x, imgs.sprig, sp.sprig, stock.rootX, gy + 7, sg.len * (sp.tall3 ? 0.85 : 0.55) * (0.4 + 0.6 * easeOut(p)) /* v82: スズラン系は前面の草を大きくし、太い茎の根元を隠す */, sg.rot + sway * 0.5, sg.flip, Math.min(1, p * 1.6) * 0.95);
     });
   }
 }
