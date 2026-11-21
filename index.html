@@ -111,9 +111,7 @@
   <!-- トップ（ヒーロー） -->
   <header class="hero-sec">
     <div class="hero-top">
-      <div id="updBar" style="display:none; margin:0 0 14px;">
-        <span style="display:inline-block; background:rgba(255,253,248,.94); font-size:13px; color:#8a6f3c; padding:6px 8px 6px 14px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.25);">新しい版があります<button class="btn btn-sub" id="btn-upd" style="padding:5px 13px; font-size:13px; margin-left:8px;">🔄 更新する</button></span>
-      </div>
+      <div id="updBar" style="display:none; margin:0 0 10px; text-align:center; font-size:13.5px; color:#fff8ea; text-shadow:0 1px 6px rgba(40,30,10,.7);">新しい版があります<span id="btn-upd" style="cursor:pointer; text-decoration:underline; font-weight:700;">（▶更新）</span></div>
       <a class="badge" href="https://www.ksvox.net/ksvox-app/" target="_blank" rel="noopener">K's VOX オリジナルアプリ</a>
       <h1 class="hero-title">ハナウタ<span class="t-flower">🌸</span>ガーデン</h1>
       <p class="hero-sub">鼻歌で咲く、世界にひとつの花</p>
@@ -236,8 +234,13 @@
   <h3 class="garden-sec">1️⃣ どの種にする？</h3>
   <div id="gardenSeeds" style="display:flex; flex-wrap:wrap; gap:10px; margin:0 2px;"></div>
   <p id="gardenSeedMsg" style="font-size:13px; color:#8a7a5c; margin:8px 2px 0;"></p>
-  <div style="max-width:560px; margin:16px auto 0;">
+  <div style="max-width:560px; margin:16px auto 0; position:relative;">
     <canvas id="gardenStage" width="900" height="1125" style="width:100%; border-radius:16px; box-shadow:0 10px 30px rgba(60,40,20,.25); display:block; background:#20351f;"></canvas>
+    <!-- v85: 用意に時間がかかる時だけ出す案内（歩く棒人形）。固まっていないことを伝える -->
+    <div id="gardenLoading" style="display:none; position:absolute; inset:0; flex-direction:column; align-items:center; justify-content:center; gap:10px; pointer-events:none;">
+      <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true"><style>.wk-b{animation:wkBob .36s ease-in-out infinite alternate}.wk-a1{animation:wkSw .36s ease-in-out infinite alternate;transform-origin:32px 24px;transform-box:view-box}.wk-a2{animation:wkSw .36s ease-in-out infinite alternate-reverse;transform-origin:32px 24px;transform-box:view-box}.wk-l1{animation:wkSw .36s ease-in-out infinite alternate-reverse;transform-origin:32px 38px;transform-box:view-box}.wk-l2{animation:wkSw .36s ease-in-out infinite alternate;transform-origin:32px 38px;transform-box:view-box}@keyframes wkSw{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}@keyframes wkBob{from{transform:translateY(0)}to{transform:translateY(-2.5px)}}</style><g class="wk-b" stroke="#fff6df" stroke-width="4" stroke-linecap="round" fill="none"><circle cx="32" cy="11" r="6" fill="#fff6df" stroke="none"/><line x1="32" y1="18" x2="32" y2="38"/><g class="wk-a1"><line x1="32" y1="24" x2="21" y2="35"/></g><g class="wk-a2"><line x1="32" y1="24" x2="43" y2="35"/></g><g class="wk-l1"><line x1="32" y1="38" x2="25" y2="55"/></g><g class="wk-l2"><line x1="32" y1="38" x2="39" y2="55"/></g></g></svg>
+      <p style="margin:0; font-size:15px; font-weight:700; color:#fff6df; text-shadow:0 1px 8px rgba(20,40,15,.85); letter-spacing:.08em;">…お庭に移動中…</p>
+    </div>
   </div>
   <!-- v55: 今の花壇をポラロイド風の写真で保存する（天気・蝶も含め、その瞬間のステージを撮影） -->
   <div style="text-align:center; margin-top:12px;">
@@ -461,7 +464,12 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v84'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v85'; /* プログラムの版（更新チェック用） */
+/* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
+   プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
+   使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
+const AV3 = 'v84', AV4 = 'v84', AV5 = 'v84';
+function avFor(src){ return src.startsWith(A5) ? AV5 : src.startsWith(A4) ? AV4 : src.startsWith(A3) ? AV3 : ASSET_V; }
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればページの一番上に静かに知らせる。読み直しはキャッシュ回避の
    クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
@@ -483,7 +491,7 @@ try { updInit(); } catch (e) {}
 function loadImg(src){
   const hit = imgCache[src];
   if (hit) return hit;
-  const vsrc = src + (src.includes('?') ? '&' : '?') + 'av=' + ASSET_V;
+  const vsrc = src + (src.includes('?') ? '&' : '?') + 'av=' + avFor(src);
   const p = (async () => {
     for (let i = 0; i < 3; i++){
       const im = await new Promise(res => { const t = new Image(); t.onload = () => res(t); t.onerror = () => res(null); t.src = i ? vsrc + '&retry=' + i : vsrc; });
@@ -4515,8 +4523,8 @@ let queenCtx = null;
 function openQueenAward(ctx){
   if ($('queenModal').style.display === 'flex') return;
   queenCtx = ctx;
-  $('queenImg').src = A5 + 'fairy-queen.webp?av=' + ASSET_V;
-  $('queenMedal').src = A5 + 'master-medal.webp?av=' + ASSET_V;
+  $('queenImg').src = A5 + 'fairy-queen.webp?av=' + AV5;
+  $('queenMedal').src = A5 + 'master-medal.webp?av=' + AV5;
   $('queenMedal').style.display = ctx.kind === 'master' ? 'block' : 'none';
   if (ctx.kind === 'master'){
     $('queenTitle').textContent = '👑 女王からの授与';
@@ -4527,10 +4535,10 @@ function openQueenAward(ctx){
     $('queenLine').textContent = '見事よ。全40種の花が、あなたの歌で咲いたわ。庭の女王から、最高の称賛を贈るわね。';
     $('btn-queen-main').textContent = '🎬 エンドロールを見る';
   }
-  $('qf1').src = A5 + 'fairy-1.webp?av=' + ASSET_V;
-  $('qf2').src = A5 + 'fairy-2.webp?av=' + ASSET_V;
-  $('qf3').src = A5 + 'fairy-3.webp?av=' + ASSET_V;
-  $('qf4').src = A5 + 'fairy-4.webp?av=' + ASSET_V;
+  $('qf1').src = A5 + 'fairy-1.webp?av=' + AV5;
+  $('qf2').src = A5 + 'fairy-2.webp?av=' + AV5;
+  $('qf3').src = A5 + 'fairy-3.webp?av=' + AV5;
+  $('qf4').src = A5 + 'fairy-4.webp?av=' + AV5;
   const festive = ctx.kind === 'completion';
   $('queenModal').style.background = festive
     ? 'radial-gradient(circle at 50% 36%, rgba(255,196,84,.50), rgba(64,44,14,.96) 60%, rgba(26,20,12,.985))'
@@ -4708,7 +4716,7 @@ async function playEndingRoll(){
   const spacer = document.createElement('div'); spacer.style.height = '6vh'; box.appendChild(spacer);
   box.appendChild(endingBlock(d => {
     const im = document.createElement('img');
-    im.src = A5 + 'fairy-queen.webp?av=' + ASSET_V;
+    im.src = A5 + 'fairy-queen.webp?av=' + AV5;
     im.style.cssText = 'height:190px; filter:drop-shadow(0 10px 22px rgba(0,0,0,.5));';
     d.appendChild(im);
     const t = document.createElement('div');
@@ -4736,7 +4744,7 @@ async function playEndingRoll(){
   }
   box.appendChild(endingBlock(d => {
     const im = document.createElement('img');
-    im.src = A5 + 'master-medal.webp?av=' + ASSET_V;
+    im.src = A5 + 'master-medal.webp?av=' + AV5;
     im.style.cssText = 'height:170px; filter:drop-shadow(0 8px 18px rgba(0,0,0,.5));';
     d.appendChild(im);
     const t = document.createElement('div');
@@ -4999,6 +5007,10 @@ let gardenSelSeed = -1;
 async function openGarden(){
   $('gardenPage').style.display = 'block';
   gardenRollWeather(); /* v52: 天気は開くたびに抽選し、開いている間は変えない */
+  gardenAnimStart(); /* v85: 描画ループを先に回し、用意できた部分から見せる */
+  gardenSceneReady = false;
+  /* v85: 用意に時間がかかる時だけ、歩く棒人形の案内を出す（0.4秒で終われば出ない） */
+  const loadTimer = setTimeout(() => { if (!gardenSceneReady){ const el = $('gardenLoading'); if (el) el.style.display = 'flex'; } }, 400);
   const st = await gardenLoad();
   if (gardenApplyWilt(st)) await gardenSave(st);
   if (st.wiltNotice){ $('gardenWilt').style.display = 'block'; st.wiltNotice = false; await gardenSave(st); }
@@ -5007,7 +5019,8 @@ async function openGarden(){
   $('gardenMsg').textContent = '';
   $('gardenPlantMsg').textContent = '';
   await renderGardenPage(st);
-  gardenAnimStart(); /* v52: 揺れ・天気のアニメーションはページ表示中だけ回す */
+  clearTimeout(loadTimer);
+  const ldEl = $('gardenLoading'); if (ldEl) ldEl.style.display = 'none';
 }
 $('btn-garden-open').onclick = openGarden;
 $('btn-garden-back').onclick = () => { if (gardenSinging) finishGardenSing(); gardenAnimStop(); $('gardenPage').style.display = 'none'; };
@@ -5241,6 +5254,7 @@ const GARDEN_WEATHERS = {
 };
 let gardenWeather = null;   /* 未抽選（検証などで openGarden を経ていない場合）は素の静止画になる */
 let gardenLayers = null;    /* { bg, stalks: [{ cv, rootX, gy, phase }] } */
+let gardenSceneSeq = 0, gardenSceneReady = true; /* v85: 並行描画の世代管理と用意完了フラグ */
 let gardenAnimId = null, gardenLastFrame = 0;
 function gardenRollWeather(){
   const r = Math.random();
@@ -5464,34 +5478,22 @@ function gardenAnimStop(){
 async function drawGardenScene(st){
   const c = $('gardenStage');
   if (!c) return;
-  /* v52: 状態が変わった時だけ、背景と株をオフスクリーンに描き直す。
-     毎フレームの合成は gardenDrawFrame が担う（揺れ・天気のため） */
-  const bgImg = await loadImg(A3 + 'garden-bg.jpg');
+  /* v85: 並行読み＋揃ったものから表示する。背景・種アイコン・各株・動物を同時に
+     読み始め、背景が届いた時点で gardenLayers を切り替える。株は自分の
+     キャンバスに描かれるので、届いた順にそのまま見える。描く順番は
+     layers.stalks の並びで決まるため、入れ物は先に全部作っておく。
+     世代 (gardenSceneSeq) が古い描画は、切り替えも完了フラグも触らない */
+  const myScene = ++gardenSceneSeq;
+  gardenSceneReady = false;
   const bgCv = document.createElement('canvas');
   bgCv.width = 900; bgCv.height = 1125;
   const bx = bgCv.getContext('2d');
-  if (bgImg) bx.drawImage(bgImg, 0, 0, 900, 1125);
-  const seedImg = await loadImg(A5 + 'seed-icon.webp');
-  const stalks = [];
-  for (const key of ['left', 'right', 'center']){
-    const area = st.areas[key];
-    if (!area) continue;
-    const sp = SPECIES.find(s => s.id === area.sp);
-    if (!sp) continue;
-    const order = [0, 2, 1].filter(i => i < area.stocks.length);
-    for (const i of order){
-      const cv = document.createElement('canvas');
-      cv.width = 900; cv.height = 1125;
-      await drawGardenStalk(cv.getContext('2d'), key, area, sp, area.stocks[i], i, seedImg);
-      const pos = GARDEN_AREAS[key], off = GARDEN_STALK_OFF[i] || GARDEN_STALK_OFF[1];
-      stalks.push({ cv, rootX: pos.x + off.dx, gy: pos.gy + off.dy, phase: (hashStr(key + ':' + i + ':' + area.sp) % 628) / 100 });
-    }
-  }
   /* v61 満開イベント（先生の設計）／v62 カピバラ条件を先生の再定義に修正:
      虹 = 「満開の種が3種」または「どれか1種が3本とも満開」かつ晴れ（晴れ・雨を含む）。
      白ウサギ = 3エリア×3本=9本すべて満開。
      カピバラ = SR種で3エリア×3本すべて満開（格付けは 虹=R／ウサギ=SR／カピバラ=SSR）。
-     動物は同時に出さず、カピバラの条件が立つ時はカピバラだけを出す（先生の決定） */
+     動物は同時に出さず、カピバラの条件が立つ時はカピバラだけを出す（先生の決定）。
+     判定は読み込み不要なので先に済ませる */
   const fullBySp = {}; let fullTotal = 0, stockTotal = 0, allFullSR = true, anySp3 = false;
   for (const key of ['left', 'center', 'right']){
     const area = st.areas[key];
@@ -5514,15 +5516,47 @@ async function drawGardenScene(st){
   let animalKind = null;
   if (stockTotal >= 9 && fullTotal >= 9 && allFullSR) animalKind = 'capybara';
   else if (stockTotal >= 9 && fullTotal >= 9) animalKind = 'rabbit';
-  let animalImgs = null;
-  if (animalKind){
-    animalImgs = {};
-    const poses = animalKind === 'rabbit' ? ['normal', 'stand', 'eat'] : ['normal', 'sleep', 'eat'];
-    for (const p of poses) animalImgs[p] = await loadImg(A3 + 'garden-' + animalKind + '-' + p + '.webp');
+  const layers = { bg: bgCv, stalks: [], rainbow: rainbowOn, animal: null };
+  /* 株の入れ物（キャンバス）を描画順に先に全部作る */
+  const jobs = [];
+  for (const key of ['left', 'right', 'center']){
+    const area = st.areas[key];
+    if (!area) continue;
+    const sp = SPECIES.find(s => s.id === area.sp);
+    if (!sp) continue;
+    const order = [0, 2, 1].filter(i => i < area.stocks.length);
+    for (const i of order){
+      const cv = document.createElement('canvas');
+      cv.width = 900; cv.height = 1125;
+      const pos = GARDEN_AREAS[key], off = GARDEN_STALK_OFF[i] || GARDEN_STALK_OFF[1];
+      layers.stalks.push({ cv, rootX: pos.x + off.dx, gy: pos.gy + off.dy, phase: (hashStr(key + ':' + i + ':' + area.sp) % 628) / 100 });
+      jobs.push({ cv, key, area, sp, stock: area.stocks[i], i });
+    }
   }
-  gardenLayers = { bg: bgCv, stalks, rainbow: rainbowOn, animal: animalKind ? { kind: animalKind, imgs: animalImgs } : null };
-  gardenDrawFrame(performance.now() / 1000);
+  const hideLoading = () => { const el = document.getElementById('gardenLoading'); if (el) el.style.display = 'none'; };
+  const bgP = loadImg(A3 + 'garden-bg.jpg').then(bgImg => {
+    if (bgImg) bx.drawImage(bgImg, 0, 0, 900, 1125);
+    if (myScene === gardenSceneSeq){ gardenLayers = layers; hideLoading(); }
+  });
+  const seedP = loadImg(A5 + 'seed-icon.webp');
+  const stalkPs = jobs.map(j => seedP.then(seedImg => drawGardenStalk(j.cv.getContext('2d'), j.key, j.area, j.sp, j.stock, j.i, seedImg)));
+  let animalP = Promise.resolve();
+  if (animalKind){
+    const poses = animalKind === 'rabbit' ? ['normal', 'stand', 'eat'] : ['normal', 'sleep', 'eat'];
+    animalP = Promise.all(poses.map(p => loadImg(A3 + 'garden-' + animalKind + '-' + p + '.webp'))).then(imgs => {
+      const animalImgs = {};
+      poses.forEach((p, ix) => { animalImgs[p] = imgs[ix]; });
+      layers.animal = { kind: animalKind, imgs: animalImgs };
+    });
+  }
+  await Promise.all([bgP, ...stalkPs, animalP]);
+  if (myScene === gardenSceneSeq){
+    gardenSceneReady = true;
+    hideLoading();
+    gardenDrawFrame(performance.now() / 1000);
+  }
 }
+
 async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
   const pos = GARDEN_AREAS[areaKey], off = GARDEN_STALK_OFF[idx] || GARDEN_STALK_OFF[1];
   const rootX = pos.x + off.dx, gy = pos.gy + off.dy;
@@ -6871,7 +6905,7 @@ function openLabHonor(kind, dateStr){
   $('labHonorLine').textContent = kind === 'doctor'
     ? 'まあ、11種もの新種を開発するなんて見事だわ！あなたに「フラワー博士」の学位を授与します。'
     : '全21種の開発を成し遂げるなんて…！あなたをハナウタ・ガーデン開発室の「教授」に任命します。';
-  $('labHonorImg').src = A5 + 'fairy-doctor.webp?av=' + ASSET_V;
+  $('labHonorImg').src = A5 + 'fairy-doctor.webp?av=' + AV5;
   $('btn-labhonor-main').textContent = kind === 'doctor' ? '🏅 学位記を見る' : '📜 任命状を見る';
   $('labHonorModal').style.display = 'flex';
 }
