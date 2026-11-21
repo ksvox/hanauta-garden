@@ -461,7 +461,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v83'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
+const ASSET_V = 'v84'; /* 素材のキャッシュ対策: 版を上げるたびに全素材を一度だけ取り直させる */
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればページの一番上に静かに知らせる。読み直しはキャッシュ回避の
    クエリ付きで行う（iPhoneのホーム画面アプリは再読み込みボタンが無く、
@@ -2949,6 +2949,7 @@ function drawHeadAt(x, img, meta, tip, dispH, rotDeg, alpha){
   const ax = meta ? meta.a : 0.5, ay = meta && meta.b ? meta.b : 0.95;
   x.save(); x.translate(tip.x, tip.y); x.rotate(rotDeg * Math.PI / 180);
   x.globalAlpha *= alpha;
+  if (meta && meta.clipF){ const yClip = h * (meta.clipF - ay + 0.09); x.beginPath(); x.rect(-w, -h, w * 2, h + yClip); x.clip(); } /* 交配種: 絵の中の茎は付け根で切り、株の茎・枝だけを見せる */
   x.drawImage(img, -ax * w, -ay * h + h * 0.09, w, h); /* 茎の先端を萼の付け根まで食い込ませ、花弁で接合部を隠す（隙間対策） */
   x.restore();
   return { x: tip.x, y: tip.y - h * 0.42 };
@@ -6350,7 +6351,7 @@ const LAB_PLANT = {
 for (const h of HYBRIDS){
   for (const stg of ['bud', 'half', 'full']){
     const rt = LAB_ROOT[h.id] && LAB_ROOT[h.id][stg]; if (!rt) continue;
-    P5[h.id + '-' + stg] = { a: (rt.rootx !== undefined ? rt.rootx : rt.cx), b: rt.bottom, ar: rt.ar };
+    P5[h.id + '-' + stg] = { a: (rt.rootx !== undefined ? rt.rootx : rt.cx), b: rt.bottom, ar: rt.ar, clipF: Math.min(0.995, rt.bottom + 0.02) }; /* clipF: 交配種の頭の絵は「茎付きの切り花」で、花の付け根から下に絵の茎が続いている。株の茎・枝と二重になり枝先で浮いて見えるため、描画時に付け根で切り取る（drawHeadAt） */
   }
 }
 /* 鈴系の満開（A案・先生の決定 2026-11-16）: 満開を1.5倍にしても天井に届かないよう、
