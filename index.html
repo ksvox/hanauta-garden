@@ -35,10 +35,14 @@
   .sb-item{ padding:0 14px; white-space:nowrap; }
   @keyframes sbFlow{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
   @media (prefers-reduced-motion: reduce){ .sb-track{ animation:none; } }
-  .cal-card{ background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:14px 12px 12px; margin-top:10px; }
-  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin:0 2px 8px; }
-  .cal-title{ font-size:19px; font-weight:800; color:#4c6b3c; }
-  .cal-nav{ background:none; border:none; font-size:24px; line-height:1; color:#8a9a7a; cursor:pointer; padding:2px 12px; }
+  h2.sec.cal-h{ margin-top:46px; }
+  #calThemeBar{ margin-top:16px; }
+  #calThemeBar .sb-item{ color:#c2497d; font-weight:700; }
+  #calThemeBar.cleared .sb-item{ color:#3e7c38; }
+  .cal-card{ background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:14px 12px 12px; margin-top:18px; }
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 10px; background:linear-gradient(180deg,#8fbc6d,#79a856); border-radius:12px; padding:9px 6px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35); }
+  .cal-title{ font-size:19px; font-weight:800; color:#ffffff; text-shadow:0 1px 3px rgba(40,70,20,.35); letter-spacing:.04em; }
+  .cal-nav{ background:none; border:none; font-size:24px; line-height:1; color:rgba(255,255,255,.92); cursor:pointer; padding:2px 12px; }
   .cal-nav:disabled{ opacity:.25; cursor:default; }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
   .cal-dow{ text-align:center; font-size:12.5px; font-weight:700; padding:2px 0 4px; }
@@ -48,7 +52,7 @@
   .cal-cell.today{ box-shadow:inset 0 0 0 2px #f19ec2; background:#fdf0f5; }
   .cal-cell.today .cal-num{ font-weight:800; color:#d15f92; }
   .cal-flower{ display:block; margin:1px auto 0; }
-  .cal-legend{ display:grid; grid-template-columns:1fr 1fr; gap:7px 12px; background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:13px 16px; margin-top:10px; font-size:13.5px; color:#5a5040; }
+  .cal-legend{ display:grid; grid-template-columns:1fr 1fr; gap:7px 12px; background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:13px 16px; margin-top:14px; font-size:13.5px; color:#5a5040; }
   .cal-lg-item{ display:flex; align-items:center; gap:7px; }
   .cal-stats{ text-align:center; font-size:14px; color:#7a6a4d; margin:12px 0 2px; }
   .howto.on-hero{ position:relative; background:rgba(255,253,248,.9); margin:0; box-shadow:0 4px 18px rgba(30,20,5,.25); }
@@ -182,9 +186,9 @@
   <button class="btn btn-main btn-big" id="btn-start">🎤鼻歌をうたう (30秒)</button>
 
   <!-- v86 ハナウタカレンダー（活動記録） -->
-  <h2 class="sec">3️⃣ハナウタカレンダー（活動記録）</h2>
+  <h2 class="sec cal-h">3️⃣ハナウタカレンダー（活動記録）</h2>
   <svg width="0" height="0" style="position:absolute;" aria-hidden="true"><defs><radialGradient id="calGradSilver" cx="0.38" cy="0.35" r="0.95"><stop offset="0%" stop-color="#f4f7fa"/><stop offset="55%" stop-color="#ccd4dd"/><stop offset="100%" stop-color="#9fb0bf"/></radialGradient><radialGradient id="calGradGold" cx="0.38" cy="0.35" r="0.95"><stop offset="0%" stop-color="#fff3b0"/><stop offset="55%" stop-color="#f5c542"/><stop offset="100%" stop-color="#d9931e"/></radialGradient></defs></svg>
-  <p class="season-banner" id="calThemeBar" style="display:none; margin-top:8px;"></p>
+  <p class="season-banner" id="calThemeBar" style="display:none"></p>
   <div class="cal-card">
     <div class="cal-head">
       <button class="cal-nav" id="cal-prev" aria-label="前の月">‹</button>
@@ -514,7 +518,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v89'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v90'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -6495,6 +6499,7 @@ function calRender(){
     const th = trec && trec.th ? calThemeOf(trec.th) : null;
     if (th){
       const msg = trec.t ? '✨今日のお題クリア！「' + th.text + '」' : '今日のお題：' + th.text;
+      bar.classList.toggle('cleared', !!trec.t);
       bar.textContent = '';
       const track = document.createElement('span'); track.className = 'sb-track';
       for (let h = 0; h < 2; h++){
@@ -6504,7 +6509,7 @@ function calRender(){
       }
       bar.appendChild(track);
       bar.style.display = '';
-    } else bar.style.display = 'none';
+    } else { bar.classList.remove('cleared'); bar.style.display = 'none'; }
   }
   const startDow = new Date(calView.y, calView.m, 1).getDay();
   const daysInMonth = new Date(calView.y, calView.m + 1, 0).getDate();
@@ -6525,7 +6530,10 @@ function calRender(){
     let total = 0;
     for (const k in days){ const r = days[k]; if (r && (r.s || r.g || r.l)) total++; }
     const isCur = calView.y === now.getFullYear() && calView.m === now.getMonth();
-    stats.textContent = isCur ? ('今月 ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました') : ((calView.m + 1) + '月は ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました');
+    const skeys = Object.keys(days).sort();
+    let ssuf = '';
+    if (skeys.length){ const sp = skeys[0].split('-'); ssuf = '（記録開始日：' + (+sp[0]) + '年' + (+sp[1]) + '月' + (+sp[2]) + '日）'; }
+    stats.textContent = (isCur ? ('今月 ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました') : ((calView.m + 1) + '月は ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました')) + ssuf;
   }
 }
 async function initCalendar(){
