@@ -514,7 +514,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v86'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v87'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -6436,14 +6436,14 @@ async function calEnsureToday(){
     let collected = null;
     try { const all = await collDB.getAll(); collected = new Set(all.map(r => r.id)); } catch (e) {}
     rec.th = calPickThemeId(collected);
-    await calSave();
+    calSave(); /* 完了は待たない */
   }
   return rec;
 }
 async function calMark(kind){
   const rec = await calEnsureToday();
   rec[kind] = 1;
-  await calSave();
+  calSave(); /* 完了は待たない */
   calRender();
 }
 async function calMarkSong(an){
@@ -6459,7 +6459,7 @@ async function calMarkSong(an){
       }
     }
   } catch (e) { /* 判定できなくても活動の記録は残す */ }
-  await calSave();
+  calSave(); /* 完了は待たない */
   calRender();
 }
 function calKindOf(rec){
@@ -6480,7 +6480,8 @@ function calFlowerSVG(kind, size){
 }
 function calRender(){
   const grid = $('cal-grid');
-  if (!grid || !calState) return;
+  if (!grid) return;
+  const days = (calState && calState.days) || {}; /* 読み込み前・失敗時でも空の月を描く */
   const now = new Date();
   if (!calView) calView = { y: now.getFullYear(), m: now.getMonth() };
   const title = $('cal-title');
@@ -6489,7 +6490,7 @@ function calRender(){
   if (next) next.disabled = (calView.y === now.getFullYear() && calView.m === now.getMonth());
   const bar = $('calThemeBar');
   const todayKey = calTodayStr();
-  const trec = calState.days[todayKey];
+  const trec = days[todayKey];
   if (bar){
     const th = trec && trec.th ? calThemeOf(trec.th) : null;
     if (th){
@@ -6514,7 +6515,7 @@ function calRender(){
   let monthCount = 0;
   for (let d = 1; d <= daysInMonth; d++){
     const key = calView.y + '-' + String(calView.m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    const rec = calState.days[key];
+    const rec = days[key];
     if (rec && (rec.s || rec.g || rec.l)) monthCount++;
     html += '<div class="cal-cell' + (key === todayKey ? ' today' : '') + (key > todayKey ? ' future' : '') + '"><div class="cal-num">' + d + '</div>' + (calKindOf(rec) ? calFlowerSVG(calKindOf(rec)) : '') + '</div>';
   }
@@ -6522,25 +6523,29 @@ function calRender(){
   const stats = $('cal-stats');
   if (stats){
     let total = 0;
-    for (const k in calState.days){ const r = calState.days[k]; if (r && (r.s || r.g || r.l)) total++; }
+    for (const k in days){ const r = days[k]; if (r && (r.s || r.g || r.l)) total++; }
     const isCur = calView.y === now.getFullYear() && calView.m === now.getMonth();
     stats.textContent = isCur ? ('今月 ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました') : ((calView.m + 1) + '月は ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました');
   }
 }
 async function initCalendar(){
+  /* v87: まず空でも描く。保存の読み込みが遅い・失敗・固まっても、カレンダーが真っ白にならないように。
+     v86の実機不具合（中身が一切描かれない）への対策として、段階ごとに独立させた */
+  try { calRender(); } catch (e) {}
+  try { await calEnsureToday(); } catch (e) {}
   try {
-    await calEnsureToday();
     const lg = $('cal-legend');
     if (lg && !lg.dataset.done){
       lg.dataset.done = '1';
       const items = [['pink', '鼻歌だけ'], ['green', 'ガーデンだけ'], ['blue', '交配だけ'], ['red', '2つで歌った'], ['silver', '3つ全部'], ['gold', '全部＋お題クリア']];
       lg.innerHTML = items.map(it => '<div class="cal-lg-item">' + calFlowerSVG(it[0], 22) + '<span>' + it[1] + '</span></div>').join('');
     }
-    calRender();
-  } catch (e) { /* カレンダーが出なくても本体は止めない */ }
+  } catch (e) {}
+  try { calRender(); } catch (e) {}
+  setTimeout(() => { try { calRender(); } catch (e) {} }, 1500); /* 読み込みが遅れて終わった場合の追い描き */
 }
-{ const pv = $('cal-prev'); if (pv) pv.onclick = () => { if (!calView) return; calView.m--; if (calView.m < 0){ calView.m = 11; calView.y--; } calRender(); };
-  const nx = $('cal-next'); if (nx) nx.onclick = () => { if (!calView) return; const now = new Date(); if (calView.y === now.getFullYear() && calView.m === now.getMonth()) return; calView.m++; if (calView.m > 11){ calView.m = 0; calView.y++; } calRender(); }; }
+{ const pv = $('cal-prev'); if (pv) pv.onclick = () => { if (!calView) calView = { y: new Date().getFullYear(), m: new Date().getMonth() }; calView.m--; if (calView.m < 0){ calView.m = 11; calView.y--; } calRender(); };
+  const nx = $('cal-next'); if (nx) nx.onclick = () => { if (!calView) calView = { y: new Date().getFullYear(), m: new Date().getMonth() }; const now = new Date(); if (calView.y === now.getFullYear() && calView.m === now.getMonth()) return; calView.m++; if (calView.m > 11){ calView.m = 0; calView.y++; } calRender(); }; }
 initCalendar();
 
 /* ========= v86 データの書き出し／読み込み（機種変更対策） =========
