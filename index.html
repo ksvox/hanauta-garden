@@ -35,6 +35,22 @@
   .sb-item{ padding:0 14px; white-space:nowrap; }
   @keyframes sbFlow{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
   @media (prefers-reduced-motion: reduce){ .sb-track{ animation:none; } }
+  .cal-card{ background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:14px 12px 12px; margin-top:10px; }
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin:0 2px 8px; }
+  .cal-title{ font-size:19px; font-weight:800; color:#4c6b3c; }
+  .cal-nav{ background:none; border:none; font-size:24px; line-height:1; color:#8a9a7a; cursor:pointer; padding:2px 12px; }
+  .cal-nav:disabled{ opacity:.25; cursor:default; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .cal-dow{ text-align:center; font-size:12.5px; font-weight:700; padding:2px 0 4px; }
+  .cal-cell{ text-align:center; padding:3px 0 2px; border-radius:10px; min-height:52px; }
+  .cal-cell .cal-num{ font-size:13.5px; color:#5a5040; }
+  .cal-cell.future .cal-num{ color:#cdbfa5; }
+  .cal-cell.today{ box-shadow:inset 0 0 0 2px #f19ec2; background:#fdf0f5; }
+  .cal-cell.today .cal-num{ font-weight:800; color:#d15f92; }
+  .cal-flower{ display:block; margin:1px auto 0; }
+  .cal-legend{ display:grid; grid-template-columns:1fr 1fr; gap:7px 12px; background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:13px 16px; margin-top:10px; font-size:13.5px; color:#5a5040; }
+  .cal-lg-item{ display:flex; align-items:center; gap:7px; }
+  .cal-stats{ text-align:center; font-size:14px; color:#7a6a4d; margin:12px 0 2px; }
   .howto.on-hero{ position:relative; background:rgba(255,253,248,.9); margin:0; box-shadow:0 4px 18px rgba(30,20,5,.25); }
   .howto-title{ text-align:center; font-weight:800; margin:0 0 4px; font-size:14px; letter-spacing:.14em; }
   h2.sec{ font-size:22px; margin:26px 0 2px; }
@@ -165,6 +181,21 @@
 
   <button class="btn btn-main btn-big" id="btn-start">🎤鼻歌をうたう (30秒)</button>
 
+  <!-- v86 ハナウタカレンダー（活動記録） -->
+  <h2 class="sec">3️⃣ハナウタカレンダー（活動記録）</h2>
+  <svg width="0" height="0" style="position:absolute;" aria-hidden="true"><defs><radialGradient id="calGradSilver" cx="0.38" cy="0.35" r="0.95"><stop offset="0%" stop-color="#f4f7fa"/><stop offset="55%" stop-color="#ccd4dd"/><stop offset="100%" stop-color="#9fb0bf"/></radialGradient><radialGradient id="calGradGold" cx="0.38" cy="0.35" r="0.95"><stop offset="0%" stop-color="#fff3b0"/><stop offset="55%" stop-color="#f5c542"/><stop offset="100%" stop-color="#d9931e"/></radialGradient></defs></svg>
+  <p class="season-banner" id="calThemeBar" style="display:none; margin-top:8px;"></p>
+  <div class="cal-card">
+    <div class="cal-head">
+      <button class="cal-nav" id="cal-prev" aria-label="前の月">‹</button>
+      <div class="cal-title" id="cal-title"></div>
+      <button class="cal-nav" id="cal-next" aria-label="次の月">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+  <div class="cal-legend" id="cal-legend"></div>
+  <p class="cal-stats" id="cal-stats"></p>
+
 <div style="text-align:center; margin:18px 0 4px;">
     <button class="btn btn-sub" id="btn-coll-open" style="padding:11px 22px; font-size:15px;">📖 マイ図鑑コレクション</button>
   </div>
@@ -192,9 +223,10 @@
   </div>
   <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 14px;">ここに残るのは花種の記録だけ。色や形の組み合わせは世界にひとつだけ。あなたの花は、いつもあなただけの特別です。</p>
   <div style="background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.75; color:#6b6151; margin:0 2px 18px;">
-    ⚠ご注意ください！<br>
-    機種変更やブラウザのデータ消去で記録は消えます。残しておきたい図鑑カードは、個別に保存しておいてください。<br>
-    ※iPhoneをご利用の方は、長く開かないでいると記録が消えてしまうことがあります。ホーム画面に追加しておくと安心です。<br>
+    ⚠️ご注意ください！<br>
+    記録はこの端末内に保存されますので、ブラウザのデータを消すと記録も消えてしまいます。<br>
+    iPhoneの方は、「ホーム画面に追加」してご利用ください。<br>
+    <button id="btn-backup-open" style="background:none; border:none; padding:2px 4px; font-size:12.5px; color:#7a5c2e; cursor:pointer;">👉［データを書き出す（機種変更）］</button><br>
     <button id="btn-coll-reset" style="margin-top:8px; background:none; border:none; padding:2px 4px; font-size:12px; color:#a08c66; text-decoration:underline; cursor:pointer;">はじめから集め直す</button>
   </div>
 <style>
@@ -396,6 +428,24 @@
   </div>
 </div>
 
+<div id="backupModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.88); z-index:62; align-items:center; justify-content:center; flex-direction:column; padding:22px;">
+  <div style="background:#fffdf8; border-radius:16px; padding:20px 18px; max-width:520px; width:100%; box-shadow:0 12px 34px rgba(0,0,0,.35);">
+    <p style="margin:0 0 14px; font-size:14.5px; line-height:1.8; color:#5a5040;">機種変更のときは、この端末の「データを書き出す」で記録をファイルに取り出し、新しい端末で「データを読み込む」と、図鑑・ガーデン・開発室・カレンダーの記録をそのまま引き継げます。<br>故障に備え、たまに書き出しておくと安心です。</p>
+    <div id="backup-main-btns" style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-main" id="btn-backup-export" style="padding:11px 18px; font-size:15px;">データを書き出す</button>
+      <button class="btn btn-sub" id="btn-backup-import" style="padding:11px 18px; font-size:15px;">データを読み込む</button>
+    </div>
+    <div id="backup-confirm" style="display:none; margin-top:6px;">
+      <p style="margin:0 0 10px; font-size:14px; line-height:1.7; color:#8a3b2e; font-weight:700;">今の記録は、ファイルの内容に置き換わります（合算はされません）。よろしいですか？</p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button class="btn btn-main" id="btn-backup-import-yes" style="padding:11px 18px; font-size:15px;">読み込む</button>
+        <button class="btn btn-sub" id="btn-backup-import-no" style="padding:11px 18px; font-size:15px;">やめる</button>
+      </div>
+    </div>
+    <p id="backup-msg" style="margin:12px 0 0; font-size:13px; color:#7a5c2e; min-height:18px; text-align:center;"></p>
+  </div>
+  <button class="btn btn-sub" id="btn-backup-close" style="margin-top:16px; padding:11px 28px; font-size:15px;">閉じる</button>
+</div>
 <div id="zoomModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.9); z-index:60; align-items:center; justify-content:center; flex-direction:column; padding:22px;">
   <img id="zoomImg" style="max-width:92vw; max-height:70vh; border-radius:14px; box-shadow:0 14px 44px rgba(0,0,0,.55);" alt="花のアップ">
   <p id="zoomName" style="color:#f5ead2; font-size:20px; font-weight:700; margin:16px 0 10px; text-align:center;"></p>
@@ -464,7 +514,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v85'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v86'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -3885,6 +3935,7 @@ async function startCeremony(){
   /* マイ図鑑コレクションへ記録（失敗しても本体は止めない）。
      v47: 記録できたら新しい開花回数をマイガーデンの「種」判定へ渡す */
   recordCollection().then(nc => { if (nc){ onBloomSeedCheck(mainSp, nc); honorsAfterBloom(mainSp, nc).catch(() => {}); } }).catch(() => {});
+  calMarkSong(an).catch(() => {}); /* v86: カレンダーの活動記録＋お題判定 */
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
   $('timer').textContent = '花が咲きました 🌸';
   phase = 'ceremony'; const t0 = performance.now();
@@ -5693,6 +5744,7 @@ async function finishGardenSing(){
     }
   }
   await gardenSave(st);
+  if (sungSec > 0) calMark('g').catch(() => {}); /* v86: カレンダーの活動記録 */
   $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + growSec.toFixed(1) + '秒ぶん育ちました' + (wBonus !== 0 ? '・ボーナス' + (wBonus > 0 ? '+' : '') + wBonus + '秒' : '') + '）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
   await renderGardenPage(st);
 }
@@ -6238,12 +6290,324 @@ collDB.putLab = async function(state){
   const db = await collDB.open(); if (!db) return;
   return new Promise(res => { try { const tx = db.transaction('garden', 'readwrite'); tx.objectStore('garden').put({ key: 'lab', ...state }); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch (e) { res(); } });
 };
+/* v86: ハナウタカレンダーの記録も garden ストアに key='cal' で保存する */
+collDB.getCal = async function(){
+  const db = await collDB.open(); if (!db) return null;
+  return new Promise(res => { try { const rq = db.transaction('garden').objectStore('garden').get('cal'); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); } catch (e) { res(null); } });
+};
+collDB.putCal = async function(state){
+  const db = await collDB.open(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction('garden', 'readwrite'); tx.objectStore('garden').put({ key: 'cal', ...state }); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch (e) { res(); } });
+};
 function labDefaultState(){ return { unlocked: false, unlockShown: false, cur: null, day: { d: '', used: {} }, blooms: 0, lastChild: null, history: [], honors: { doctor: '', prof: '' } }; }
 async function labLoad(){
   try { const s = await collDB.getLab(); if (s && typeof s === 'object'){ const d = labDefaultState(); return { ...d, ...s, day: (s.day && typeof s.day === 'object') ? s.day : d.day }; } } catch (e) { /* DBが無い環境では既定値 */ }
   return labDefaultState();
 }
 async function labSave(st){ try { await collDB.putLab(st); } catch (e) { /* 保存できなくても止めない */ } }
+
+/* ========= v86 ハナウタカレンダー（活動記録） =========
+   先生の設計（2026-11-22確定）: トップの「鼻歌を歌う」ボタンの下に
+   「3️⃣ハナウタカレンダー（活動記録）」を新設する。
+   ・今日のお題: 花の名前は言わず「その花の咲く歌い方」だけをテロップで流す。
+     日付で決まり、前日とは重ねない。まだ図鑑にない花の歌い方を少し出やすくする。
+     判定は選定と同じ物差しで「歌い方が合っているか」を見る（別の花が咲いてもクリア）。
+   ・活動の花マーク: その日の活動で色がその都度変わり、0時で確定する。
+     鼻歌だけ=ピンク／ガーデンだけ=緑／交配だけ=青／2つ=赤／3つ全部=銀／
+     3つ全部+お題クリア=金。中心は常に黄色。お題クリアだけでは見た目は変わらない。
+   ・記録は日付＋活動フラグだけ（garden ストア key='cal'）。保持は無期限 */
+function calDateStr(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function calTodayStr(){ return calDateStr(new Date()); }
+let calState = null, calView = null;
+async function calLoad(){
+  if (calState) return calState;
+  try { const r = await collDB.getCal(); if (r && r.days && typeof r.days === 'object'){ calState = { days: r.days }; return calState; } } catch (e) {}
+  calState = { days: {} };
+  return calState;
+}
+async function calSave(){ try { await collDB.putCal({ days: calState.days }); } catch (e) { /* 保存できなくても止めない */ } }
+/* お題の芯（基本種26種）。check は選定の関門と同じ物差し（ctx = {f,x,cl,type,A,B,rob}） */
+const CAL_THEMES = [
+  { id:'tulip', sp:'tulip', text:'狭い音の範囲で、素直にまっすぐ歌ってみて', check:c => (c.f.rangeSemis || 0) <= TULIP_RANGE_MAX && (c.f.longToneRatio || 0) < 0.20 },
+  { id:'ranunculus', sp:'ranunculus', text:'階段みたいに一音ずつ、広めの音域を歌ってみて', check:c => (c.x.stepShare || 0) >= 0.50 && (c.f.rangeSemis || 0) > TULIP_RANGE_MAX },
+  { id:'marguerite', sp:'marguerite', text:'同じ音を繰り返す、素朴な歌を歌ってみて', check:c => c.type === 'T2' && !((c.x.sameRep || 0) >= T2_REP_MIN && (c.f.vigor || 0) < FIREFLY_VIGOR_MAX) },
+  { id:'firefly', sp:'firefly', text:'同じ音を繰り返して、控えめにそっと歌ってみて', check:c => (c.x.sameRep || 0) >= T2_REP_MIN && (c.f.vigor || 0) < FIREFLY_VIGOR_MAX },
+  { id:'rose', sp:'rose', text:'誰もが知っているような、まっすぐなメロディーを歌ってみて', check:c => c.type === 'T5' },
+  { id:'anemone', sp:'anemone', text:'少し切ない、短調の響きの歌を歌ってみて', check:c => (c.x.minorMargin || 0) >= ANEMONE_MINOR_MIN },
+  { id:'candy', sp:'candy', text:'明るくはっきりした長調のメロディーを歌ってみて', check:c => c.A && (c.x.majorMargin || 0) >= MAJOR_MARGIN_MIN },
+  { id:'sunflower', sp:'sunflower', text:'少しずつ、どんどん高く上がっていく歌を歌ってみて', check:c => c.type === 'T4' },
+  { id:'tulilily', sp:'tulilily', text:'音程をぴったり合わせて、正確に歌ってみて', check:c => !!c.cl.tulilily },
+  { id:'gerbera', sp:'gerbera', text:'音階を駆け上がるように、広く上がる歌を歌ってみて', check:c => (c.x.stepRun || 0) >= 5 && c.rob > TULIP_RANGE_MAX },
+  { id:'sakura', sp:'sakura', text:'和音をたどるような、行進曲みたいな歌を歌ってみて', check:c => c.type === 'T6' && !((c.x.thirdShare || 0) >= 0.20 && (c.f.leaps || 0) >= 2 && (c.x.maxGap || 0) >= GOLDBELL_GAP_MIN) },
+  { id:'goldbell', sp:'goldbell', text:'フレーズとフレーズの間に、間（ま）を置いて歌ってみて', check:c => (c.x.thirdShare || 0) >= 0.20 && (c.f.leaps || 0) >= 2 && (c.x.maxGap || 0) >= GOLDBELL_GAP_MIN },
+  { id:'featherflower', sp:'featherflower', text:'賛美歌のように、ゆったりと厳かに歌ってみて', check:c => c.type === 'T7' || c.type === 'T10' },
+  { id:'dahlia', sp:'dahlia', text:'音を大きく動かして、クライマックスのある歌を歌ってみて', check:c => c.type === 'T11' },
+  { id:'mobius', sp:'mobius', text:'大きく行ったり来たり、波打つように歌ってみて', check:c => (c.x.turnAmp || 0) >= 3.40 },
+  { id:'swirl', sp:'swirl', text:'細かく何度も折り返すようなメロディーを歌ってみて', check:c => (c.x.turns || 0) >= SWIRL_TURNS_MIN && (c.x.turnAmp || 0) < 3.40 },
+  { id:'lantern', sp:'lantern', text:'フレーズの終わりに、長い音を置いて歌ってみて', check:c => c.rob < 12 && (c.x.ltRel15 || 0) >= 0.40 },
+  { id:'lily', sp:'lily', text:'どのフレーズも、終わりの音を長めに伸ばして歌ってみて', check:c => c.rob < 12 && (c.x.ltRel15 || 0) < 0.40 && (c.x.phraseEndRaw || 0) >= 3 },
+  { id:'moonring', sp:'moonring', text:'低い声で、短い音だけの歌を歌ってみて', check:c => (c.f.tessitura || 60) <= 58 && (c.x.ltRel15 || 0) < 0.10 },
+  { id:'carnation', sp:'carnation', text:'テンポを気にせず、自由な気分で歌ってみて', check:c => !c.B },
+  { id:'cotton', sp:'cotton', text:'高い声で、狭い音の範囲を正確に歌ってみて', check:c => c.A && (c.f.tessitura || 60) >= COTTON_TESS_MIN && c.rob < 12 },
+  { id:'bubble', sp:'bubble', text:'高い声で、細く軽やかに歌ってみて', check:c => !!c.cl.bubble },
+  { id:'galaxy', sp:'galaxy', text:'声をふわりと揺らして、星空みたいに歌ってみて', check:c => !!c.cl.galaxy },
+  { id:'crystal', sp:'crystal', text:'フレーズの終わりを長く伸ばして、声を揺らしながら歌ってみて', check:c => !!c.cl.crystal && (c.x.phraseEndRaw || 0) >= 3 },
+  { id:'noirrose', sp:'noirrose', text:'静かに深く、大人の色気のある歌を歌ってみて', check:c => !!c.cl.noir },
+  { id:'rainbow', sp:'rainbow', text:'ゆっくりと広い音域で、長い音とビブラートをたっぷり歌ってみて', check:c => !!c.cl.rainbow && rainbowShape(c.f) }
+];
+/* 言い換え（芯と同じ歌い方・別の言い方） */
+const CAL_THEME_VARS = [
+  { base:'lantern', text:'一息ごとに、最後の音をたっぷり伸ばして歌ってみて' },
+  { base:'lily', text:'歌の区切りごとに、余韻を残すように伸ばして歌ってみて' },
+  { base:'gerbera', text:'階段を一気に駆け上がるみたいに歌ってみて' },
+  { base:'sunflower', text:'朝日が昇るように、少しずつ高く歌ってみて' },
+  { base:'bubble', text:'高いところで、シャボン玉みたいに軽く歌ってみて' },
+  { base:'galaxy', text:'声に小さな波をつけて、ゆらゆら歌ってみて' },
+  { base:'crystal', text:'終わりの音で、声をそっと震わせて歌ってみて' },
+  { base:'moonring', text:'低い声で、つぶやくように短く歌ってみて' },
+  { base:'carnation', text:'気の向くままに、速さは自由で歌ってみて' },
+  { base:'rose', text:'覚えやすい、素直なメロディーを歌ってみて' },
+  { base:'dahlia', text:'両腕を広げるみたいに、音も大きく広げて歌ってみて' },
+  { base:'swirl', text:'小川の渦みたいに、くるくる回る音で歌ってみて' },
+  { base:'goldbell', text:'鐘を鳴らすみたいに、音と音の間を空けて歌ってみて' },
+  { base:'featherflower', text:'教会に響くように、ゆっくりと歌ってみて' }
+];
+/* 季節もの（期間中だけ池に入る。歌い方はホスト種と同じ） */
+const CAL_THEME_SEASONAL = [
+  { guest:'poinsettia', text:'クリスマスの気分で、まっすぐな歌を歌ってみて' },
+  { guest:'orchid', text:'お正月らしく、フレーズの終わりを長く伸ばして歌ってみて' },
+  { guest:'chocolat', text:'甘い気分で、素直にまっすぐ歌ってみて' },
+  { guest:'sakura_season', text:'春の気分で、行進曲みたいな歌を歌ってみて' },
+  { guest:'redcarnation', text:'母の日の頃。テンポは自由に、優しく歌ってみて' },
+  { guest:'hydrangea', text:'梅雨の季節。音を大きく動かして歌ってみて' },
+  { guest:'rainbowsun', text:'夏の夕立のあとみたいに、長い音を置いて歌ってみて' },
+  { guest:'hibiscus', text:'真夏の気分で、広く駆け上がる歌を歌ってみて' },
+  { guest:'higanbana', text:'秋の気配。少し切ない短調の歌を歌ってみて' },
+  { guest:'pumpkin', text:'ハロウィンの夜。低い声で、短い音だけの歌を歌ってみて' },
+  { guest:'momiji', text:'紅葉の季節。和音をたどるような歌を歌ってみて' }
+];
+function calThemeOf(id){
+  if (!id) return null;
+  const base = CAL_THEMES.find(t => t.id === id);
+  if (base) return base;
+  if (id.endsWith('2')){
+    const b = CAL_THEMES.find(t => t.id === id.slice(0, -1));
+    const v = CAL_THEME_VARS.find(t => t.base === id.slice(0, -1));
+    if (b && v) return { id, sp: b.sp, text: v.text, check: b.check };
+  }
+  if (id.indexOf('th_') === 0){
+    const g = id.slice(3);
+    const w = SEASONAL_WINDOWS.find(w2 => w2.guest === g);
+    const sv = CAL_THEME_SEASONAL.find(t => t.guest === g);
+    if (w && sv){ const b = CAL_THEMES.find(t => t.id === w.host); if (b) return { id, sp: w.host, text: sv.text, check: b.check }; }
+  }
+  return null;
+}
+function calPickThemeId(collected){
+  const pool = [];
+  for (const t of CAL_THEMES) pool.push(t.id);
+  for (const v of CAL_THEME_VARS) pool.push(v.base + '2');
+  const now = new Date();
+  for (const w of SEASONAL_WINDOWS) if (seasonActiveOn(w.start, now)) pool.push('th_' + w.guest);
+  const ws = pool.map(id => {
+    const t = calThemeOf(id);
+    let wgt = (id.indexOf('th_') === 0) ? 1.5 : 1;
+    if (t && t.sp === 'rainbow') wgt = 0.4; /* SSR級の歌い方は毎日のお題には重いので、たまにだけ */
+    else if (t && collected && !collected.has(t.sp)) wgt *= 2; /* まだ図鑑にない花を少し出やすく */
+    return wgt;
+  });
+  const total = ws.reduce((a, b) => a + b, 0);
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const yRec = calState ? calState.days[calDateStr(y)] : null;
+  for (let attempt = 0; attempt < 4; attempt++){
+    const rng = mulberry32(hashStr(calTodayStr() + ':theme:' + attempt));
+    let r = rng() * total, pick = pool[pool.length - 1];
+    for (let i = 0; i < pool.length; i++){ r -= ws[i]; if (r <= 0){ pick = pool[i]; break; } }
+    if (!yRec || yRec.th !== pick) return pick;
+  }
+  return pool[0];
+}
+async function calEnsureToday(){
+  const st = await calLoad();
+  const key = calTodayStr();
+  if (!st.days[key]) st.days[key] = { s: 0, g: 0, l: 0, t: 0, th: '' };
+  const rec = st.days[key];
+  if (!rec.th){
+    let collected = null;
+    try { const all = await collDB.getAll(); collected = new Set(all.map(r => r.id)); } catch (e) {}
+    rec.th = calPickThemeId(collected);
+    await calSave();
+  }
+  return rec;
+}
+async function calMark(kind){
+  const rec = await calEnsureToday();
+  rec[kind] = 1;
+  await calSave();
+  calRender();
+}
+async function calMarkSong(an){
+  const rec = await calEnsureToday();
+  rec.s = 1;
+  try {
+    if (!rec.t && an && an.feat){
+      const theme = calThemeOf(rec.th);
+      if (theme && theme.check){
+        const f = an.feat, x = noteFeaturesOf(an), cl = srClaimsOf(f, x);
+        const ctx = { f, x, cl, type: classifyType(f, x), A: skillA(f), B: skillB(f), rob: Math.max(x.robRange !== undefined ? x.robRange : (f.rangeSemis || 0), x.p98long || 0) };
+        if (theme.check(ctx)) rec.t = 1;
+      }
+    }
+  } catch (e) { /* 判定できなくても活動の記録は残す */ }
+  await calSave();
+  calRender();
+}
+function calKindOf(rec){
+  if (!rec) return null;
+  const n = (rec.s ? 1 : 0) + (rec.g ? 1 : 0) + (rec.l ? 1 : 0);
+  if (n === 0) return null;
+  if (n === 3) return rec.t ? 'gold' : 'silver';
+  if (n === 2) return 'red';
+  return rec.s ? 'pink' : rec.g ? 'green' : 'blue';
+}
+function calFlowerSVG(kind, size){
+  const fills = { pink: '#f49ec1', green: '#8cc084', blue: '#7fb2e0', red: '#ef6a5a' };
+  const petal = kind === 'silver' ? 'url(#calGradSilver)' : kind === 'gold' ? 'url(#calGradGold)' : (fills[kind] || '#ffffff');
+  let petals = '';
+  for (let i = 0; i < 5; i++) petals += '<ellipse cx="20" cy="11.5" rx="5.6" ry="9" fill="' + petal + '" transform="rotate(' + (i * 72) + ' 20 20)"/>';
+  const sz = size || 30;
+  return '<svg class="cal-flower" width="' + sz + '" height="' + sz + '" viewBox="0 0 40 40" aria-hidden="true">' + petals + '<circle cx="20" cy="20" r="4.6" fill="#ffd94d"/></svg>';
+}
+function calRender(){
+  const grid = $('cal-grid');
+  if (!grid || !calState) return;
+  const now = new Date();
+  if (!calView) calView = { y: now.getFullYear(), m: now.getMonth() };
+  const title = $('cal-title');
+  if (title) title.textContent = calView.y + '年 ' + (calView.m + 1) + '月';
+  const next = $('cal-next');
+  if (next) next.disabled = (calView.y === now.getFullYear() && calView.m === now.getMonth());
+  const bar = $('calThemeBar');
+  const todayKey = calTodayStr();
+  const trec = calState.days[todayKey];
+  if (bar){
+    const th = trec && trec.th ? calThemeOf(trec.th) : null;
+    if (th){
+      const msg = trec.t ? '✨今日のお題クリア！「' + th.text + '」' : '今日のお題：' + th.text;
+      bar.textContent = '';
+      const track = document.createElement('span'); track.className = 'sb-track';
+      for (let h = 0; h < 2; h++){
+        const half = document.createElement('span'); half.className = 'sb-half';
+        for (let r = 0; r < 2; r++){ const it = document.createElement('span'); it.className = 'sb-item'; it.textContent = msg; half.appendChild(it); }
+        track.appendChild(half);
+      }
+      bar.appendChild(track);
+      bar.style.display = '';
+    } else bar.style.display = 'none';
+  }
+  const startDow = new Date(calView.y, calView.m, 1).getDay();
+  const daysInMonth = new Date(calView.y, calView.m + 1, 0).getDate();
+  const dows = ['日', '月', '火', '水', '木', '金', '土'];
+  let html = '';
+  for (let i = 0; i < 7; i++) html += '<div class="cal-dow" style="color:' + (i === 0 ? '#d4708e' : i === 6 ? '#5b84c4' : '#8a7a5c') + '">' + dows[i] + '</div>';
+  for (let i = 0; i < startDow; i++) html += '<div class="cal-cell"></div>';
+  let monthCount = 0;
+  for (let d = 1; d <= daysInMonth; d++){
+    const key = calView.y + '-' + String(calView.m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const rec = calState.days[key];
+    if (rec && (rec.s || rec.g || rec.l)) monthCount++;
+    html += '<div class="cal-cell' + (key === todayKey ? ' today' : '') + (key > todayKey ? ' future' : '') + '"><div class="cal-num">' + d + '</div>' + (calKindOf(rec) ? calFlowerSVG(calKindOf(rec)) : '') + '</div>';
+  }
+  grid.innerHTML = html;
+  const stats = $('cal-stats');
+  if (stats){
+    let total = 0;
+    for (const k in calState.days){ const r = calState.days[k]; if (r && (r.s || r.g || r.l)) total++; }
+    const isCur = calView.y === now.getFullYear() && calView.m === now.getMonth();
+    stats.textContent = isCur ? ('今月 ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました') : ((calView.m + 1) + '月は ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました');
+  }
+}
+async function initCalendar(){
+  try {
+    await calEnsureToday();
+    const lg = $('cal-legend');
+    if (lg && !lg.dataset.done){
+      lg.dataset.done = '1';
+      const items = [['pink', '鼻歌だけ'], ['green', 'ガーデンだけ'], ['blue', '交配だけ'], ['red', '2つで歌った'], ['silver', '3つ全部'], ['gold', '全部＋お題クリア']];
+      lg.innerHTML = items.map(it => '<div class="cal-lg-item">' + calFlowerSVG(it[0], 22) + '<span>' + it[1] + '</span></div>').join('');
+    }
+    calRender();
+  } catch (e) { /* カレンダーが出なくても本体は止めない */ }
+}
+{ const pv = $('cal-prev'); if (pv) pv.onclick = () => { if (!calView) return; calView.m--; if (calView.m < 0){ calView.m = 11; calView.y--; } calRender(); };
+  const nx = $('cal-next'); if (nx) nx.onclick = () => { if (!calView) return; const now = new Date(); if (calView.y === now.getFullYear() && calView.m === now.getMonth()) return; calView.m++; if (calView.m > 11){ calView.m = 0; calView.y++; } calRender(); }; }
+initCalendar();
+
+/* ========= v86 データの書き出し／読み込み（機種変更対策） =========
+   先生の文面で図鑑の注意書きから開くポップアップ。方式はファイルのみ（サーバーなし）。
+   読み込みは上書き＋確認1回。合算はしない。対象は図鑑（カード画像を含む全レコード）・
+   ガーデン・開発室・カレンダーの全記録 */
+let backupPending = null;
+function openBackup(){
+  backupPending = null;
+  $('backup-msg').textContent = '';
+  $('backup-confirm').style.display = 'none';
+  $('backup-main-btns').style.display = 'flex';
+  $('backupModal').style.display = 'flex';
+}
+function closeBackup(){ $('backupModal').style.display = 'none'; backupPending = null; }
+async function backupExport(){
+  const msg = $('backup-msg');
+  try {
+    msg.textContent = 'ファイルを作っています…';
+    const data = { app: 'hanauta-garden', kind: 'backup', v: 1, date: new Date().toISOString(),
+      collection: await collDB.getAll(), garden: await collDB.getGarden(), lab: await collDB.getLab(), cal: await collDB.getCal() };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'hanauta-backup-' + calTodayStr().replace(/-/g, '') + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch (e) {} }, 4000);
+    msg.textContent = '書き出しました。ファイルは大切に保管してください。';
+  } catch (e) { msg.textContent = '書き出しに失敗しました。もう一度お試しください。'; }
+}
+function backupImportPick(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = async () => {
+    const file = inp.files && inp.files[0]; if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data || data.app !== 'hanauta-garden' || data.kind !== 'backup' || !Array.isArray(data.collection)) throw new Error('bad file');
+      backupPending = data;
+      $('backup-main-btns').style.display = 'none';
+      $('backup-confirm').style.display = 'block';
+      $('backup-msg').textContent = 'ファイル「' + file.name + '」を読み込みます。';
+    } catch (e) { $('backup-msg').textContent = 'そのファイルは読み込めませんでした。書き出したファイルを選び直してください。'; }
+  };
+  inp.click();
+}
+async function backupImportApply(){
+  const data = backupPending; if (!data) return;
+  const msg = $('backup-msg');
+  try {
+    msg.textContent = '読み込んでいます…';
+    await collDB.clear();
+    for (const rec of data.collection) await collDB.put(rec);
+    if (data.garden) await collDB.putGarden(data.garden); else await collDB.putGarden(gardenDefaultState());
+    if (data.lab) await collDB.putLab(data.lab); else await collDB.putLab(labDefaultState());
+    if (data.cal && data.cal.days) await collDB.putCal({ days: data.cal.days }); else await collDB.putCal({ days: {} });
+    msg.textContent = '読み込みました。アプリを開き直します。';
+    setTimeout(() => location.reload(), 900);
+  } catch (e) { msg.textContent = '読み込みに失敗しました。もう一度お試しください。'; }
+}
+{ const ob = $('btn-backup-open'); if (ob) ob.onclick = openBackup;
+  const cb = $('btn-backup-close'); if (cb) cb.onclick = closeBackup;
+  const ex = $('btn-backup-export'); if (ex) ex.onclick = backupExport;
+  const im = $('btn-backup-import'); if (im) im.onclick = backupImportPick;
+  const iy = $('btn-backup-import-yes'); if (iy) iy.onclick = backupImportApply;
+  const ino = $('btn-backup-import-no'); if (ino) ino.onclick = () => { backupPending = null; $('backup-confirm').style.display = 'none'; $('backup-main-btns').style.display = 'flex'; $('backup-msg').textContent = ''; }; }
+
 function labTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 
 /* ===== 図鑑側: 解放イベントと親の選択 ===== */
@@ -6741,6 +7105,7 @@ async function labChallenge(){
     st2.cur.points = Math.min(80, st2.cur.points + pts);
     st2.cur.accSum += acc; st2.cur.accN += 1; st2.cur.tonicSum += mel.tonic; st2.cur.sessions += 1;
     await labSave(st2);
+    calMark('l').catch(() => {}); /* v86: カレンダーの活動記録 */
     $('labCount').textContent = '';
     $('labMsg').textContent = '🎉 ' + pts + 'ポイント獲得！（正解率 ' + Math.round(acc * 100) + '％・合計 ' + st2.cur.points + 'P）';
     if (st2.cur.points >= 71){ await labBloom(st2); return; }
