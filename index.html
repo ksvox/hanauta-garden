@@ -154,7 +154,7 @@
   </div>
 
 <!-- 花が咲く画面 -->
-  <div class="stage-wrap" id="stagewrap"><canvas id="stage" width="900" height="1125"></canvas></div>
+  <div class="stage-wrap nostick" id="stagewrap"><canvas id="stage" width="900" height="1125"></canvas></div>
   <p class="timer" id="timer"></p>
   <button class="btn btn-main" id="btn-finish" style="display:none;">🔄 はじめからやり直す</button>
 
@@ -514,7 +514,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v87'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v89'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -4132,7 +4132,7 @@ function finishWilt(){
   const mode = wilt ? wilt.mode : 'again';
   phase = 'done'; wilt = null; petals = [];
   cancelAnimationFrame(rafId); loopRunning = false;
-  $('stagewrap').classList.remove('nostick');
+  $('stagewrap').classList.add('nostick'); /* v89: 舞台は貼り付けない（先生の決定） */
   $('result').style.display = 'none'; $('result').classList.remove('gone');
   $('timer').textContent = '花は土に還りました 🌱';
   drawIdleStage();
@@ -6420,8 +6420,8 @@ function calPickThemeId(collected){
   const y = new Date(); y.setDate(y.getDate() - 1);
   const yRec = calState ? calState.days[calDateStr(y)] : null;
   for (let attempt = 0; attempt < 4; attempt++){
-    const rng = mulberry32(hashStr(calTodayStr() + ':theme:' + attempt));
-    let r = rng() * total, pick = pool[pool.length - 1];
+    const rr = rng(hashStr(calTodayStr() + ':theme:' + attempt));
+    let r = rr() * total, pick = pool[pool.length - 1];
     for (let i = 0; i < pool.length; i++){ r -= ws[i]; if (r <= 0){ pick = pool[i]; break; } }
     if (!yRec || yRec.th !== pick) return pick;
   }
