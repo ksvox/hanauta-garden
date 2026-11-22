@@ -37,8 +37,9 @@
   @media (prefers-reduced-motion: reduce){ .sb-track{ animation:none; } }
   h2.sec.cal-h{ margin-top:46px; }
   #calThemeBar{ margin-top:16px; }
-  #calThemeBar .sb-item{ color:#c2497d; font-weight:700; }
-  #calThemeBar.cleared .sb-item{ color:#3e7c38; }
+  #calThemeBar .cal-th-label{ color:#c2497d; }
+  #calThemeBar.cleared .cal-th-label{ color:#3e7c38; }
+  .cal-start{ font-size:12.5px; color:#a08c62; }
   .cal-card{ background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:14px 12px 12px; margin-top:18px; }
   .cal-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 10px; background:linear-gradient(180deg,#8fbc6d,#79a856); border-radius:12px; padding:9px 6px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35); }
   .cal-title{ font-size:19px; font-weight:800; color:#ffffff; text-shadow:0 1px 3px rgba(40,70,20,.35); letter-spacing:.04em; }
@@ -351,6 +352,7 @@
       <button class="btn btn-main" id="btn-lab-t1" style="padding:12px; font-size:15.5px;">初級の鼻歌をうたう</button>
       <button class="btn btn-main" id="btn-lab-t2" style="padding:12px; font-size:15.5px;">中級の鼻歌をうたう</button>
       <button class="btn btn-main" id="btn-lab-t3" style="padding:12px; font-size:15.5px;">上級の鼻歌をうたう</button>
+      <button class="btn" id="btn-lab-bonus" style="display:none; padding:12px; font-size:15.5px; font-weight:800; color:#5a3d00; background:linear-gradient(180deg,#ffd968,#f0b429); border:2px solid #c98f12; box-shadow:0 4px 14px rgba(240,180,41,.45);">🏆 ボーナスチャレンジ</button>
     </div>
     <div id="labSessionBtns" style="display:none; gap:9px; max-width:420px; margin:12px auto 0;">
       <button class="btn btn-sub" id="btn-lab-relisten" style="padding:12px; font-size:15.5px; flex:1; margin:0;">🔁 もう一度聞く</button>
@@ -518,7 +520,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v90'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v92'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -664,11 +666,14 @@ Object.assign(FMSG.species, {
 "momiji": {"trait": "秋に深まる紅", "mood": "穏やか", "one": ["もみじだね。秋の色が、あなたの声に染まったみたい。", "真っ赤な紅葉が咲いたよ。静かで、深い美しさの花だね。"], "cheer": ["深まっていく美しさは、あなたの魅力だよ。焦らず色づいてね。", "秋は実りの季節。あなたの頑張りも、きっと実を結ぶよ。"]}
 });
 Object.assign(FMSG.fixedFam, { poinsettia:'赤', orchid:'ピンク', chocolat:'ピンク', sakura_season:'ピンク', redcarnation:'赤', hydrangea:'青', rainbowsun:'ピンク', hibiscus:'赤', higanbana:'赤', pumpkin:'橙', momiji:'橙' });
-function buildFlowerMessage(){
-  if (!flowerInfo) return null;
-  const sp = flowerInfo.sp, color = flowerInfo.color;
+function buildFlowerMessage(fiArg, seedArg){
+  /* v91: 対象の花は引数で受け取る（開発室が共通の flowerInfo を上書きして本編の文面が化ける事故の修正）。
+     引数なし＝本編の花（従来どおり）。seedArg は文面の抽選シード（開発室は 'L'+連番） */
+  const fi = fiArg || flowerInfo;
+  if (!fi) return null;
+  const sp = fi.sp, color = fi.color;
   const d = FMSG.species[sp.id]; if (!d) return null;
-  const r = rng(hashStr(bloomNo + sp.id + 'fmsg'));
+  const r = rng(hashStr((seedArg != null ? seedArg : bloomNo) + sp.id + 'fmsg'));
   const pick = arr => arr[Math.floor(r() * arr.length)];
   /* ① 友だちの一言は、その花種の専用文（A/B）だけから選ぶ（先生の設計どおり。共通テンプレートは混ぜない） */
   const one = pick(d.one.filter(Boolean));
@@ -690,12 +695,12 @@ function buildFlowerMessage(){
   const fairy = (SR_SET.has(sp.id) || SSR_SET.has(sp.id)) ? 3 : (TIER2_SET.has(sp.id) ? 2 : 1);
   /* v43: 花名曲イベントで咲いた花は、専用妖精（fairy-4）と曲名入りの専用行が階層連動より優先。
      差し替えるのは①だけで、②エールと③ラッキー要素は通常どおり各種のプールから出す */
-  if (flowerInfo.eventSong){
+  if (fi.eventSong){
     /* v62: hedge層（みたいだった）は断定しない言い方にする（先生の文面） */
-    if (flowerInfo.eventTier === 'hedge'){
-      return { one: `あなたの歌『${flowerInfo.eventSong}』みたいだったから、この花を咲かせてみたよ。`, cheer, lucky, fairy: 4 };
+    if (fi.eventTier === 'hedge'){
+      return { one: `あなたの歌『${fi.eventSong}』みたいだったから、この花を咲かせてみたよ。`, cheer, lucky, fairy: 4 };
     }
-    return { one: `『${flowerInfo.eventSong}』を歌ってくれたのね。`, cheer, lucky, fairy: 4 };
+    return { one: `『${fi.eventSong}』を歌ってくれたのね。`, cheer, lucky, fairy: 4 };
   }
   /* v55: 終端受け皿種 hotlips も専用妖精（fairy-4）。①は先生の文そのまま
      （FMSG の one はその1文だけのプールなので、上の pick で必ずその文になる） */
@@ -6498,13 +6503,14 @@ function calRender(){
   if (bar){
     const th = trec && trec.th ? calThemeOf(trec.th) : null;
     if (th){
-      const msg = trec.t ? '✨今日のお題クリア！「' + th.text + '」' : '今日のお題：' + th.text;
+      const thLabel = trec.t ? '✨今日のお題クリア！' : '今日のお題：';
+      const thRest = trec.t ? '「' + th.text + '」' : th.text;
       bar.classList.toggle('cleared', !!trec.t);
       bar.textContent = '';
       const track = document.createElement('span'); track.className = 'sb-track';
       for (let h = 0; h < 2; h++){
         const half = document.createElement('span'); half.className = 'sb-half';
-        for (let r = 0; r < 2; r++){ const it = document.createElement('span'); it.className = 'sb-item'; it.textContent = msg; half.appendChild(it); }
+        for (let r = 0; r < 2; r++){ const it = document.createElement('span'); it.className = 'sb-item'; const lab = document.createElement('span'); lab.className = 'cal-th-label'; lab.textContent = thLabel; it.appendChild(lab); it.appendChild(document.createTextNode(thRest)); half.appendChild(it); }
         track.appendChild(half);
       }
       bar.appendChild(track);
@@ -6531,9 +6537,9 @@ function calRender(){
     for (const k in days){ const r = days[k]; if (r && (r.s || r.g || r.l)) total++; }
     const isCur = calView.y === now.getFullYear() && calView.m === now.getMonth();
     const skeys = Object.keys(days).sort();
-    let ssuf = '';
-    if (skeys.length){ const sp = skeys[0].split('-'); ssuf = '（記録開始日：' + (+sp[0]) + '年' + (+sp[1]) + '月' + (+sp[2]) + '日）'; }
-    stats.textContent = (isCur ? ('今月 ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました') : ((calView.m + 1) + '月は ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました')) + ssuf;
+    let sline = '';
+    if (skeys.length){ const sp = skeys[0].split('-'); sline = '<br><span class="cal-start">記録開始日：' + (+sp[0]) + '年' + (+sp[1]) + '月' + (+sp[2]) + '日</span>'; }
+    stats.innerHTML = (isCur ? ('今月 ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました') : ((calView.m + 1) + '月は ' + monthCount + '日 ・ 通算 ' + total + '日 うたいました')) + sline;
   }
 }
 async function initCalendar(){
@@ -6567,20 +6573,36 @@ function openBackup(){
   $('backup-confirm').style.display = 'none';
   $('backup-main-btns').style.display = 'flex';
   $('backupModal').style.display = 'flex';
+  /* v92: 共有シートはタップ直後に開かないと端末に拒否されるため、ファイルを先に組み立てておく */
+  backupFileCache = null;
+  backupBuildFile().then(f => { backupFileCache = f; }).catch(() => {});
 }
 function closeBackup(){ $('backupModal').style.display = 'none'; backupPending = null; }
+let backupFileCache = null;
+async function backupBuildFile(){
+  const data = { app: 'hanauta-garden', kind: 'backup', v: 1, date: new Date().toISOString(),
+    collection: await collDB.getAll(), garden: await collDB.getGarden(), lab: await collDB.getLab(), cal: await collDB.getCal() };
+  return new File([JSON.stringify(data)], 'hanauta-backup-' + calTodayStr().replace(/-/g, '') + '.json', { type: 'application/json' });
+}
+function backupDownload(file){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch (e) {} }, 4000);
+}
 async function backupExport(){
   const msg = $('backup-msg');
   try {
-    msg.textContent = 'ファイルを作っています…';
-    const data = { app: 'hanauta-garden', kind: 'backup', v: 1, date: new Date().toISOString(),
-      collection: await collDB.getAll(), garden: await collDB.getGarden(), lab: await collDB.getLab(), cal: await collDB.getCal() };
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'hanauta-backup-' + calTodayStr().replace(/-/g, '') + '.json';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch (e) {} }, 4000);
+    const file = backupFileCache || await backupBuildFile();
+    backupFileCache = null;
+    /* v92: 対応端末ではOSの共有画面を開き、保存先（ドライブ／iCloud／Dropboxなど）を選んでもらう。
+       共有が使えない環境では従来どおりダウンロードに切り替える */
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try { await navigator.share({ files: [file] }); msg.textContent = '書き出しました。ファイルは大切に保管してください。'; return; }
+      catch (e) { if (e && e.name === 'AbortError'){ msg.textContent = ''; return; } /* 共有できなければダウンロードへ */ }
+    }
+    backupDownload(file);
     msg.textContent = '書き出しました。ファイルは大切に保管してください。';
   } catch (e) { msg.textContent = '書き出しに失敗しました。もう一度お試しください。'; }
 }
@@ -6897,6 +6919,8 @@ async function renderLabPage(){
       b.disabled = !!used[lv] || labTraining;
       b.textContent = (lv === 1 ? '初級' : lv === 2 ? '中級' : '上級') + 'の鼻歌をうたう' + (used[lv] ? '（また明日うたってね）' : '');
     }
+    const bb = $('btn-lab-bonus');
+    if (bb) bb.style.display = (st.cur.bonusReady && !st.cur.bonusUsed && !labTraining) ? '' : 'none';
   }
   await renderLabStage();
 }
@@ -6989,6 +7013,23 @@ function labClick(tAbs, accent, volMul){
   o.start(tAbs); o.stop(tAbs + 0.06);
 }
 const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
+/* v92 ボーナスステージ（先生の提案 2026-11-23）: 教会旋法のスケールを4分音符刻みで1オクターブ。
+   イオニアン（通常の長音階）は除く6旋法。sol は各旋法の変化音に合わせた階名 */
+const LAB_MODES = [
+  { id: 'dorian', jp: 'ドリアン', steps: [0, 2, 3, 5, 7, 9, 10], sol: ['ド', 'レ', 'ミ♭', 'ファ', 'ソ', 'ラ', 'シ♭', 'ド'] },
+  { id: 'phrygian', jp: 'フリギアン', steps: [0, 1, 3, 5, 7, 8, 10], sol: ['ド', 'レ♭', 'ミ♭', 'ファ', 'ソ', 'ラ♭', 'シ♭', 'ド'] },
+  { id: 'lydian', jp: 'リディアン', steps: [0, 2, 4, 6, 7, 9, 11], sol: ['ド', 'レ', 'ミ', 'ファ♯', 'ソ', 'ラ', 'シ', 'ド'] },
+  { id: 'mixolydian', jp: 'ミクソリディアン', steps: [0, 2, 4, 5, 7, 9, 10], sol: ['ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ♭', 'ド'] },
+  { id: 'aeolian', jp: 'エオリアン', steps: [0, 2, 3, 5, 7, 8, 10], sol: ['ド', 'レ', 'ミ♭', 'ファ', 'ソ', 'ラ♭', 'シ♭', 'ド'] },
+  { id: 'locrian', jp: 'ロクリアン', steps: [0, 1, 3, 5, 6, 8, 10], sol: ['ド', 'レ♭', 'ミ♭', 'ファ', 'ソ♭', 'ラ♭', 'シ♭', 'ド'] },
+];
+function labGenModeMelody(){
+  const tonic = 53 + Math.floor(Math.random() * 12); /* 通常と同じ F3〜E4 */
+  const mode = LAB_MODES[Math.floor(Math.random() * LAB_MODES.length)];
+  const semis = [...mode.steps, 12];
+  const notes = semis.map((sm, i) => ({ deg: i, midi: tonic + sm, start: i, dur: 1 }));
+  return { tonic, minor: false, bonus: true, mode: mode.id, modeJp: mode.jp, sol: mode.sol, notes };
+}
 function labScore(frames, mel){
   let correct = 0;
   for (const n of mel.notes){
@@ -7010,7 +7051,7 @@ function labPointsOf(acc){ return clamp(Math.floor(acc * 100 / 10) + 1, 1, 10); 
    課題メロディーは挑戦が終わるまで同じものを保持する（聞き直しても変わらない） */
 let labSession = null; /* { level, mel } */
 function labBuildChips(mel){
-  const sol = mel.minor ? LAB_SOL_MIN : LAB_SOL_MAJ;
+  const sol = mel.sol || (mel.minor ? LAB_SOL_MIN : LAB_SOL_MAJ);
   const chips = $('labNotes'); chips.innerHTML = '';
   mel.notes.forEach(n => { const s = document.createElement('span'); s.textContent = sol[n.deg]; s.style.cssText = 'display:inline-block; min-width:34px; padding:5px 4px; margin:2px; border-radius:8px; background:#efe7d3; font-size:14px; font-weight:700; color:#6b6151; text-align:center;'; chips.appendChild(s); });
 }
@@ -7036,17 +7077,19 @@ async function labPlayDemo(level){
   const st = await labLoad();
   if (!st.cur) return;
   const today = labTodayStr();
-  if (st.day && st.day.d === today && st.day.used && st.day.used[level]){ $('labMsg').textContent = 'その難易度は今日はもう歌いました。また明日どうぞ。'; return; }
+  if (level === 'bonus'){ if (st.cur.bonusUsed){ $('labMsg').textContent = 'ボーナスは、この花ではもう挑戦しました。'; return; } }
+  else if (st.day && st.day.d === today && st.day.used && st.day.used[level]){ $('labMsg').textContent = 'その難易度は今日はもう歌いました。また明日どうぞ。'; return; }
   try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') await AC.resume(); } catch (e) { return; }
-  if (!labSession || labSession.level !== level) labSession = { level, mel: labGenMelody(level) };
+  if (!labSession || labSession.level !== level) labSession = { level, mel: level === 'bonus' ? labGenModeMelody() : labGenMelody(level) };
   const mel = labSession.mel;
   $('labSessionBtns').style.display = 'none';
+  $('btn-lab-bonus').style.display = 'none';
   labTraining = true;
   for (const lv of [1, 2, 3]) $('btn-lab-t' + lv).disabled = true;
   labBuildChips(mel);
   const { at, waitUntil, later } = labGrid();
   /* カウント（表示＋強いクリック）→ デモ（弱いクリック継続）。表示は数字が変わるだけ */
-  $('labMsg').textContent = '🎧 デモを聴く（' + (mel.minor ? '短調' : '長調') + '）';
+  $('labMsg').textContent = mel.bonus ? ('🎧 デモを聴く（🏆' + mel.modeJp + 'スケール）') : ('🎧 デモを聴く（' + (mel.minor ? '短調' : '長調') + '）');
   for (let b = 0; b < 4; b++) labClick(at(b), b === 0);
   labCountRun(at, later, 12, null);
   mel.notes.forEach((n, i) => { labTone(midiHz(n.midi), at(4 + n.start), n.dur * LAB_BEAT * 0.92, 0.22); later(at(4 + n.start), () => labSetChip(i, '#f7d774')); });
@@ -7070,14 +7113,16 @@ async function labChallenge(){
   } catch (e) { $('labMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; $('labSessionBtns').style.display = 'flex'; return; }
   const today = labTodayStr();
   if (!st.day || st.day.d !== today) st.day = { d: today, used: {} };
-  st.day.used[level] = true; /* 消費は挑戦を始めた時点（デモ再生では消費しない） */
+  if (level === 'bonus'){ if (st.cur) st.cur.bonusUsed = true; /* ボーナスの消費も挑戦を始めた時点 */ }
+  else st.day.used[level] = true; /* 消費は挑戦を始めた時点（デモ再生では消費しない） */
   await labSave(st);
   labTraining = true;
+  $('btn-lab-bonus').style.display = 'none';
   for (const lv of [1, 2, 3]) $('btn-lab-t' + lv).disabled = true;
   labBuildChips(mel);
   const { at, waitUntil, later } = labGrid();
   /* カウント＋ルート音（表示は数字のみ）→ 録音（数字が膨らむ・クリック音なし＝コエシル方式） */
-  $('labMsg').textContent = '🌟 ハナウタチャレンジ！カウントとルート音を聴いてね';
+  $('labMsg').textContent = mel.bonus ? ('🏆 ボーナスチャレンジ！「' + mel.modeJp + 'スケール」カウントとルート音を聴いてね') : '🌟 ハナウタチャレンジ！カウントとルート音を聴いてね';
   labTone(midiHz(mel.tonic), at(0), 4 * LAB_BEAT * 0.95, 0.20);
   for (let b = 0; b < 4; b++) labClick(at(b), b === 0);
   labCountRun(at, later, 12, 4);
@@ -7116,15 +7161,23 @@ async function labChallenge(){
   const st2 = await labLoad();
   if (st2.cur){
     st2.cur.points = Math.min(80, st2.cur.points + pts);
-    st2.cur.accSum += acc; st2.cur.accN += 1; st2.cur.tonicSum += mel.tonic; st2.cur.sessions += 1;
+    /* v92: ボーナスはポイントのみで、花の色（正解率の平均・主音の平均）には反映しない（先生の決定）。
+       ボーナスの出現条件は、上級で正解率85%以上（この株で1回だけ） */
+    if (!mel.bonus){
+      st2.cur.accSum += acc; st2.cur.accN += 1; st2.cur.tonicSum += mel.tonic; st2.cur.sessions += 1;
+      if (level === 3 && acc >= 0.85) st2.cur.bonusReady = true;
+    }
     await labSave(st2);
     calMark('l').catch(() => {}); /* v86: カレンダーの活動記録 */
     $('labCount').textContent = '';
-    $('labMsg').textContent = '🎉 ' + pts + 'ポイント獲得！（正解率 ' + Math.round(acc * 100) + '％・合計 ' + st2.cur.points + 'P）';
+    $('labMsg').textContent = mel.bonus
+      ? ('🏆 ボーナス！「' + mel.modeJp + 'スケール」正解率 ' + Math.round(acc * 100) + '％・' + pts + 'ポイント獲得！（合計 ' + st2.cur.points + 'P）')
+      : ('🎉 ' + pts + 'ポイント獲得！（正解率 ' + Math.round(acc * 100) + '％・合計 ' + st2.cur.points + 'P）' + (level === 3 && acc >= 0.85 ? ' 🏆ボーナスチャレンジが出現したよ！' : ''));
     if (st2.cur.points >= 71){ await labBloom(st2); return; }
   }
   await renderLabPage();
 }
+$('btn-lab-bonus').onclick = () => labPlayDemo('bonus');
 $('btn-lab-t1').onclick = () => labPlayDemo(1);
 $('btn-lab-t2').onclick = () => labPlayDemo(2);
 $('btn-lab-t3').onclick = () => labPlayDemo(3);
@@ -7209,7 +7262,9 @@ async function labBloom(st){
   st.lastChild = def.id;
   await labSave(st);
   labCheckHonors(st).catch(() => {});
-  flowerInfo = labBloomCtx.fi;
+  /* v91: ここで flowerInfo = labBloomCtx.fi とすると本編の花情報が消え、本編のフラワーメッセージと
+     オルゴールが開発室の花のものに化ける（報告された不具合）。開発室の文面は btn-lab-fmsg が
+     labBloomCtx.fi を直接 buildFlowerMessage へ渡して作るので、この代入はしない */
   $('labBloomName').textContent = '🌸 ' + fi.name + '（' + def.jp + '）が咲きました！';
   if (labBloomCtx.canvas) $('labBloomImg').src = labBloomCtx.canvas.toDataURL('image/png');
   $('labBloom').style.display = '';
@@ -7347,7 +7402,8 @@ $('btn-lab-share').onclick = async () => {
   } catch (e) { if (e && e.name === 'AbortError') return; }
 };
 $('btn-lab-fmsg').onclick = () => {
-  const m = buildFlowerMessage(); if (!m) return;
+  if (!labBloomCtx) return;
+  const m = buildFlowerMessage(labBloomCtx.fi, 'L' + labBloomCtx.serial); if (!m) return;
   $('fmsg-one').textContent = m.one;
   $('fmsg-cheer').textContent = m.cheer;
   $('fmsg-lucky').textContent = m.lucky;
