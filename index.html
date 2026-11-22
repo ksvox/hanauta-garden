@@ -520,11 +520,11 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v94'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v95'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
-const AV3 = 'v84', AV4 = 'v84', AV5 = 'v84';
+const AV3 = 'v95', AV4 = 'v84', AV5 = 'v84';
 function avFor(src){ return src.startsWith(A5) ? AV5 : src.startsWith(A4) ? AV4 : src.startsWith(A3) ? AV3 : ASSET_V; }
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればページの一番上に静かに知らせる。読み直しはキャッシュ回避の
@@ -5380,11 +5380,11 @@ const GARDEN_ANIM_SPOTS = {
 const GARDEN_ANIMALS = {
   rabbit: {
     seq: [ ['normal', 5], ['stand', 6], ['normal', 4], ['eat', 6] ],
-    poses: { normal: { spot: 'frontR', h: 228 }, stand: { spot: 'back', h: 212 }, eat: { spot: 'frontL', h: 205 } },
+    poses: { normal: { spot: 'frontR', h: 198 }, stand: { spot: 'frontR', h: 262 }, eat: { spot: 'frontL', h: 150 }, jump: { spot: 'frontL', h: 160 }, front: { spot: 'frontR', h: 198 } },
   },
   capybara: {
     seq: [ ['normal', 6], ['eat', 7], ['sleep', 9], ['normal', 5] ],
-    poses: { normal: { spot: 'frontR', h: 250 }, eat: { spot: 'frontL', h: 198 }, sleep: { spot: 'back', h: 168 } },
+    poses: { normal: { spot: 'frontR', h: 250 }, eat: { spot: 'frontL', h: 222 }, sleep: { spot: 'frontR', h: 170 }, walk1: { spot: 'frontL', h: 240 }, walk2: { spot: 'frontL', h: 240 } },
   },
 };
 function gardenAnimalPoseAt(kind, t){
@@ -5401,21 +5401,113 @@ function gardenAnimalPoseAt(kind, t){
 }
 function gardenDrawAnimal(x, t, back){
   const an = gardenLayers && gardenLayers.animal;
-  if (!an || !an.imgs) return;
-  const A = GARDEN_ANIMALS[an.kind];
-  const st = gardenAnimalPoseAt(an.kind, t);
-  const draw = (pose, alpha) => {
-    const P = A.poses[pose];
-    if (!P || (P.spot === 'back') !== back) return;
-    const img = an.imgs[pose];
-    if (!img) return;
-    const spot = GARDEN_ANIM_SPOTS[P.spot];
-    const w = P.h * img.width / img.height;
-    x.save(); x.globalAlpha = alpha;
-    x.drawImage(img, spot.x - w / 2, spot.bottom - P.h, w, P.h);
-    x.restore();
-  };
-  if (st.nxt){ draw(st.cur, 1 - st.f); draw(st.nxt, st.f); } else draw(st.cur, 1);
+  if (!an || !an.imgs || back) return; /* v95: 動物は常に手前（花より前）に描く。奥の位置は満開の花に隠れるため廃止 */
+  if (an.kind === 'rabbit') drawRabbitShow(x, an.imgs, t);
+  else drawCapyShow(x, an.imgs, t);
+}
+const ANIMAL_SPOTS = { L: { x: 200, b: 1046 }, R: { x: 662, b: 1032 } };
+function drawAnimalPose(x, img, h, cx, bottom, o){
+  if (!img) return;
+  o = o || {};
+  const w = h * img.width / img.height;
+  x.save();
+  x.globalAlpha = o.alpha == null ? 1 : o.alpha;
+  x.translate(cx, bottom + (o.yOff || 0));
+  if (o.flip) x.scale(-1, 1);
+  if (o.rot) x.rotate(o.rot);
+  if (o.squash) x.scale(1, o.squash);
+  x.drawImage(img, -w / 2, -h, w, h);
+  x.restore();
+}
+function drawAnimalShadow(x, cx, bottom, w, air){
+  x.save();
+  x.fillStyle = 'rgba(38,26,14,' + (0.32 * (1 - air * 0.55)).toFixed(3) + ')';
+  x.beginPath();
+  x.ellipse(cx, bottom + 5, w * 0.36 * (1 - air * 0.3), 9 * (1 - air * 0.3), 0, 0, 6.3);
+  x.fill();
+  x.restore();
+}
+function animalSegAt(SEGS, T, t){
+  const tt = ((t % T) + T) % T;
+  for (let i = 0; i < SEGS.length; i++){
+    if (tt < SEGS[i][0]){
+      return { cur: SEGS[i], prev: SEGS[(i + SEGS.length - 1) % SEGS.length],
+               start: i === 0 ? 0 : SEGS[i - 1][0], tt };
+    }
+  }
+  return { cur: SEGS[0], prev: SEGS[SEGS.length - 1], start: 0, tt };
+}
+const easeIO = p => p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+/* ウサギ: 食べる→立つ→跳ぶ→着地→正面→食べる→立つ→跳んで戻る（手前の土の上だけを移動） */
+function drawRabbitShow(x, imgs, t){
+  const H = p => GARDEN_ANIMALS.rabbit.poses[p].h;
+  const SEGS = [
+    [5.0, 'eat', 'L', 'L', 0], [7.6, 'stand', 'L', 'L', 0], [8.9, 'jump', 'L', 'R', 0],
+    [12.4, 'normal', 'R', 'R', 1], [15.9, 'front', 'R', 'R', 0], [18.5, 'stand', 'R', 'R', 0],
+    [19.8, 'jump', 'R', 'L', 0], [22.8, 'normal', 'L', 'L', 0], [27.0, 'eat', 'L', 'L', 0],
+  ];
+  const { cur, prev, start, tt } = animalSegAt(SEGS, 27, t);
+  const pose = cur[1], from = ANIMAL_SPOTS[cur[2]], to = ANIMAL_SPOTS[cur[3]];
+  const el = tt - start, dur = cur[0] - start;
+  if (pose === 'jump'){
+    const p = Math.min(1, el / dur), e = easeIO(p);
+    const cx = from.x + (to.x - from.x) * e;
+    const gb = from.b + (to.b - from.b) * e;
+    const air = Math.sin(Math.PI * p);
+    drawAnimalShadow(x, cx, gb, H('jump') * imgs.jump.width / imgs.jump.height, air);
+    const fi = el < 0.12 ? el / 0.12 : 1;
+    if (fi < 1) drawAnimalPose(x, imgs[prev[1]], H(prev[1]), from.x, from.b, { alpha: 1 - fi });
+    drawAnimalPose(x, imgs.jump, H('jump'), cx, gb, { yOff: -air * 60, flip: cur[2] === 'L', alpha: fi });
+    return;
+  }
+  const spot = to;
+  const flip = cur[4] === 1;
+  let squash = 0;
+  if (prev[1] === 'jump' && el < 0.45) squash = 1 - 0.07 * Math.sin(Math.PI * el / 0.45);
+  const fade = (prev[1] === 'jump' || pose === 'stand') ? 0.3 : 0.5;
+  if (el < fade && prev[1] !== pose){
+    const pSpot = ANIMAL_SPOTS[prev[3]];
+    const pFlip = prev[1] === 'jump' ? prev[2] === 'L' : prev[4] === 1;
+    drawAnimalPose(x, imgs[prev[1]], H(prev[1]), pSpot.x, pSpot.b, { alpha: 1 - el / fade, flip: pFlip });
+    drawAnimalPose(x, imgs[pose], H(pose), spot.x, spot.b, { alpha: el / fade, squash, flip });
+  } else {
+    drawAnimalPose(x, imgs[pose], H(pose), spot.x, spot.b, { squash, flip });
+  }
+}
+/* カピバラ: 食べる→ゆっくり歩く→座る→寝る→歩いて戻る */
+function drawCapyShow(x, imgs, t){
+  const H = p => GARDEN_ANIMALS.capybara.poses[p].h;
+  /* [until, pose, from, to, flip]  sitR = 右向きに座る（反転） */
+  const SEGS = [
+    [6.0, 'eat', 'L', 'L', 0], [8.5, 'sitR', 'L', 'L', 1], [15.5, 'walk', 'L', 'R', 1],
+    [17.5, 'sitR', 'R', 'R', 1], [25.5, 'sleep', 'R', 'R', 0], [28.0, 'normal', 'R', 'R', 0],
+    [35.0, 'walk', 'R', 'L', 0], [37.0, 'normal', 'L', 'L', 0],
+  ];
+  const { cur, prev, start, tt } = animalSegAt(SEGS, 37, t);
+  const pose = cur[1], from = ANIMAL_SPOTS[cur[2]], to = ANIMAL_SPOTS[cur[3]];
+  const el = tt - start, dur = cur[0] - start;
+  if (pose === 'walk'){
+    const p = Math.min(1, el / dur), e = p * p * (3 - 2 * p);
+    const cx = from.x + (to.x - from.x) * e;
+    const gb = from.b + (to.b - from.b) * e;
+    const fr = Math.floor(el / 0.27) % 2 === 0 ? 'walk1' : 'walk2';
+    drawAnimalPose(x, imgs[fr], H(fr), cx, gb, { yOff: -Math.abs(Math.sin(p * Math.PI * 7)) * 3, flip: cur[4] === 1 });
+    return;
+  }
+  const imgPose = pose === 'sitR' ? 'normal' : pose;
+  const flip = cur[4] === 1, spot = to;
+  const prevPose = prev[1] === 'sitR' ? 'normal' : prev[1];
+  const fade = (pose === 'sleep' || prev[1] === 'sleep') ? 0.8 : 0.5;
+  if (el < fade && prev[1] !== 'walk' && prevPose !== imgPose){
+    const pSpot = ANIMAL_SPOTS[prev[3]];
+    drawAnimalPose(x, imgs[prevPose], H(prevPose), pSpot.x, pSpot.b, { alpha: 1 - el / fade, flip: prev[4] === 1 });
+    drawAnimalPose(x, imgs[imgPose], H(imgPose), spot.x, spot.b, { alpha: el / fade, flip });
+  } else if (el < fade && prev[1] !== 'walk' && prevPose === imgPose && (prev[4] === 1) !== flip){
+    drawAnimalPose(x, imgs[imgPose], H(imgPose), spot.x, spot.b, { alpha: 1 - el / fade, flip: prev[4] === 1 });
+    drawAnimalPose(x, imgs[imgPose], H(imgPose), spot.x, spot.b, { alpha: el / fade, flip });
+  } else {
+    drawAnimalPose(x, imgs[imgPose], H(imgPose), spot.x, spot.b, { flip });
+  }
 }
 /* v61 虹: 庭の奥に柔らかい弧を重ねる（手続き描画。素材は増やさない） */
 let gardenRainbowCv = null;
@@ -5602,7 +5694,7 @@ async function drawGardenScene(st){
   const stalkPs = jobs.map(j => seedP.then(seedImg => drawGardenStalk(j.cv.getContext('2d'), j.key, j.area, j.sp, j.stock, j.i, seedImg)));
   let animalP = Promise.resolve();
   if (animalKind){
-    const poses = animalKind === 'rabbit' ? ['normal', 'stand', 'eat'] : ['normal', 'sleep', 'eat'];
+    const poses = animalKind === 'rabbit' ? ['normal', 'stand', 'eat', 'jump', 'front'] : ['normal', 'sleep', 'eat', 'walk1', 'walk2'];
     animalP = Promise.all(poses.map(p => loadImg(A3 + 'garden-' + animalKind + '-' + p + '.webp'))).then(imgs => {
       const animalImgs = {};
       poses.forEach((p, ix) => { animalImgs[p] = imgs[ix]; });
