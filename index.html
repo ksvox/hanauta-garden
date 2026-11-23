@@ -39,6 +39,42 @@
   #calThemeBar{ margin-top:16px; }
   #calThemeBar .cal-th-label{ color:#c2497d; }
   #calThemeBar.cleared .cal-th-label{ color:#3e7c38; }
+  /* v96 フラワーショップ */
+  .shop-sign{ position:relative; max-width:440px; margin:6px auto 4px; padding-top:10px; padding-bottom:8px; background:linear-gradient(180deg,#fffdf6,#fdf3e0); border:3px solid #eec9d6; outline:2px solid #f9e8ef; border-radius:999px; padding:17px 20px 14px; text-align:center; box-shadow:0 6px 18px rgba(120,70,90,.18); }
+  .sign-en{ font-family:'Snell Roundhand','Apple Chancery','Segoe Script','Brush Script MT',cursive; font-size:38px; color:#d6336c; line-height:1.1; }
+  .sign-jp{ font-size:13px; letter-spacing:.55em; text-indent:.55em; color:#a8763e; margin-top:3px; }
+  .sign-line svg{ width:225px; max-width:80%; height:auto; display:block; margin:0 auto; }
+  .sign-line.flip{ transform:scaleY(-1); }
+  .bq-stage{ position:relative; max-width:520px; margin:0 auto; border-radius:18px; overflow:hidden; box-shadow:0 6px 20px rgba(60,45,20,.25); }
+  .bq-stage > img.bg{ width:100%; display:block; }
+  .bq-grid{ position:absolute; left:5%; right:5%; bottom:3.5%; top:44%; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .bq-cell{ position:relative; background:rgba(255,253,247,.85); border:2px dashed rgba(150,110,50,.55); border-radius:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
+  .bq-cell.filled{ border-style:solid; border-color:rgba(150,110,50,.35); background:rgba(255,253,247,.94); }
+  .bq-cell .num{ position:absolute; top:3px; left:7px; font-size:15px; z-index:2; }
+  .bq-cell .plus{ font-size:26px; color:#b08d4f; font-weight:700; }
+  .bq-cell img.head{ max-width:88%; max-height:88%; object-fit:contain; }
+  .bq-cell .nm{ position:absolute; bottom:2px; left:0; right:0; font-size:10.5px; color:#6d5326; text-align:center; z-index:2; }
+  .bq-msg-btn{ padding:9px 14px; font-size:14.5px; border-radius:999px; border:1.5px solid #cbb894; background:#fdfaf2; color:#6d4c1e; cursor:pointer; }
+  .bq-msg-btn.sel{ border-color:#c2497d; background:#fbe7ef; font-weight:800; }
+  /* 下部タブバー（手順5）: 旧ナビボタンは隠し、ページ下にバーの分の余白を足す */
+  #collectionPage, #gardenPage, #labPage, #shopPage, #bqPicker{ padding-bottom:112px !important; }
+  body{ padding-bottom:86px; }
+  #tabBar{ position:fixed; left:0; right:0; bottom:0; z-index:58; background:rgba(255,253,247,.97); border-top:1.5px solid #e3d3ac; display:flex; padding:7px 4px calc(10px + env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(90,60,20,.13); }
+  .tab-btn{ flex:1; background:none; border:none; border-left:1px solid rgba(160,130,80,.28); cursor:pointer; padding:1px 0 0; }
+  .tab-btn:first-child{ border-left:none; }
+  .tab-btn .tab-ic{ display:block; font-size:22px; line-height:1.2; }
+  .tab-btn .tab-lb{ display:block; font-size:11.5px; color:#7a6a4d; font-weight:600; margin-top:1px; }
+  .tab-btn .tab-dot{ display:block; width:5px; height:5px; border-radius:50%; margin:3px auto 0; background:transparent; }
+  .tab-btn.on .tab-lb{ color:#c2497d; font-weight:800; }
+  .tab-btn.on .tab-dot{ background:#c2497d; }
+  .tab-btn.lock .tab-lb, .tab-btn.lock .tab-dot{ display:none; }
+  .tab-btn.lock .tab-ic{ font-size:24px; padding:7px 0; }
+  #tabToast{ position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(8px); background:rgba(60,45,25,.92); color:#fff7e6; font-size:14px; padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:95; white-space:nowrap; }
+  #tabToast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .bq-pick-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px 10px; max-width:560px; margin:0 auto; }
+  .bq-pick-cell{ text-align:center; cursor:pointer; background:#fffdf8; border-radius:12px; padding:8px 4px 7px; box-shadow:0 3px 10px rgba(60,45,20,.12); }
+  .bq-pick-cell.dim{ opacity:.35; pointer-events:none; }
+  .bq-lock{ display:inline-block; background:#efe9da; color:#8a7a56; border-radius:14px; padding:14px 26px; font-size:14.5px; line-height:1.7; }
   .cal-start{ font-size:12.5px; color:#a08c62; }
   .cal-card{ background:#fffdf8; border-radius:18px; box-shadow:0 4px 16px rgba(60,45,20,.13); padding:14px 12px 12px; margin-top:18px; }
   .cal-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 10px; background:linear-gradient(180deg,#8fbc6d,#79a856); border-radius:12px; padding:9px 6px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35); }
@@ -201,14 +237,7 @@
   <div class="cal-legend" id="cal-legend"></div>
   <p class="cal-stats" id="cal-stats"></p>
 
-<div style="text-align:center; margin:18px 0 4px;">
-    <button class="btn btn-sub" id="btn-coll-open" style="padding:11px 22px; font-size:15px;">📖 マイ図鑑コレクション</button>
-  </div>
-
   <!-- v47 マイガーデン: 最初の種を獲得するまで出さない -->
-  <div id="gardenBtnWrap" style="text-align:center; margin:10px 0 4px; display:none;">
-    <button class="btn btn-sub" id="btn-garden-open" style="padding:11px 22px; font-size:15px;">🌷 マイガーデンに行く</button>
-  </div>
 
   <p class="brand"><a href="https://www.ksvox.net" target="_blank" rel="noopener">Ⓒボーカル道場K's VOX</a></p>
 
@@ -246,13 +275,9 @@
   </div>
   <div id="collGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 10px;"></div>
   <div id="collHints" style="text-align:center; margin-top:32px;">
-    <button class="btn btn-main" id="btn-lab-go" style="display:none; padding:11px 26px; font-size:15.5px; margin-bottom:10px; background:linear-gradient(135deg,#7fae5f,#4e7d46);">🧪 開発室に行く</button><br>
     <button class="btn btn-sub" id="btn-hint" style="padding:11px 26px; font-size:15.5px;">💡 ヒント</button>
     <div id="hintNote" style="font-size:12px; color:#a08c66; margin-top:5px;"></div>
     <div id="hintPanel" style="display:none; max-width:520px; margin:16px auto 0; text-align:left;"></div>
-  </div>
-  <div style="text-align:center; margin-top:26px;">
-    <button class="btn btn-sub" id="btn-coll-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
   </div>
 </div>
 
@@ -310,9 +335,6 @@
     機種変更やブラウザのデータ消去で記録は消えます。<br>
     ※iPhoneをご利用の方は、長く開かないでいると記録が消えてしまうことがあります。ホーム画面に追加しておくと安心です。
   </div>
-  <div style="text-align:center; margin-top:26px;">
-    <button class="btn btn-sub" id="btn-garden-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
-  </div>
 </div>
 
 <!-- v47 種イベントのモーダル -->
@@ -335,7 +357,7 @@
   <p style="text-align:center; font-size:13.5px; color:#6b6151; margin:0 6px 14px;">ここでは、お花が求めるメロディーをハナウタにしてね。</p>
   <div id="labNoCur" style="display:none; text-align:center; background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:16px; font-size:14px; line-height:1.8; color:#6b6151;">いま開発中の花はありません。<br>図鑑で花を2種類選ぶと、交配を始められます。</div>
   <div id="labCur">
-    <p style="font-weight:700; color:#7a5c2e; margin:10px 0 6px;">① 現在交配中の花</p>
+    <h2 class="sec" style="margin-top:10px;">1️⃣ 現在交配中の花</h2>
     <div style="display:flex; align-items:flex-start; justify-content:center; gap:10px;">
       <div id="labParentA" style="width:38%; text-align:center;"></div>
       <div style="font-size:22px; font-weight:800; color:#a08c66; padding-top:14%;">×</div>
@@ -346,7 +368,7 @@
       <p id="labPoints" style="text-align:center; font-size:14px; font-weight:700; color:#7a5c2e; margin:10px 0 4px;"></p>
       <div style="height:10px; background:#e5dcc4; border-radius:999px; overflow:hidden;"><div id="labBar" style="height:100%; width:0%; background:linear-gradient(90deg,#8fae5f,#e88bb0); transition:width .5s;"></div></div>
     </div>
-    <p style="font-weight:700; color:#7a5c2e; margin:20px 0 6px;">② 新種を育てる</p>
+    <h2 class="sec">2️⃣ 新種を育てる</h2>
     <p style="font-size:13px; line-height:1.7; color:#6b6151; margin:0 0 8px;">お花が求めるメロディーを聴いて、同じようにハナウタしてね。正解率が高いほどポイントが増えて、花が育ちます（満開は71P）。難易度ごとに、1日1回ずつ歌えます。</p>
     <div style="display:flex; flex-direction:column; gap:9px; max-width:420px; margin:0 auto;">
       <button class="btn btn-main" id="btn-lab-t1" style="padding:12px; font-size:15.5px;">初級の鼻歌をうたう</button>
@@ -376,9 +398,6 @@
   <div style="max-width:420px; margin:26px auto 0; text-align:center;">
     <button class="btn btn-main" id="btn-lab-note" style="padding:12px 26px; font-size:15.5px; background:linear-gradient(135deg,#a5823f,#7c6125);">③ 開発ノートを見る</button>
     <p style="font-size:13px; color:#6b6151; margin:8px 0 0;">これまでの交配記録が参照できます。</p>
-  </div>
-  <div style="text-align:center; margin-top:26px;">
-    <button class="btn btn-sub" id="btn-lab-back" style="padding:12px 30px; font-size:16px;">🌸 戻る</button>
   </div>
 </div>
 
@@ -434,6 +453,57 @@
   </div>
 </div>
 
+<div id="shopPage" style="display:none; position:fixed; inset:0; z-index:57; background:#f7f1e3; overflow-y:auto; padding:24px 16px 44px;">
+  <div class="shop-sign"><div class="sign-line"><svg width="300" height="28" viewBox="0 0 320 28" style="display:block; margin:2px auto 4px;" aria-hidden="true"><path d="M4 16 Q 40 7, 80 15 T 160 15 T 240 15 T 316 14" stroke="#7a9a52" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M52 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="64" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 64 6)"/><path d="M118 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="130" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 130 23)"/><path d="M186 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="198" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 198 6)"/><path d="M252 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="264" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 264 23)"/><circle cx="33.8" cy="14.0" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="17.6" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="16.2" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="11.8" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="10.4" r="3.1" fill="#e88bb0"/><circle cx="30" cy="14" r="2.1" fill="#f7d774"/><circle cx="98.8" cy="14.0" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="17.6" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="16.2" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="11.8" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="10.4" r="3.1" fill="#f2b04a"/><circle cx="95" cy="14" r="2.1" fill="#f7d774"/><circle cx="163.8" cy="14.0" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="17.6" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="16.2" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="11.8" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="10.4" r="3.1" fill="#9a7fc9"/><circle cx="160" cy="14" r="2.1" fill="#f7d774"/><circle cx="228.8" cy="14.0" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="17.6" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="16.2" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="11.8" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="10.4" r="3.1" fill="#7fa8d9"/><circle cx="225" cy="14" r="2.1" fill="#f7d774"/><circle cx="293.8" cy="14.0" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="17.6" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="16.2" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="11.8" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="10.4" r="3.1" fill="#ef7d54"/><circle cx="290" cy="14" r="2.1" fill="#f7d774"/></svg></div><div class="sign-en">Flower Shop</div><div class="sign-jp">フラワーショップ</div><div class="sign-line flip"><svg width="300" height="28" viewBox="0 0 320 28" style="display:block; margin:2px auto 4px;" aria-hidden="true"><path d="M4 16 Q 40 7, 80 15 T 160 15 T 240 15 T 316 14" stroke="#7a9a52" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M52 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="64" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 64 6)"/><path d="M118 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="130" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 130 23)"/><path d="M186 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="198" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 198 6)"/><path d="M252 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="264" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 264 23)"/><circle cx="33.8" cy="14.0" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="17.6" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="16.2" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="11.8" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="10.4" r="3.1" fill="#e88bb0"/><circle cx="30" cy="14" r="2.1" fill="#f7d774"/><circle cx="98.8" cy="14.0" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="17.6" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="16.2" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="11.8" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="10.4" r="3.1" fill="#f2b04a"/><circle cx="95" cy="14" r="2.1" fill="#f7d774"/><circle cx="163.8" cy="14.0" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="17.6" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="16.2" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="11.8" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="10.4" r="3.1" fill="#9a7fc9"/><circle cx="160" cy="14" r="2.1" fill="#f7d774"/><circle cx="228.8" cy="14.0" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="17.6" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="16.2" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="11.8" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="10.4" r="3.1" fill="#7fa8d9"/><circle cx="225" cy="14" r="2.1" fill="#f7d774"/><circle cx="293.8" cy="14.0" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="17.6" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="16.2" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="11.8" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="10.4" r="3.1" fill="#ef7d54"/><circle cx="290" cy="14" r="2.1" fill="#f7d774"/></svg></div></div>
+  <p style="text-align:center; font-weight:800; font-size:17px; color:#4c3a22; margin:14px 0 2px;">咲かせたお花でブーケを作ろう</p>
+  <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">お花を9つ選んでブーケを作り、スタンプ風にしてお友だちに送れます。</p>
+  <div id="bqViewSelect">
+    <h2 class="sec" style="margin-top:16px;">1️⃣ お花を選ぶ</h2>
+    <div class="bq-stage">
+      <img class="bg" id="bqShopBg" alt="">
+      <div class="bq-grid" id="bqGrid"></div>
+    </div>
+    <p id="bqSelMsg" style="text-align:center; font-size:13px; color:#8a6f3c; min-height:20px; margin:10px 0 2px;"></p>
+    <div style="text-align:center; margin-top:6px;">
+      <button class="btn sub" id="btn-bq-reset" type="button">🔄 選び直す</button>
+      <button class="btn" id="btn-bq-make" type="button">💐 ブーケを作る</button>
+    </div>
+  </div>
+  <div id="bqViewSing" style="display:none;">
+    <h2 class="sec" style="margin-top:16px;">2️⃣ ブーケを作る</h2>
+    <p id="bqSingText" style="text-align:center; font-size:14.5px; color:#6d5326; line-height:1.7; margin:0 4px;">30秒の鼻歌を歌って、ブーケを完成させてください。</p>
+    <div style="position:relative; max-width:520px; margin:10px auto; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 6px 20px rgba(60,45,20,.18);">
+      <canvas id="bqCv" width="1210" height="1300" style="width:100%; display:block;"></canvas>
+      <div id="bqDark" style="position:absolute; inset:0; background:#14100c; opacity:0; pointer-events:none; transition:opacity .7s;"></div>
+      <div id="bqDoneText" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:34px; font-weight:800; color:#ffe9a8; text-shadow:0 2px 14px rgba(0,0,0,.6);">ブーケ完成✨</div>
+    </div>
+    <p id="bqSingMsg" style="text-align:center; font-size:14px; color:#8a6f3c; min-height:22px; margin:10px 0 2px;"></p>
+    <div style="text-align:center; margin-top:6px;">
+      <button class="btn" id="btn-bq-sing" type="button">🎤鼻歌をうたう（30秒）</button>
+      <button class="btn sub" id="btn-bq-abort" type="button" style="display:none;">やめる</button>
+      <div id="bqMsgZone" style="display:none; margin:4px 0 8px;">
+        <p style="text-align:center; font-size:13px; color:#6b6151; margin:6px 0 7px;">メッセージを選んでね（画像に入ります）</p>
+        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+          <button class="bq-msg-btn" type="button" data-msg="ありがとう！">ありがとう！</button>
+          <button class="bq-msg-btn" type="button" data-msg="おめでとう！">おめでとう！</button>
+          <button class="bq-msg-btn" type="button" data-msg="お疲れさま！">お疲れさま！</button>
+          <button class="bq-msg-btn sel" type="button" data-msg="">なし</button>
+        </div>
+      </div>
+      <button class="btn" id="btn-bq-share" type="button" style="display:none;">💌 LINEで送る</button>
+      <button class="btn sub" id="btn-bq-again" type="button" style="display:none;">選び直す</button>
+    </div>
+  </div>
+</div>
+<div id="bqPicker" style="display:none; position:fixed; inset:0; z-index:70; background:#f7f1e3; overflow-y:auto; padding:24px 16px 44px;">
+  <h2 style="text-align:center; font-size:21px; margin:4px 0 6px; color:#4c3a22;">お花を選んでね</h2>
+  <p id="bqPickNote" style="text-align:center; font-size:13px; color:#8a6f3c; margin:0 0 14px;"></p>
+  <div class="bq-pick-grid" id="bqPickGrid"></div>
+  <div style="text-align:center; margin-top:20px;">
+    <button class="btn sub" id="btn-bq-pick-remove" type="button" style="display:none;">このマスの花をはずす</button>
+    <button class="btn sub" id="btn-bq-pick-back" type="button">← もどる</button>
+  </div>
+</div>
 <div id="backupModal" style="display:none; position:fixed; inset:0; background:rgba(24,18,10,.88); z-index:62; align-items:center; justify-content:center; flex-direction:column; padding:22px;">
   <div style="background:#fffdf8; border-radius:16px; padding:20px 18px; max-width:520px; width:100%; box-shadow:0 12px 34px rgba(0,0,0,.35);">
     <p style="margin:0 0 14px; font-size:14.5px; line-height:1.8; color:#5a5040;">機種変更のときは、この端末の「データを書き出す」で記録をファイルに取り出し、新しい端末で「データを読み込む」と、図鑑・ガーデン・開発室・カレンダーの記録をそのまま引き継げます。<br>故障に備え、たまに書き出しておくと安心です。</p>
@@ -520,11 +590,11 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v95'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v97'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
-const AV3 = 'v95', AV4 = 'v84', AV5 = 'v84';
+const AV3 = 'v96', AV4 = 'v84', AV5 = 'v84';
 function avFor(src){ return src.startsWith(A5) ? AV5 : src.startsWith(A4) ? AV4 : src.startsWith(A3) ? AV3 : ASSET_V; }
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればページの一番上に静かに知らせる。読み直しはキャッシュ回避の
@@ -3943,7 +4013,7 @@ async function startCeremony(){
   if (flowerInfo){ flowerInfo.eventSong = liveEventSong || null; flowerInfo.eventTier = liveEventTier || null; } /* イベントの花なら一致した曲名を持たせる（フラワーメッセージ用） */
   /* マイ図鑑コレクションへ記録（失敗しても本体は止めない）。
      v47: 記録できたら新しい開花回数をマイガーデンの「種」判定へ渡す */
-  recordCollection().then(nc => { if (nc){ onBloomSeedCheck(mainSp, nc); honorsAfterBloom(mainSp, nc).catch(() => {}); } }).catch(() => {});
+  recordCollection().then(nc => { refreshShopEntrance(); if (nc){ onBloomSeedCheck(mainSp, nc); honorsAfterBloom(mainSp, nc).catch(() => {}); } }).catch(() => {});
   calMarkSong(an).catch(() => {}); /* v86: カレンダーの活動記録＋お題判定 */
   stocks[0].stems.forEach((st, idx) => setTimeout(() => pluck(440 * Math.pow(2, (idx * 4 - 6) / 12), 0, 0.12), 300 + idx * 220));
   $('timer').textContent = '花が咲きました 🌸';
@@ -4543,7 +4613,6 @@ async function openCollection(){
   }
   labOnCollection(map);
 }
-$('btn-coll-open').onclick = openCollection;
 
 /* ========= v70 称号（マスター）と全種制覇エンドロール =========
    先生の決定（2026-11-18）: 10回 銀の印 / 30回 金の印 / 50回で「極」カンスト。
@@ -5041,10 +5110,7 @@ function closeSeedModal(){
   refreshGardenBtn();
   if (seedGiftQueue.length) setTimeout(presentNextSeedGift, 700);
 }
-async function refreshGardenBtn(st){
-  const s = st || await gardenLoad();
-  $('gardenBtnWrap').style.display = (s && s.everSeed) ? 'block' : 'none';
-}
+async function refreshGardenBtn(st){ /* お庭の入口はタブバーに移行したため、ここでは何もしない */ }
 refreshGardenBtn();
 /* 枯れ: 満開の株だけが対象。昨日一日歌わなかった場合に消え、エリアは元の土に戻る（v74: 判定をカレンダーに統一） */
 function gardenApplyWilt(st){
@@ -5082,8 +5148,6 @@ async function openGarden(){
   clearTimeout(loadTimer);
   const ldEl = $('gardenLoading'); if (ldEl) ldEl.style.display = 'none';
 }
-$('btn-garden-open').onclick = openGarden;
-$('btn-garden-back').onclick = () => { if (gardenSinging) finishGardenSing(); gardenAnimStop(); $('gardenPage').style.display = 'none'; };
 function gardenDayInfo(st){
   const today = gardenTodayStr();
   const n = (st.day && st.day.d === today) ? st.day.n : 0;
@@ -5904,7 +5968,6 @@ $('btn-coll-reset').onclick = async () => {
   b.textContent = 'はじめから集め直す'; b.style.color = '#a08c66'; b.style.fontWeight = '';
   openCollection();
 };
-$('btn-coll-back').onclick = () => { $('collectionPage').style.display = 'none'; };
 
 /* リズム補正: オルゴールに揺らぎは要らない（先生の指定）。歌の音の間隔から拍の格子を推定し、
    音の頭をいちばん近い格子へ完全に寄せる。拍が読み取れる歌にだけ掛け、拍のない歌はそのままにする */
@@ -6400,6 +6463,15 @@ collDB.putCal = async function(state){
   const db = await collDB.open(); if (!db) return;
   return new Promise(res => { try { const tx = db.transaction('garden', 'readwrite'); tx.objectStore('garden').put({ key: 'cal', ...state }); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch (e) { res(); } });
 };
+/* v96: フラワーショップの選択中の花も garden ストアに key='bq' で保存する */
+collDB.getBq = async function(){
+  const db = await collDB.open(); if (!db) return null;
+  return new Promise(res => { try { const rq = db.transaction('garden').objectStore('garden').get('bq'); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); } catch (e) { res(null); } });
+};
+collDB.putBq = async function(state){
+  const db = await collDB.open(); if (!db) return;
+  return new Promise(res => { try { const tx = db.transaction('garden', 'readwrite'); tx.objectStore('garden').put({ key: 'bq', ...state }); tx.oncomplete = () => res(); tx.onerror = () => res(); } catch (e) { res(); } });
+};
 function labDefaultState(){ return { unlocked: false, unlockShown: false, cur: null, day: { d: '', used: {} }, blooms: 0, lastChild: null, history: [], honors: { doctor: '', prof: '' } }; }
 async function labLoad(){
   try { const s = await collDB.getLab(); if (s && typeof s === 'object'){ const d = labDefaultState(); return { ...d, ...s, day: (s.day && typeof s.day === 'object') ? s.day : d.day }; } } catch (e) { /* DBが無い環境では既定値 */ }
@@ -6806,7 +6878,6 @@ $('btn-lab-select').onclick = async () => {
   openLab();
 };
 $('btn-lab-cancel').onclick = () => labSetSelectMode(false);
-$('btn-lab-go').onclick = () => openLab();
 $('btn-lab-unlock-go').onclick = () => { $('labUnlockModal').style.display = 'none'; };
 $('collGrid').addEventListener('click', e => {
   if (!labSel.on) return;
@@ -7029,7 +7100,6 @@ async function openLab(){
   $('labPage').style.display = 'block';
   await renderLabPage();
 }
-$('btn-lab-back').onclick = () => { $('labPage').style.display = 'none'; };
 
 /* ===== トレーニング（BPM84・2小節=8拍。難易度3種、各1日1回） ===== */
 const LAB_BPM = 84, LAB_BEAT = 60 / LAB_BPM;
@@ -7533,6 +7603,418 @@ $('btn-lab-zoom').onclick = () => {
   zoomOpen = true;
 };
 $('btn-lab-next').onclick = () => { $('labPage').style.display = 'none'; openCollection(); };
+/* ===== v96 フラワーショップ ===== */
+const BQ_UNLOCK = 20;
+const BQ_NUMS = '①②③④⑤⑥⑦⑧⑨';
+const BQ_CROP = { lantern: [0.14, 0, 0.86, 0.46], goldbell: [0.02, 0.14, 0.98, 0.66], firefly: [0.04, 0, 0.96, 0.58], sweetpea: [0.10, 0.10, 0.90, 0.50], marigold: [0.08, 0, 0.92, 0.40], hotlips: [0.10, 0, 0.90, 0.36], sakura2: [0.02, 0.02, 0.98, 0.56] };
+const BQ_SCALE = { sunflower: 1.2, tulip: 0.85, goldbell: 0.95, firefly: 0.95 };
+const BQ_BASIC = { gerbera: [16, 0.78, 0.95], dahlia: [318, 0.48, 0.95], carnation: [338, 0.55, 0.95], ranunculus: [24, 0.62, 0.98], anemone: [262, 0.42, 0.95] };
+const BQ_HOME = { dahlia:332, rose:350, lily:298, gerbera:45, sunflower:48, anemone:218, ranunculus:18, marguerite:55, tulip:50, featherflower:312, swirl:255, tulilily:50, candy:345, mobius:285, sakura:340, cotton:325, moonring:250, carnation:130, galaxy:235, lantern:30, crystal:200, goldbell:45, bubble:275, noirrose:348, firefly:80, rainbow:315 };
+const BQ_SLOTS1 = [
+  { n: 7, x: 450, y: 262, s: 0.80, rot: -6 }, { n: 8, x: 605, y: 230, s: 0.80, rot: 0 }, { n: 9, x: 760, y: 262, s: 0.80, rot: 6 },
+  { n: 5, x: 348, y: 400, s: 0.85, rot: -8 }, { n: 6, x: 862, y: 400, s: 0.85, rot: 8 },
+  { n: 1, x: 605, y: 440, s: 1.00, rot: 0 },
+  { n: 3, x: 412, y: 562, s: 0.90, rot: -5 }, { n: 4, x: 798, y: 562, s: 0.90, rot: 5 },
+  { n: 2, x: 605, y: 618, s: 0.95, rot: 0 },
+];
+const BQ_SLOTS2 = BQ_SLOTS1.map(s => ({ n: s.n, x: Math.round(s.x * 1195 / 1210), y: Math.round(s.y * 1316 / 1300), s: s.s, rot: s.rot }));
+const BQ_BASES = [
+  { img: 'bq-base.webp',  W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: null },
+  { img: 'bq-base3.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 280 },
+  { img: 'bq-base4.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 355 },
+  { img: 'bq-base5.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 208 },
+  { img: 'bq-base6.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 32 },
+];
+/* 歌の色から土台を選ぶ: 淡い歌は白、鮮やかな歌は色相に一番近いラッピング */
+function bqPickBase(color){
+  if (!color || color.fam === 'white' || (color.sat || 0) < 0.30) return 0;
+  let best = 1, bd = 999;
+  for (let i = 1; i < BQ_BASES.length; i++){
+    const dd = Math.abs(color.hue - BQ_BASES[i].hue) % 360, d = dd > 180 ? 360 - dd : dd;
+    if (d < bd){ bd = d; best = i; }
+  }
+  return best;
+}
+let bqMsg = '';
+function bqDrawMsgCard(x, msg){
+  const B = BQ_BASES[bqBaseIdx], s = B.W / 1210;
+  x.save(); x.translate(872 * s, 884 * s); x.rotate(-7 * Math.PI / 180); x.scale(s, s);
+  const rr = (a, b, w, h, r) => { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); };
+  x.fillStyle = 'rgba(90,60,20,.28)'; rr(-176, -52, 360, 136, 14); x.fill();
+  x.fillStyle = '#fffdf6'; rr(-182, -60, 360, 136, 14); x.fill();
+  x.strokeStyle = '#c49e54'; x.lineWidth = 3; rr(-182, -60, 360, 136, 14); x.stroke();
+  x.strokeStyle = 'rgba(196,158,84,.45)'; x.lineWidth = 1.5; rr(-172, -50, 340, 116, 10); x.stroke();
+  x.fillStyle = '#b03a5b'; x.font = '700 47px "Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(msg, 0, 10);
+  x.restore();
+}
+let bqPicks = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
+let bqBaseIdx = 0, bqSinging = false, bqStream = null, bqTimer = null, bqFinal = false, bqPickSlot = 0;
+const bqOff = document.createElement('canvas');
+const bqWork = document.createElement('canvas');
+const BQ_SW = 1330, BQ_SH = 1560, BQ_OX = 60, BQ_OY = 120;
+function bqDrawFlowerLine(x, cx, cy, w){
+  x.save(); x.translate(cx - w / 2, cy); x.globalAlpha = 0.55;
+  const cols = ['#e88bb0', '#f2b04a', '#9a7fc9', '#7fa8d9', '#ef7d54'];
+  x.strokeStyle = '#7a9a52'; x.lineWidth = 3; x.beginPath();
+  for (let px = 0; px <= w; px += 8){ const py = 22 + 6 * Math.sin(px / w * Math.PI * 3); if (px === 0) x.moveTo(px, py); else x.lineTo(px, py); }
+  x.stroke();
+  x.fillStyle = '#8fae5f';
+  [[64, 4], [198, 4], [130, 36], [264, 36]].forEach(([lx, ly], i) => { x.save(); x.translate(lx * w / 320, ly); x.rotate(i % 2 ? 0.5 : -0.5); x.beginPath(); x.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2); x.fill(); x.restore(); });
+  [30, 95, 160, 225, 290].forEach((fx, i) => {
+    const cxp = fx * w / 320, cyp = 22 + 6 * Math.sin(cxp / w * Math.PI * 3);
+    x.fillStyle = cols[i];
+    for (let a = 0; a < 5; a++){ const ang = a * Math.PI * 2 / 5 - Math.PI / 2; x.beginPath(); x.arc(cxp + 7 * Math.cos(ang), cyp + 7 * Math.sin(ang), 4.6, 0, Math.PI * 2); x.fill(); }
+    x.fillStyle = '#f7d774'; x.beginPath(); x.arc(cxp, cyp, 3.1, 0, Math.PI * 2); x.fill();
+  });
+  x.restore();
+}
+const bqHeadCache = {}, bqBaseCache = {};
+
+async function bqCollectedMap(){ const all = await collDB.getAll(); const m = {}; for (const r of all) m[r.id] = r; return m; }
+function bqKindCount(map){ return SPECIES.filter(sp => map[sp.id]).length + HYBRIDS.filter(h => map[h.id]).length; }
+function bqDef(id){ const sp = SPECIES.find(s => s.id === id); if (sp) return { id, jp: sp.jp, sp }; const h = HYBRID_BY_ID[id]; if (h) return { id, jp: h.jp, hybrid: h }; return null; }
+function bqPickable(id, map){ const d = bqDef(id); if (!d || !map[id]) return false; if (d.sp && d.sp.seasonalScene) return false; return true; }
+async function bqLoadPicks(){ try { const r = await collDB.getBq(); if (r && r.picks){ const map = await bqCollectedMap(); const used = {}; for (let n = 1; n <= 9; n++){ const id = r.picks[n]; if (id && bqPickable(id, map) && (used[id] || 0) < (map[id].count || 1)){ bqPicks[n] = id; used[id] = (used[id] || 0) + 1; } else bqPicks[n] = null; } } } catch (e) {} }
+async function bqSavePicks(){ try { await collDB.putBq({ picks: bqPicks }); } catch (e) {} }
+async function refreshShopEntrance(){ const el = $('shopEntrance'); if (!el) return; try { const map = await bqCollectedMap(); const n = bqKindCount(map);
+  if (n >= BQ_UNLOCK){ el.innerHTML = ''; const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = '💐 お店に入る'; b.onclick = openShop; el.appendChild(b); }
+  else el.innerHTML = '<span class="bq-lock">🔒 フラワーショップ<br>あと ' + (BQ_UNLOCK - n) + ' 種で開きます</span>';
+} catch (e) {} }
+async function openShop(){ $('shopPage').style.display = 'block'; $('bqShopBg').src = A3 + 'shop-bg.webp?av=' + AV3; await bqLoadPicks(); bqShowSelect(); renderBqGrid(); }
+function bqShowSelect(){ $('bqViewSelect').style.display = ''; $('bqViewSing').style.display = 'none'; }
+function bqHybridHue(def){ for (const k in LAB_CROSS){ if (LAB_CROSS[k] === def.id){ const fams = k.split('|'); const reps = fams.map(f => Object.keys(LAB_FAM).find(id => LAB_FAM[id] === f)); if (reps.length === 1) return LAB_HOME[reps[0]] || 330; return labHueOf(reps[0], reps[1]); } } return 330; }
+async function bqHeadImg(id){
+  if (bqHeadCache[id]) return bqHeadCache[id];
+  const d = bqDef(id); if (!d) return null;
+  let out = null;
+  if (id === 'tulip' || id === 'rose' || id === 'sunflower'){ out = await loadImg(A3 + 'bq-' + id + '.webp'); }
+  else {
+    let raw = null;
+    if (d.hybrid) raw = await loadImg(A5 + id + '-full.webp');
+    else raw = (d.sp.cluster || !d.sp.stemFam) ? await loadImg(A4 + d.sp.base + '-full.webp') : await loadImg(A5 + (d.sp.headBase || d.sp.base) + '-full.webp');
+    if (!raw) return null;
+    let img = raw;
+    const cr = BQ_CROP[id] || (d.hybrid ? [0, 0, 1, 0.98] : null);
+    if (cr){ const c = document.createElement('canvas'); c.width = Math.round(raw.width * (cr[2] - cr[0])); c.height = Math.round(raw.height * (cr[3] - cr[1])); c.getContext('2d').drawImage(raw, -Math.round(raw.width * cr[0]), -Math.round(raw.height * cr[1])); img = c; }
+    const needsDye = d.hybrid ? true : !!d.sp.dye;
+    if (needsDye){
+      let hue, sat, light;
+      if (BQ_BASIC[id]){ [hue, sat, light] = BQ_BASIC[id]; }
+      else if (d.hybrid){ hue = bqHybridHue(d.hybrid); sat = 0.5; light = 0.6; }
+      else { hue = BQ_HOME[id] !== undefined ? BQ_HOME[id] : 330; sat = 0.55; light = 0.62; }
+      out = dyeImage(img, { base: 'bq_' + id, dye: true, id }, hue, sat, light, 'bqhead');
+    } else out = img;
+  }
+  bqHeadCache[id] = out; return out;
+}
+function bqHeadURL(im){ return im instanceof HTMLCanvasElement ? im.toDataURL() : (im && im.src) || ''; }
+/* 包装紙の染色: 紙の質感（明るさ）を掛け合わせ、リボンは染めない（際まで長いグラデーション） */
+function bqDyeBase(img, B, hueDeg, tintSat){
+  const key = B.img + '|' + Math.round(hueDeg) + '|' + Math.round(tintSat * 20);
+  if (bqBaseCache[key]) return bqBaseCache[key];
+  const W = img.width, H = img.height;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+  const idat = x.getImageData(0, 0, W, H), d = idat.data;
+  const Hh = (((hueDeg % 360) + 360) % 360) / 60, C = tintSat, X = C * (1 - Math.abs(Hh % 2 - 1));
+  let tr, tg, tb;
+  if (Hh < 1){ tr = C; tg = X; tb = 0; } else if (Hh < 2){ tr = X; tg = C; tb = 0; } else if (Hh < 3){ tr = 0; tg = C; tb = X; }
+  else if (Hh < 4){ tr = 0; tg = X; tb = C; } else if (Hh < 5){ tr = X; tg = 0; tb = C; } else { tr = C; tg = 0; tb = X; }
+  const rib = B.rib, org = B.org, FEATHER = 300 * (W / 1210);
+  /* カスミソウ保護: 明るく色みのない小さな塊だけを「白い点」として守る（土台ごとに一度だけ計算） */
+  if (!B.dotMask){
+    const bright = new Uint8Array(W * H);
+    for (let p = 0; p < W * H; p++){ const i4 = p * 4; if (d[i4 + 3] < 110) continue; const r0 = d[i4] / 255, g0 = d[i4 + 1] / 255, b0 = d[i4 + 2] / 255; const mx0 = Math.max(r0, g0, b0), mn0 = Math.min(r0, g0, b0); if (mn0 >= 0.84 && (mx0 > 0 ? (mx0 - mn0) / mx0 : 0) <= 0.08) bright[p] = 1; }
+    /* 細い茎ごとつながって大きな塊になるので、まず2回細らせて茎を消し、芯だけを塊で拾い、最後に少し膨らませて点全体を覆う */
+    let cur = bright;
+    for (let e = 0; e < 2; e++){ const nx = new Uint8Array(W * H); for (let y2 = 1; y2 < H - 1; y2++) for (let x2 = 1; x2 < W - 1; x2++){ const p = y2 * W + x2; if (cur[p] && cur[p - 1] && cur[p + 1] && cur[p - W] && cur[p + W]) nx[p] = 1; } cur = nx; }
+    const core = new Uint8Array(W * H), seen = new Uint8Array(W * H), stack = [];
+    for (let p = 0; p < W * H; p++){
+      if (!cur[p] || seen[p]) continue;
+      const comp = []; stack.length = 0; stack.push(p); seen[p] = 1;
+      while (stack.length){ const q = stack.pop(); comp.push(q); const qx = q % W, qy = (q / W) | 0;
+        if (qx > 0 && cur[q - 1] && !seen[q - 1]){ seen[q - 1] = 1; stack.push(q - 1); }
+        if (qx < W - 1 && cur[q + 1] && !seen[q + 1]){ seen[q + 1] = 1; stack.push(q + 1); }
+        if (qy > 0 && cur[q - W] && !seen[q - W]){ seen[q - W] = 1; stack.push(q - W); }
+        if (qy < H - 1 && cur[q + W] && !seen[q + W]){ seen[q + W] = 1; stack.push(q + W); } }
+      if (comp.length <= 500) for (const q of comp) core[q] = 1;
+    }
+    const mask = new Uint8Array(W * H);
+    for (let y2 = 0; y2 < H; y2++) for (let x2 = 0; x2 < W; x2++){ if (!core[y2 * W + x2]) continue; for (let dy2 = -3; dy2 <= 3; dy2++) for (let dx2 = -3; dx2 <= 3; dx2++){ const nx2 = x2 + dx2, ny2 = y2 + dy2; if (nx2 >= 0 && ny2 >= 0 && nx2 < W && ny2 < H) mask[ny2 * W + nx2] = 1; } }
+    B.dotMask = mask;
+  }
+  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++){
+    const i = (yy * W + xx) * 4;
+    if (d[i + 3] < 110) continue;
+    if (B.dotMask[yy * W + xx]) continue;
+    const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
+    const s0 = mx > 0 ? dl / mx : 0;
+    let h0 = 0;
+    if (dl > 1e-4){ if (mx === r) h0 = ((g - b) / dl) % 6; else if (mx === g) h0 = (b - r) / dl + 2; else h0 = (r - g) / dl + 4; h0 *= 60; if (h0 < 0) h0 += 360; }
+    if (h0 >= 66 && h0 <= 175 && s0 > 0.08) continue;
+    if (h0 >= 15 && h0 <= 45 && s0 >= 0.18 && s0 <= 0.68 && mx <= 0.52 && r > b + 0.03) continue;
+    const ex = (xx - org.cx) / org.rx, ey = (yy - org.cy) / org.ry, ed2 = ex * ex + ey * ey;
+    let amt = ed2 < 1.1 ? 0.30 : 0.85;
+    let rdist = 1e9;
+    if (xx >= rib.x0 && xx <= rib.x1 && yy >= rib.top) rdist = 0;
+    else { const dx = xx < rib.x0 ? rib.x0 - xx : (xx > rib.x1 ? xx - rib.x1 : 0); const dy = yy < rib.top ? rib.top - yy : 0; rdist = Math.sqrt(dx * dx + dy * dy); }
+    amt *= Math.min(1, rdist / FEATHER);
+    if (amt <= 0.004) continue;
+    const L = mx * 0.84 + 0.10;
+    d[i]     = Math.round(255 * ((L * (1 + (tr - 0.33) * 1.6)) * (1 - amt) + (0.30 + L * 0.85) * (0.25 + tr * 1.05) * amt));
+    d[i + 1] = Math.round(255 * ((L * (1 + (tg - 0.33) * 1.6)) * (1 - amt) + (0.30 + L * 0.85) * (0.25 + tg * 1.05) * amt));
+    d[i + 2] = Math.round(255 * ((L * (1 + (tb - 0.33) * 1.6)) * (1 - amt) + (0.30 + L * 0.85) * (0.25 + tb * 1.05) * amt));
+  }
+  x.putImageData(idat, 0, 0);
+  bqBaseCache[key] = c; return c;
+}
+async function bqRenderBouquet(){
+  const B = BQ_BASES[bqBaseIdx];
+  bqWork.width = B.W; bqWork.height = B.H;
+  const x = bqWork.getContext('2d');
+  x.clearRect(0, 0, B.W, B.H);
+  let base = await loadImg(A3 + B.img);
+  if (!base) return;
+  x.drawImage(base, 0, 0, B.W, B.H);
+  for (const slot of B.slots){
+    const id = bqPicks[slot.n]; if (!id) continue;
+    const im = await bqHeadImg(id); if (!im) continue;
+    const d = bqDef(id), sp = d.sp;
+    let h = 332 * B.hScale * slot.s / (sp && sp.headScale ? Math.pow(sp.headScale, 0.55) : 1) * (BQ_SCALE[id] || (BQ_CROP[id] ? 1 : (sp && sp.cluster ? 1.3 : 1)));
+    const isTulip = id === 'tulip';
+    let jy = 0, flip = 1;
+    if (isTulip){ h *= 1 + ((slot.n * 29) % 7 - 3) * 0.03; jy = ((slot.n * 41) % 9 - 4) * 4; flip = slot.n % 3 === 0 ? -1 : 1; }
+    const w = h * im.width / im.height;
+    x.save(); x.translate(slot.x, slot.y + jy + (sp && sp.stemFam ? h * 0.05 : 0)); x.rotate((slot.rot * (isTulip ? 3.2 : 1) + (isTulip ? ((slot.n * 53) % 5 - 2) * 2.5 : 0)) * Math.PI / 180); x.scale(flip, 1);
+    x.drawImage(im, -w / 2, -h / 2, w, h); x.restore();
+  }
+  const lip = document.createElement('canvas'); lip.width = B.W; lip.height = B.lip.h;
+  const lx = lip.getContext('2d');
+  lx.drawImage(base, 0, B.lip.y, B.W, B.lip.h, 0, 0, B.W, B.lip.h);
+  lx.globalCompositeOperation = 'destination-in';
+  const lg = lx.createLinearGradient(0, 0, 0, B.lip.h);
+  lg.addColorStop(0, 'rgba(0,0,0,0)'); lg.addColorStop(0.38, 'rgba(0,0,0,1)'); lg.addColorStop(1, 'rgba(0,0,0,1)');
+  lx.fillStyle = lg; lx.fillRect(0, 0, B.W, B.lip.h);
+  x.drawImage(lip, 0, B.lip.y);
+  if (bqMsg) bqDrawMsgCard(x, bqMsg);
+  /* 舞台に載せる（パーティ背景＋影＋花ライン＋クレジット） */
+  bqOff.width = BQ_SW; bqOff.height = BQ_SH;
+  const sx = bqOff.getContext('2d');
+  const bgIm = await loadImg(A3 + 'bq-stage-bg.webp?av=' + AV3);
+  if (bgIm) sx.drawImage(bgIm, 0, 0, BQ_SW, BQ_SH); else { sx.fillStyle = '#f7f1e3'; sx.fillRect(0, 0, BQ_SW, BQ_SH); }
+  sx.save(); sx.shadowColor = 'rgba(70,45,80,.45)'; sx.shadowBlur = 30; sx.shadowOffsetY = 14;
+  sx.drawImage(bqWork, BQ_OX, BQ_OY); sx.restore();
+  sx.drawImage(bqWork, BQ_OX, BQ_OY);
+  bqDrawFlowerLine(sx, BQ_SW / 2, 1440, 480);
+  sx.fillStyle = 'rgba(122,92,46,.68)'; sx.font = '26px sans-serif'; sx.textAlign = 'center'; sx.textBaseline = 'middle';
+  sx.fillText('ハナウタ・ガーデン　hanauta-garden.ksvox.net', BQ_SW / 2, 1524);
+}
+function bqShowScaled(px, smooth){
+  const cv = $('bqCv');
+  cv.width = BQ_SW; cv.height = BQ_SH;
+  const x = cv.getContext('2d');
+  const t = document.createElement('canvas'); t.width = Math.max(4, Math.round(BQ_SW / px)); t.height = Math.max(4, Math.round(BQ_SH / px));
+  t.getContext('2d').drawImage(bqOff, 0, 0, t.width, t.height);
+  x.imageSmoothingEnabled = smooth;
+  x.clearRect(0, 0, BQ_SW, BQ_SH);
+  x.drawImage(t, 0, 0, BQ_SW, BQ_SH);
+  x.imageSmoothingEnabled = true;
+}
+function bqShowFinal(){ const cv = $('bqCv'); cv.width = BQ_SW; cv.height = BQ_SH; const x = cv.getContext('2d'); x.clearRect(0, 0, BQ_SW, BQ_SH); x.drawImage(bqOff, 0, 0); }
+async function renderBqGrid(){
+  const grid = $('bqGrid'); grid.innerHTML = '';
+  for (const n of [7, 8, 9, 5, 1, 6, 3, 2, 4]){
+    const cell = document.createElement('div');
+    cell.className = 'bq-cell' + (bqPicks[n] ? ' filled' : '');
+    const num = document.createElement('span'); num.className = 'num'; num.textContent = BQ_NUMS[n - 1]; cell.appendChild(num);
+    if (bqPicks[n]){
+      const im = await bqHeadImg(bqPicks[n]);
+      if (im){ const t = document.createElement('img'); t.className = 'head'; t.src = bqHeadURL(im); cell.appendChild(t); }
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = bqDef(bqPicks[n]).jp; cell.appendChild(nm);
+    } else { const p = document.createElement('span'); p.className = 'plus'; p.textContent = '＋'; cell.appendChild(p); }
+    cell.onclick = () => openBqPicker(n);
+    grid.appendChild(cell);
+  }
+  const filled = Object.values(bqPicks).filter(Boolean).length;
+  $('bqSelMsg').textContent = filled === 9 ? '9つそろいました。「ブーケを作る」を押してね。' : 'マスをタップして花を選んでね（あと ' + (9 - filled) + ' つ）';
+  $('btn-bq-make').disabled = filled !== 9;
+}
+async function openBqPicker(n){
+  bqPickSlot = n;
+  const map = await bqCollectedMap();
+  $('bqPicker').style.display = 'block';
+  $('bqPickNote').textContent = 'マス ' + BQ_NUMS[n - 1] + ' に入れる花を選んでね（咲かせた回数まで選べます）';
+  $('btn-bq-pick-remove').style.display = bqPicks[n] ? '' : 'none';
+  const used = {}; for (const k in bqPicks) if (bqPicks[k]) used[bqPicks[k]] = (used[bqPicks[k]] || 0) + 1;
+  const grid = $('bqPickGrid'); grid.innerHTML = '';
+  const ids = Object.keys(map).filter(id => bqPickable(id, map)).sort((a, b) => bqDef(a).jp < bqDef(b).jp ? -1 : 1);
+  for (const id of ids){
+    const remain = (map[id].count || 1) - (used[id] || 0);
+    const cell = document.createElement('div');
+    cell.className = 'bq-pick-cell' + (remain <= 0 ? ' dim' : '');
+    const im = await bqHeadImg(id);
+    if (im){ const t = document.createElement('img'); t.src = bqHeadURL(im); t.style.cssText = 'width:100%; height:92px; object-fit:contain;'; cell.appendChild(t); }
+    const nm = document.createElement('div'); nm.textContent = bqDef(id).jp; nm.style.cssText = 'font-size:12.5px; color:#4c3a22; margin-top:3px;'; cell.appendChild(nm);
+    const rm = document.createElement('div'); rm.textContent = remain > 0 ? 'あと ' + remain + ' 輪' : '使い切り'; rm.style.cssText = 'font-size:11.5px; color:#8a6f3c;'; cell.appendChild(rm);
+    if (remain > 0) cell.onclick = async () => { bqPicks[bqPickSlot] = id; await bqSavePicks(); $('bqPicker').style.display = 'none'; renderBqGrid(); };
+    grid.appendChild(cell);
+  }
+}
+$('btn-bq-pick-back').onclick = () => { $('bqPicker').style.display = 'none'; };
+$('btn-bq-pick-remove').onclick = async () => { bqPicks[bqPickSlot] = null; await bqSavePicks(); $('bqPicker').style.display = 'none'; renderBqGrid(); };
+$('btn-bq-reset').onclick = async () => { for (const k in bqPicks) bqPicks[k] = null; await bqSavePicks(); renderBqGrid(); };
+$('btn-bq-make').onclick = async () => {
+  bqBaseIdx = 0;
+  bqMsg = '';
+  document.querySelectorAll('.bq-msg-btn').forEach(o => o.classList.toggle('sel', !o.dataset.msg));
+  $('bqMsgZone').style.display = 'none';
+  bqFinal = false;
+  $('bqViewSelect').style.display = 'none'; $('bqViewSing').style.display = '';
+  $('btn-bq-sing').style.display = ''; $('btn-bq-share').style.display = 'none'; $('btn-bq-again').style.display = 'none'; $('btn-bq-abort').style.display = 'none';
+  $('bqSingMsg').textContent = ''; $('bqSingText').textContent = '30秒の鼻歌を歌って、ブーケを完成させてください。';
+  $('bqDark').style.opacity = 0; $('bqDoneText').style.display = 'none';
+  await bqRenderBouquet();
+  bqShowScaled(34, true);
+};
+$('btn-bq-sing').onclick = async () => {
+  if (bqSinging) return;
+  let stream2;
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') await AC.resume(); stream2 = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } }); }
+  catch (e) { $('bqSingMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; return; }
+  bqSinging = true; bqStream = stream2;
+  $('btn-bq-sing').style.display = 'none'; $('btn-bq-abort').style.display = '';
+  const src = AC.createMediaStreamSource(stream2); const an2 = AC.createAnalyser(); an2.fftSize = 2048; src.connect(an2);
+  const buf = new Float32Array(an2.fftSize), fbuf = new Float32Array(an2.frequencyBinCount);
+  const frames2 = []; const t0 = performance.now(); let lastMosaic = 0;
+  const tick = () => {
+    if (!bqSinging) return;
+    const t = (performance.now() - t0) / 1000;
+    an2.getFloatTimeDomainData(buf);
+    const { f, rms } = autoPitch(buf, AC.sampleRate);
+    an2.getFloatFrequencyData(fbuf);
+    let num = 0, den = 0;
+    for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / an2.fftSize) * m; den += m; }
+    let rich = 0;
+    if (f > 0){
+      const binHz = AC.sampleRate / an2.fftSize;
+      const magAt = hz => { const b = Math.round(hz / binHz); let m = 0; for (let j = Math.max(2, b - 1); j <= Math.min(fbuf.length - 1, b + 1); j++) m = Math.max(m, Math.pow(10, fbuf[j] / 20)); return m; };
+      const F0 = magAt(f); let Hh = 0; for (let k = 2; k <= 5; k++) Hh += magAt(f * k);
+      if (F0 + Hh > 0) rich = Hh / (F0 + Hh);
+    }
+    frames2.push({ t, f, rms, cent: den > 0 ? num / den : 0, rich });
+    $('bqSingMsg').textContent = '🌸 うたっています… あと ' + Math.max(0, 30 - Math.floor(t)) + ' 秒';
+    if (performance.now() - lastMosaic > 130){ lastMosaic = performance.now(); bqShowScaled(16 + Math.round(Math.sin(performance.now() / 300) * 5 + 5), false); }
+    if (t >= 30){ bqFinishSing(frames2); return; }
+    bqTimer = setTimeout(tick, 50);
+  };
+  tick();
+};
+async function bqFinishSing(frames2){
+  bqSinging = false; clearTimeout(bqTimer);
+  if (bqStream) bqStream.getTracks().forEach(tr => tr.stop()); bqStream = null;
+  $('btn-bq-abort').style.display = 'none';
+  let an = null; try { an = analyzeFrames(frames2); } catch (e) {}
+  if (!an || !an.feat){ $('bqSingMsg').textContent = '声がうまく拾えませんでした。もう少し近くで、はっきりうたってみてください。'; $('btn-bq-sing').style.display = ''; bqShowScaled(34, true); return; }
+  const color = pickColor(an.feat, SPECIES.find(s => s.id === 'rose'), hashStr('bq' + Date.now()));
+  bqBaseIdx = bqPickBase(color);
+  $('bqSingMsg').textContent = '';
+  const dark = $('bqDark'); dark.style.opacity = 1;
+  await new Promise(r => setTimeout(r, 750));
+  await bqRenderBouquet();
+  bqShowFinal(); bqFinal = true;
+  $('bqDoneText').style.display = 'flex';
+  dark.style.opacity = 0;
+  await new Promise(r => setTimeout(r, 1100));
+  $('bqDoneText').style.display = 'none';
+  $('btn-bq-share').style.display = ''; $('btn-bq-again').style.display = ''; $('bqMsgZone').style.display = '';
+  $('bqSingText').textContent = 'できあがり！スタンプ風のブーケを、お友だちに送れます。';
+}
+$('btn-bq-abort').onclick = () => { if (!bqSinging) return; bqSinging = false; clearTimeout(bqTimer); if (bqStream) bqStream.getTracks().forEach(tr => tr.stop()); bqStream = null; $('btn-bq-abort').style.display = 'none'; $('btn-bq-sing').style.display = ''; $('bqSingMsg').textContent = ''; bqShowScaled(34, true); };
+$('btn-bq-again').onclick = () => { bqShowSelect(); renderBqGrid(); };
+document.querySelectorAll('.bq-msg-btn').forEach(b => b.onclick = async () => {
+  bqMsg = b.dataset.msg || '';
+  document.querySelectorAll('.bq-msg-btn').forEach(o => o.classList.toggle('sel', o === b));
+  await bqRenderBouquet(); bqShowFinal();
+});
+/* ===== 下部タブバー ===== */
+const TAB_ICONS = { top: '🏠', coll: '📖', garden: '🌷', lab: '🧪', shop: '💐' };
+let tabLocks = { garden: 1, lab: 99, shop: 99 };
+function tabToast(msg){ const t = $('tabToast'); if (!t) return; t.textContent = msg; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2200); }
+async function tabRefreshLocks(){
+  try {
+    const map = await bqCollectedMap();
+    const found26 = SPECIES.filter(sp => !sp.eventOnly && map[sp.id]).length;
+    tabLocks.lab = Math.max(0, 15 - found26);
+    tabLocks.shop = Math.max(0, BQ_UNLOCK - bqKindCount(map));
+    const g = await gardenLoad();
+    tabLocks.garden = (g && g.everSeed) ? 0 : 1;
+  } catch (e) {}
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const t = b.dataset.tab, locked = (t === 'lab' || t === 'shop' || t === 'garden') && tabLocks[t] > 0;
+    b.classList.toggle('lock', locked);
+    b.querySelector('.tab-ic').textContent = locked ? '❔' : TAB_ICONS[t];
+  });
+}
+function tabSync(){
+  let cur = 'top';
+  if ($('shopPage').style.display !== 'none' || $('bqPicker').style.display !== 'none') cur = 'shop';
+  else if ($('labPage').style.display !== 'none') cur = 'lab';
+  else if ($('gardenPage').style.display !== 'none') cur = 'garden';
+  else if ($('collectionPage').style.display !== 'none') cur = 'coll';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === cur));
+}
+function tabCloseAll(){
+  if ($('gardenPage').style.display !== 'none'){ if (gardenSinging) finishGardenSing(); gardenAnimStop(); $('gardenPage').style.display = 'none'; }
+  if ($('labPage').style.display !== 'none') $('labPage').style.display = 'none';
+  if ($('collectionPage').style.display !== 'none') $('collectionPage').style.display = 'none';
+  if ($('shopPage').style.display !== 'none'){ if (bqSinging) $('btn-bq-abort').onclick(); $('shopPage').style.display = 'none'; }
+  $('bqPicker').style.display = 'none';
+}
+function tabInit(){
+document.querySelectorAll('.tab-btn').forEach(b => b.onclick = async () => {
+  const t = b.dataset.tab;
+  if (t === 'lab' && tabLocks.lab > 0){ tabToast('あと ' + tabLocks.lab + ' 種で開きます'); return; }
+  if (t === 'shop' && tabLocks.shop > 0){ tabToast('あと ' + tabLocks.shop + ' 種で開きます'); return; }
+  if (t === 'garden' && tabLocks.garden > 0){ tabToast('お庭は、種を手に入れると開きます'); return; }
+  tabCloseAll();
+  if (t === 'coll') openCollection();
+  else if (t === 'garden') openGarden();
+  else if (t === 'lab') openLab();
+  else if (t === 'shop') openShop();
+  else window.scrollTo({ top: 0, behavior: 'smooth' });
+  tabSync(); tabRefreshLocks();
+});
+['collectionPage', 'gardenPage', 'labPage', 'shopPage', 'bqPicker'].forEach(id => {
+  const el = $(id); if (el && typeof MutationObserver !== 'undefined') new MutationObserver(() => { tabSync(); tabRefreshLocks(); }).observe(el, { attributes: true, attributeFilter: ['style'] });
+});
+tabSync(); tabRefreshLocks();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tabInit); else tabInit();
+$('btn-bq-share').onclick = () => {
+  bqOff.toBlob(async blob => {
+    if (!blob) return;
+    const file = new File([blob], 'bouquet.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try { await navigator.share({ files: [file] }); $('bqSingMsg').textContent = '送りました。'; return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bouquet.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    $('bqSingMsg').textContent = '共有が使えなかったため、ダウンロードしました。ダウンロードした画像は、写真アプリからLINEへ送れます。';
+  }, 'image/png');
+};
+refreshShopEntrance();
+
 
 </script>
+<div id="tabBar">
+  <button class="tab-btn on" data-tab="top" type="button"><span class="tab-ic">🏠</span><span class="tab-lb">トップ</span><span class="tab-dot"></span></button>
+  <button class="tab-btn" data-tab="coll" type="button"><span class="tab-ic">📖</span><span class="tab-lb">図鑑</span><span class="tab-dot"></span></button>
+  <button class="tab-btn" data-tab="garden" type="button"><span class="tab-ic">🌷</span><span class="tab-lb">お庭</span><span class="tab-dot"></span></button>
+  <button class="tab-btn" data-tab="lab" type="button"><span class="tab-ic">🧪</span><span class="tab-lb">開発</span><span class="tab-dot"></span></button>
+  <button class="tab-btn" data-tab="shop" type="button"><span class="tab-ic">💐</span><span class="tab-lb">お店</span><span class="tab-dot"></span></button>
+</div>
+<div id="tabToast"></div>
 </html>
