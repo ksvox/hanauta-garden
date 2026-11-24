@@ -359,7 +359,7 @@
   <p style="text-align:center; font-weight:800; font-size:17px; color:#4c3a22; margin:14px 0 2px;">2つの花種を交配させて新種を開発！</p>
   <p style="text-align:center; font-size:13.5px; color:#6b6151; margin:0 6px 14px;">ここでは、お花が求めるメロディーをハナウタにしてね。</p>
   <p id="labEventBanner" class="season-banner" style="display:none; margin:0 auto 12px;"></p>
-  <div id="labNoCur" style="display:none; text-align:center; background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:16px; font-size:14px; line-height:1.8; color:#6b6151;">いま開発中の花はありません。<br>図鑑で花を2種類選ぶと、交配を始められます。</div>
+  <div id="labNoCur" style="display:none; text-align:center; background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:16px; font-size:14px; line-height:1.8; color:#6b6151;">いま開発中の花はありません。<br>図鑑で花を2種類選ぶと、交配を始められます。<div style="margin-top:12px;"><button class="btn btn-main" id="btn-lab-start" style="padding:11px 22px;">🌱 新種を開発する</button></div></div>
   <div id="labCur">
     <h2 class="sec" style="margin-top:10px;">1️⃣ 現在交配中の花</h2>
     <div style="display:flex; align-items:flex-start; justify-content:center; gap:10px;">
@@ -622,7 +622,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v101'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v102'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -7259,6 +7259,8 @@ async function drawLabPlant(e, st, opt){
   const stock = await labGetStock(st, color, stage);
   if (!stock) return;
   const P = opt.prog !== undefined ? opt.prog : (stage === 5 ? 0.51 : (stage === 6 || stage === 7) ? 0.72 : 1);
+  /* v102: 静止画では、透けた重なりの途中（蕾0.51・半開0.72など）で止まって見えないよう、完成した形の比率に寄せる（蕾=0.45／半開き=0.75／満開=1）。満開の儀式で opt.prog が渡された時は、今までどおり滑らかに変化させる */
+  const snapP = p => opt.prog !== undefined ? p : (p <= 0 ? 0 : p < 0.6 ? 0.45 : p < 0.875 ? 0.75 : 1);
   e.save();
   e.translate(LAB_SOIL.x, LAB_SOIL.y); e.scale(LAB_SC, LAB_SC); e.translate(-LAB_SOIL.x, -LAB_SOIL.y);
   /* 開発種だけの規則（先生の決定 2026-11-16）: 満開は中央の主茎1本だけ。
@@ -7274,7 +7276,7 @@ async function drawLabPlant(e, st, opt){
     if (stage === 8) return idx <= 2 ? 0.79 : 0;
     return idx <= 2 ? 0.79 : 0.55;
   };
-  drawStock(e, stock, { global: P, stem: (st, idx) => idx === 0 ? P : Math.min(P, capFor(idx)) }, 0);
+  drawStock(e, stock, { global: snapP(P), stem: (st, idx) => snapP(idx === 0 ? P : Math.min(P, capFor(idx))) }, 0);
   e.restore();
 }
 async function renderLabStage(){
@@ -7829,7 +7831,9 @@ $('btn-lab-zoom').onclick = () => {
   $('zoomModal').style.display = 'flex';
   zoomOpen = true;
 };
-$('btn-lab-next').onclick = () => { $('labPage').style.display = 'none'; openCollection(); };
+async function labGoSelect(){ $('labPage').style.display = 'none'; await openCollection(); labSetSelectMode(true); }
+$('btn-lab-next').onclick = () => labGoSelect();
+$('btn-lab-start').onclick = () => labGoSelect();
 /* ===== v96 フラワーショップ ===== */
 const BQ_UNLOCK = 20;
 const BQ_NUMS = '①②③④⑤⑥⑦⑧⑨';
