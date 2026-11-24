@@ -286,7 +286,7 @@
   <div class="garden-plate"><h2>マイガーデン</h2></div>
   <!-- v52: 今日の天気（開くたびに抽選）。v61: 天気ボーナスで成長秒数にも影響する（先生の決定） -->
   <p id="gardenWeather" style="text-align:center; font-size:14.5px; font-weight:700; color:#7a5c2e; margin:0 0 4px; min-height:21px;"></p>
-  <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">特別な種を植えて、10秒の鼻歌で育てる小さな花壇です。<br>歌を聴かせると、株が少しずつ育ちます。</p>
+  <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">特別な種を植えて、トレーニングの鼻歌で育てる小さな花壇です。<br>歌を聴かせると、株が少しずつ育ちます。</p>
   <div id="gardenWilt" style="display:none; max-width:520px; margin:10px auto 4px;">
     <div class="bubble" style="box-shadow:0 6px 18px rgba(60,45,20,.18); font-size:14.5px;">
       <p style="margin:0;">ハナウタが足りなくて枯れてしまいました…</p>
@@ -325,10 +325,12 @@
   </div>
   <h3 class="garden-sec">3️⃣ 花を育てる</h3>
   <div style="text-align:center;">
-    <button class="btn btn-main" id="btn-garden-sing" style="padding:13px 26px; font-size:16.5px;">🎤 10秒の鼻歌をうたう</button>
+    <button class="btn btn-main" id="btn-garden-sing" style="padding:13px 26px; font-size:16.5px;">🎤 トレーニングの鼻歌をうたう</button>
     <button class="btn btn-sub" id="btn-garden-stop" style="display:none; padding:13px 26px; font-size:16.5px;">⏹ やめる</button>
     <p id="gardenDayInfo" style="font-size:13px; color:#8a7a5c; margin:9px 2px 0;"></p>
     <p id="gardenMsg" style="font-size:13.5px; color:#6b6151; margin:5px 2px 0; min-height:18px;"></p>
+    <div id="gardenCount" style="text-align:center; font-size:46px; font-weight:800; color:#b3547e; min-height:58px; margin-top:10px; letter-spacing:.1em;"></div>
+    <div id="gardenNotes" style="text-align:center; margin-top:4px; min-height:38px;"></div>
   </div>
   <div style="background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.75; color:#6b6151; margin:22px 2px 0;">
     ⚠ご注意ください！<br>
@@ -355,6 +357,7 @@
   </div>
   <p style="text-align:center; font-weight:800; font-size:17px; color:#4c3a22; margin:14px 0 2px;">2つの花種を交配させて新種を開発！</p>
   <p style="text-align:center; font-size:13.5px; color:#6b6151; margin:0 6px 14px;">ここでは、お花が求めるメロディーをハナウタにしてね。</p>
+  <p id="labEventBanner" class="season-banner" style="display:none; margin:0 auto 12px;"></p>
   <div id="labNoCur" style="display:none; text-align:center; background:#fdfaf2; border:1.5px solid #d9c9a3; border-radius:12px; padding:16px; font-size:14px; line-height:1.8; color:#6b6151;">いま開発中の花はありません。<br>図鑑で花を2種類選ぶと、交配を始められます。</div>
   <div id="labCur">
     <h2 class="sec" style="margin-top:10px;">1️⃣ 現在交配中の花</h2>
@@ -457,6 +460,7 @@
   <div class="shop-sign"><div class="sign-line"><svg width="300" height="28" viewBox="0 0 320 28" style="display:block; margin:2px auto 4px;" aria-hidden="true"><path d="M4 16 Q 40 7, 80 15 T 160 15 T 240 15 T 316 14" stroke="#7a9a52" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M52 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="64" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 64 6)"/><path d="M118 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="130" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 130 23)"/><path d="M186 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="198" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 198 6)"/><path d="M252 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="264" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 264 23)"/><circle cx="33.8" cy="14.0" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="17.6" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="16.2" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="11.8" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="10.4" r="3.1" fill="#e88bb0"/><circle cx="30" cy="14" r="2.1" fill="#f7d774"/><circle cx="98.8" cy="14.0" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="17.6" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="16.2" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="11.8" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="10.4" r="3.1" fill="#f2b04a"/><circle cx="95" cy="14" r="2.1" fill="#f7d774"/><circle cx="163.8" cy="14.0" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="17.6" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="16.2" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="11.8" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="10.4" r="3.1" fill="#9a7fc9"/><circle cx="160" cy="14" r="2.1" fill="#f7d774"/><circle cx="228.8" cy="14.0" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="17.6" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="16.2" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="11.8" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="10.4" r="3.1" fill="#7fa8d9"/><circle cx="225" cy="14" r="2.1" fill="#f7d774"/><circle cx="293.8" cy="14.0" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="17.6" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="16.2" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="11.8" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="10.4" r="3.1" fill="#ef7d54"/><circle cx="290" cy="14" r="2.1" fill="#f7d774"/></svg></div><div class="sign-en">Flower Shop</div><div class="sign-jp">フラワーショップ</div><div class="sign-line flip"><svg width="300" height="28" viewBox="0 0 320 28" style="display:block; margin:2px auto 4px;" aria-hidden="true"><path d="M4 16 Q 40 7, 80 15 T 160 15 T 240 15 T 316 14" stroke="#7a9a52" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M52 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="64" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 64 6)"/><path d="M118 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="130" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 130 23)"/><path d="M186 12 q7 -8 13 -5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="198" cy="6" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(-28 198 6)"/><path d="M252 17 q-7 8 13 5" stroke="#7a9a52" stroke-width="1.6" fill="none"/><ellipse cx="264" cy="23" rx="5.5" ry="2.8" fill="#8fae5f" transform="rotate(28 264 23)"/><circle cx="33.8" cy="14.0" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="17.6" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="16.2" r="3.1" fill="#e88bb0"/><circle cx="26.9" cy="11.8" r="3.1" fill="#e88bb0"/><circle cx="31.2" cy="10.4" r="3.1" fill="#e88bb0"/><circle cx="30" cy="14" r="2.1" fill="#f7d774"/><circle cx="98.8" cy="14.0" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="17.6" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="16.2" r="3.1" fill="#f2b04a"/><circle cx="91.9" cy="11.8" r="3.1" fill="#f2b04a"/><circle cx="96.2" cy="10.4" r="3.1" fill="#f2b04a"/><circle cx="95" cy="14" r="2.1" fill="#f7d774"/><circle cx="163.8" cy="14.0" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="17.6" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="16.2" r="3.1" fill="#9a7fc9"/><circle cx="156.9" cy="11.8" r="3.1" fill="#9a7fc9"/><circle cx="161.2" cy="10.4" r="3.1" fill="#9a7fc9"/><circle cx="160" cy="14" r="2.1" fill="#f7d774"/><circle cx="228.8" cy="14.0" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="17.6" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="16.2" r="3.1" fill="#7fa8d9"/><circle cx="221.9" cy="11.8" r="3.1" fill="#7fa8d9"/><circle cx="226.2" cy="10.4" r="3.1" fill="#7fa8d9"/><circle cx="225" cy="14" r="2.1" fill="#f7d774"/><circle cx="293.8" cy="14.0" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="17.6" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="16.2" r="3.1" fill="#ef7d54"/><circle cx="286.9" cy="11.8" r="3.1" fill="#ef7d54"/><circle cx="291.2" cy="10.4" r="3.1" fill="#ef7d54"/><circle cx="290" cy="14" r="2.1" fill="#f7d774"/></svg></div></div>
   <p style="text-align:center; font-weight:800; font-size:17px; color:#4c3a22; margin:14px 0 2px;">咲かせたお花でブーケを作ろう</p>
   <p style="text-align:center; font-size:13.5px; line-height:1.7; color:#6b6151; margin:0 6px 6px;">集めた花を使ってブーケを作り、LINE等でお友だちにプレゼントしよう！</p>
+  <p id="shopEventBanner" class="season-banner" style="display:none; margin:6px auto 2px;"></p>
   <div id="bqViewSelect">
     <h2 class="sec" style="margin-top:16px;">1️⃣ お花を選ぶ</h2>
     <div class="bq-stage">
@@ -591,11 +595,11 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v99'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v100'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
-const AV3 = 'v96', AV4 = 'v84', AV5 = 'v84';
+const AV3 = 'v100', AV4 = 'v84', AV5 = 'v100';
 function avFor(src){ return src.startsWith(A5) ? AV5 : src.startsWith(A4) ? AV4 : src.startsWith(A3) ? AV3 : ASSET_V; }
 /* v78 更新チェック: サーバー上の version.json と自分の版を比べ、新しい版が
    出ていればページの一番上に静かに知らせる。読み直しはキャッシュ回避の
@@ -3915,6 +3919,17 @@ function seasonActiveGuest(date){
   }
   return null;
 }
+/* v100: 流れるお知らせを任意の帯に流す共通処理（トップの季節バナーと同じ作り） */
+function fillNewsBanner(el, msg){
+  el.textContent = '';
+  const track = document.createElement('span'); track.className = 'sb-track';
+  for (let h = 0; h < 2; h++){
+    const half = document.createElement('span'); half.className = 'sb-half';
+    for (let r = 0; r < 2; r++){ const it = document.createElement('span'); it.className = 'sb-item'; it.textContent = msg; half.appendChild(it); }
+    track.appendChild(half);
+  }
+  el.appendChild(track);
+}
 function initSeasonBanner(){
   const el = document.getElementById('seasonBanner');
   if (!el) return;
@@ -4976,16 +4991,34 @@ async function gardenLoad(){
   st.areas = { ...d.areas, ...(s.areas || {}) };
   st.day = { ...d.day, ...(s.day || {}) };
   delete st.key;
+  /* v100: お庭の成長単位を「秒」から「ポイント」へ移行。既存の記録は一度だけ 100/170 で換算する */
+  if (!st.ptsV){
+    st.ptsV = 1;
+    const K = 100 / 170;
+    for (const k of ['left', 'center', 'right']){
+      const area = st.areas[k]; if (!area) continue;
+      area.areaSec = Math.round((area.areaSec || 0) * K * 10) / 10;
+      for (const stk of (area.stocks || [])){
+        stk.born = Math.round((stk.born || 0) * K * 10) / 10;
+        const acc = stk.acc;
+        if (acc){
+          for (const f of ['w', 'range', 'tess', 'thick', 'rms']) if (typeof acc[f] === 'number') acc[f] *= K;
+          if (acc.pat) for (const f in acc.pat) if (typeof acc.pat[f] === 'number') acc.pat[f] *= K;
+        }
+      }
+    }
+    gardenSave(st).catch(() => {});
+  }
   return st;
 }
 async function gardenSave(st){ await collDB.putGarden(st); }
 function gardenTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
-/* 株ごとの累積秒数→成長段階（先生の確定仕様） */
-function gardenStageOf(cum){ return cum < 10 ? 'seed' : cum < 40 ? 'sprout' : cum < 70 ? 'futabaS' : cum < 110 ? 'futabaL' : cum < 140 ? 'bud' : cum < 170 ? 'nanabun' : 'full'; }
+/* 株ごとの累積ポイント→成長段階（v100: 先生の仕様 2026-11-24。20P芽/35P小さな双葉/50P双葉/65P蕾/85P半開き/100P満開） */
+function gardenStageOf(cum){ return cum < 20 ? 'seed' : cum < 35 ? 'sprout' : cum < 50 ? 'futabaS' : cum < 65 ? 'futabaL' : cum < 85 ? 'bud' : cum < 100 ? 'nanabun' : 'full'; }
 /* 茎+蕾〜満開を本体の株描画の進捗へ写す（0.30=茎が伸びて蕾、0.85=七分咲き、1=満開） */
 function gardenProgOf(cum){
-  if (cum < 140) return 0.30 + 0.18 * clamp((cum - 110) / 30, 0, 1);
-  if (cum < 170) return 0.48 + 0.37 * (cum - 140) / 30;
+  if (cum < 85) return 0.30 + 0.18 * clamp((cum - 65) / 20, 0, 1);
+  if (cum < 100) return 0.48 + 0.37 * (cum - 85) / 15;
   return 1;
 }
 /* 株が「育つ間に聴いた歌の特徴」の蓄積（色・形の決定に使う） */
@@ -5122,7 +5155,7 @@ function gardenApplyWilt(st){
       const area = st.areas[k];
       if (!area) continue;
       const before = area.stocks.length;
-      area.stocks = area.stocks.filter(s2 => (area.areaSec - s2.born) < 170);
+      area.stocks = area.stocks.filter(s2 => (area.areaSec - s2.born) < 100); /* v100: 満開ラインは100P */
       if (area.stocks.length < before) wilted = true;
       if (!area.stocks.length) st.areas[k] = null;
     }
@@ -5152,7 +5185,7 @@ async function openGarden(){
 function gardenDayInfo(st){
   const today = gardenTodayStr();
   const n = (st.day && st.day.d === today) ? st.day.n : 0;
-  return '今日の鼻歌は あと ' + Math.max(0, 10 - n) + ' 回うたえます（1日10回まで）';
+  return 'あと' + Math.max(0, 5 - n) + '回歌えます';
 }
 /* v53: その日の鼻歌が上限（10回）に達したら、歌うボタンを「♫ また明日うたってね」に
    変えてグレー＋押せなくする（先生の指定）。上限未満・翌日は通常表示に戻す。
@@ -5163,7 +5196,7 @@ function gardenUpdateSingBtn(st){
   if (!b) return;
   const today = gardenTodayStr();
   const n = (st && st.day && st.day.d === today) ? st.day.n : 0;
-  if (n >= 10){
+  if (n >= 5){
     b.disabled = true;
     b.textContent = '♫ また明日うたってね';
     b.style.background = '#d8d2c2';
@@ -5171,7 +5204,7 @@ function gardenUpdateSingBtn(st){
     b.style.boxShadow = 'none';
   } else {
     b.disabled = false;
-    b.textContent = '🎤 10秒の鼻歌をうたう';
+    b.textContent = '🎤 トレーニングの鼻歌をうたう';
     b.style.background = '';
     b.style.color = '';
     b.style.boxShadow = '';
@@ -5226,16 +5259,18 @@ function updatePlantButtons(st){
   const ssp = sel ? SPECIES.find(s => s.id === sel.sp) : null;
   $('gardenPlantMsg').textContent = ssp ? '「' + ssp.jp + '」の種を植える場所を選んでください。植えたら種はなくなります。' : 'まず種を選んでください。'; /* v55: 満開後の植え替え機能が入ったため「植え替えはできません」の文言は外した */
 }
-async function renderGardenPage(st){
+async function renderGardenPage(st, opt){
   st = st || await gardenLoad();
   renderGardenSeeds(st);
   updatePlantButtons(st);
   updateReplantButtons(st); /* v55: 植え替えボタンの表示も最新の状態に合わせる */
   $('gardenDayInfo').textContent = gardenDayInfo(st);
   gardenUpdateSingBtn(st); /* v53: 上限に達していたら歌うボタンを切り替える */
-  await drawGardenScene(st);
+  /* v100: 顔ぶれの控えが歌う前と同じなら、描き直し自体をしない（変わらない花を消さない） */
+  if (!(opt && opt.prevSig && gardenSceneSig(st) === opt.prevSig)) await drawGardenScene(st);
 }
 async function gardenPlant(areaKey){
+  if (gardenSinging) return; /* v100: トレーニング中は植え替え操作を受け付けない */
   const st = await gardenLoad();
   if (gardenSelSeed < 0 || !st.seeds[gardenSelSeed] || st.areas[areaKey]) return;
   const sd = st.seeds[gardenSelSeed];
@@ -5380,6 +5415,7 @@ const GARDEN_WEATHERS = {
 let gardenWeather = null;   /* 未抽選（検証などで openGarden を経ていない場合）は素の静止画になる */
 let gardenLayers = null;    /* { bg, stalks: [{ cv, rootX, gy, phase }] } */
 let gardenSceneSeq = 0, gardenSceneReady = true; /* v85: 並行描画の世代管理と用意完了フラグ */
+let gardenFadeCv = null, gardenFadeSnap = null, gardenFadeT0 = 0; /* v100: 場面切り替えフェイド用 */
 let gardenAnimId = null, gardenLastFrame = 0;
 function gardenRollWeather(){
   const r = Math.random();
@@ -5596,6 +5632,13 @@ function gardenDrawRainbow(x){
   }
   x.drawImage(gardenRainbowCv, 0, 0);
 }
+/* v100: 場面の切り替えフェイド（前の画面を薄く重ねて消していく） */
+function gardenFadeDraw(x){
+  if (!gardenFadeSnap) return;
+  const ft = (performance.now() - gardenFadeT0) / 650;
+  if (ft >= 1){ gardenFadeSnap = null; return; }
+  x.save(); x.globalAlpha = 1 - ft; x.drawImage(gardenFadeSnap, 0, 0); x.restore();
+}
 function gardenDrawFrame(t){
   const c = $('gardenStage');
   if (!c || !gardenLayers) return;
@@ -5618,7 +5661,7 @@ function gardenDrawFrame(t){
     x.restore();
   }
   gardenDrawAnimal(x, t, false); /* 前のポーズ（ノーマル・食べる）は株より手前に描く */
-  if (!W) return;
+  if (!W){ gardenFadeDraw(x); return; }
   if (W.base === 'sunny'){
     /* 晴天: 光だまりと光の筋（透明度はゆっくり明滅する） */
     const shim = 0.85 + 0.15 * Math.sin(t * 0.6);
@@ -5676,6 +5719,7 @@ function gardenDrawFrame(t){
     }
     x.stroke();
   }
+  gardenFadeDraw(x);
 }
 function gardenAnimStart(){
   if (gardenAnimId != null) return; /* 開くたびに呼んでもループは増殖しない */
@@ -5753,7 +5797,8 @@ async function drawGardenScene(st){
   const hideLoading = () => { const el = document.getElementById('gardenLoading'); if (el) el.style.display = 'none'; };
   const bgP = loadImg(A3 + 'garden-bg.jpg').then(bgImg => {
     if (bgImg) bx.drawImage(bgImg, 0, 0, 900, 1125);
-    if (myScene === gardenSceneSeq){ gardenLayers = layers; hideLoading(); }
+    /* v100: ここでは切り替えない。背景だけ先に届いた時点で切り替えると、まだ真っ白な
+       株の層が見えて、満開の花が一瞬消えたように見える（先生の報告した不具合） */
   });
   const seedP = loadImg(A5 + 'seed-icon.webp');
   const stalkPs = jobs.map(j => seedP.then(seedImg => drawGardenStalk(j.cv.getContext('2d'), j.key, j.area, j.sp, j.stock, j.i, seedImg)));
@@ -5768,12 +5813,71 @@ async function drawGardenScene(st){
   }
   await Promise.all([bgP, ...stalkPs, animalP]);
   if (myScene === gardenSceneSeq){
+    /* v100: 切り替えは全部の層が描き終わってから。既に表示中の場面がある時は、
+       前の画面の控えを薄く重ねて消していく（フェイド）ので、花が消えて見えることがない */
+    if (gardenLayers){
+      const stageCv = $('gardenStage');
+      if (stageCv){
+        if (!gardenFadeCv) gardenFadeCv = document.createElement('canvas');
+        gardenFadeCv.width = stageCv.width; gardenFadeCv.height = stageCv.height;
+        gardenFadeCv.getContext('2d').drawImage(stageCv, 0, 0);
+        gardenFadeSnap = gardenFadeCv; gardenFadeT0 = performance.now();
+      }
+    }
+    gardenLayers = layers;
     gardenSceneReady = true;
     hideLoading();
     gardenDrawFrame(performance.now() / 1000);
   }
 }
 
+/* v100: 画面に出ている花の顔ぶれ（種・段階・色・形）の控え。
+   歌う前後で控えが同じなら、その歌では何も変わっていないので描き直し自体をしない */
+function gardenSceneSig(st){
+  try {
+    const parts = [];
+    for (const k of ['left', 'center', 'right']){
+      const area = st.areas[k];
+      if (!area){ parts.push(k + ':x'); continue; }
+      const sp = SPECIES.find(s2 => s2.id === area.sp);
+      const sts = (area.stocks || []).map(stk => {
+        const cum = Math.max(0, area.areaSec - stk.born);
+        const stage = gardenStageOf(cum);
+        let c = stage;
+        if (sp && (stage === 'bud' || stage === 'nanabun' || stage === 'full')){
+          const feat = gardenAccFeat(stk.acc);
+          const col = pickColor(feat, sp, hashStr(stk.seed + sp.id + 'col'));
+          c += ':' + Math.round(col.hue) + ',' + Math.round((col.sat || 0) * 20) + ',' + Math.round((col.light || 0) * 20)
+             + ':' + Math.round(feat.rangeSemis * 2) + ',' + Math.round(feat.tessitura) + ',' + Math.round((feat.thickness || 0) * 20);
+        }
+        return c;
+      });
+      parts.push(k + ':' + area.sp + ':' + sts.join('/'));
+    }
+    /* 動物と虹の判定は drawGardenScene と同じ物差しで写す */
+    let fullTotal = 0, stockTotal = 0, allFullSR = true, anySp3 = false;
+    const fullSpecies = {};
+    for (const k of ['left', 'center', 'right']){
+      const area = st.areas[k]; if (!area) continue;
+      const sp = SPECIES.find(s2 => s2.id === area.sp); if (!sp) continue;
+      let fullHere = 0;
+      for (const stk of (area.stocks || [])){
+        stockTotal++;
+        if (gardenStageOf(Math.max(0, area.areaSec - stk.born)) === 'full'){
+          fullHere++; fullTotal++;
+          if (!(SR_SET.has(sp.id) || SSR_SET.has(sp.id))) allFullSR = false;
+        }
+      }
+      if (fullHere > 0) fullSpecies[sp.id] = true;
+      if (fullHere >= 3) anySp3 = true;
+    }
+    const wNow = gardenWeather ? GARDEN_WEATHERS[gardenWeather] : null;
+    const rainbowOn = (Object.keys(fullSpecies).length >= 3 || anySp3) && !!wNow && wNow.base === 'sunny';
+    const animal = (stockTotal >= 9 && fullTotal >= 9) ? (allFullSR ? 'capybara' : 'rabbit') : '';
+    parts.push('animal:' + animal + ':rainbow:' + (rainbowOn ? 1 : 0));
+    return parts.join('|');
+  } catch (e) { return null; }
+}
 async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
   const pos = GARDEN_AREAS[areaKey], off = GARDEN_STALK_OFF[idx] || GARDEN_STALK_OFF[1];
   const rootX = pos.x + off.dx, gy = pos.gy + off.dy;
@@ -5788,7 +5892,7 @@ async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
     /* イベント種は段階素材が満開しかないため、満開までは双葉の姿で代用する */
     const sproutName = sp.sprout || 'sprout-leaves';
     const img = await loadImg(A4 + sproutName + '.webp');
-    let dh = stage === 'sprout' ? 46 + (cum - 10) * 0.8 : stage === 'futabaS' ? 76 + (cum - 40) * 0.8 : 100 + (cum - 70) * 0.5; /* v94: 大きい双葉（futabaL）が巨大すぎたため一回り小さく（先生の指摘） */
+    let dh = stage === 'sprout' ? 46 + (cum - 20) * 1.2 : stage === 'futabaS' ? 76 + (cum - 35) * 0.8 : 100 + (cum - 50) * 0.5; /* v100: ポイント段階に合わせた芽・双葉の大きさ */ /* v94: 大きい双葉（futabaL）が巨大すぎたため一回り小さく（先生の指摘） */
     dh = clamp(dh, 40, 150) * (pos.s / 0.66);
     drawSoilMound(x, rootX, gy, Math.max(56, dh * 0.8), 15, GARDEN_SOIL_RGB);
     if (img) drawAnchored(x, img, sproutName, rootX, gy + 3, dh, 0, idx === 2, 1);
@@ -5801,7 +5905,7 @@ async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
   const phrase = { start: 0, durSec: 5, meanRms: clamp(feat.meanRms || 0.1, 0.02, 0.4), notes: [] };
   for (let i = 0; i < 10; i++) phrase.notes.push({ midi: 60, start: i * 0.5, dur: 0.5, dev: 0.05 });
   const saveR = stemR;
-  stemR = clamp(0.55 + 0.45 * Math.min(1, cum / 170), 0.55, 1);
+  stemR = clamp(0.55 + 0.45 * Math.min(1, cum / 100), 0.55, 1); /* v100: 満開=100P */
   const stock = buildStock([phrase], sp, color, 0, 300, stalk.seed + sp.id, 0.62, { stabCents: 18 }, null, -1e6);
   stemR = saveR;
   stock.rootX = rootX;
@@ -5814,11 +5918,53 @@ async function drawGardenStalk(x, areaKey, area, sp, stalk, idx, seedImg){
   drawStock(x, stock, { global: prog, stem: () => prog }, 0);
   x.restore();
 }
-/* ---- ガーデン専用の10秒の鼻歌 ---- */
+/* ---- v100: マイガーデンは「トレーニングモード」（先生の仕様 2026-11-24） ----
+   決まったメロディを歌う練習。開発室がチャレンジモードで、こちらはトレーニング。
+   ・5種のパターンからランダム1つ、キー（ルート）はランダム
+   ・開発室と同じく、先にデモを再生してから歌う（デモを聞くだけでは回数を消費しない）
+   ・1日5回まで。ポイントは正解率の10等分（100%で10P、90%以上で9P…）
+   ・天気ボーナスは今までどおり（ポイントとして加算）
+   ・株の段階は累積ポイント（20P芽/35P小さな双葉/50P双葉/65P蕾/85P半開き/100P満開） */
 let gardenSinging = false, gardenSingTimer = null, gardenSingStream = null, gardenSingFrames = null;
-function gardenApplySong(area, sec, feat){
-  const before = area.areaSec, after = before + sec;
-  /* 2本目はエリア累積100秒、3本目は160秒で出現し、出現時点からの累積で育つ */
+let gardenSession = null; /* { mel } 歌い終わるまで保持（聞き直しても変わらない） */
+let gardenStopFlag = false;
+const GARDEN_SCALE = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24]; /* 階名0〜14（ド〜高いシ〜ド）の半音 */
+const GARDEN_SOL = ['ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'ド'];
+/* パターンは [階名, 拍数] の並び。①②③は四分音符、④⑤は八分音符（0.5拍） */
+const GARDEN_PATTERNS = [
+  { name: 'スケール', notes: [[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[7,1],[6,1],[5,1],[4,1],[3,1],[2,1],[1,1],[0,1]] },
+  { name: '2度進行', notes: [[0,1],[1,1],[0,1],[1,1],[2,1],[3,1],[2,1],[3,1],[4,1],[5,1],[4,1],[3,1],[2,1],[1,1],[0,2]] },
+  { name: '3度進行', notes: [[0,1],[2,1],[4,2],[1,1],[3,1],[5,2],[2,1],[4,1],[6,2],[7,1],[4,1],[0,2]] },
+  { name: '4度スケール', notes: [[0,.5],[1,.5],[2,.5],[3,.5],[0,2],[1,.5],[2,.5],[3,.5],[4,.5],[1,2],[2,.5],[3,.5],[4,.5],[5,.5],[2,2],[0,2]] }, /* v100: 先生の直し——各フレーズは最初の音に戻って伸ばす */
+  { name: '下り5度スケール', notes: [[7,.5],[6,.5],[5,.5],[4,.5],[3,2],[6,.5],[5,.5],[4,.5],[3,.5],[2,2],[5,.5],[4,.5],[3,.5],[2,.5],[1,2],[0,2]] },
+];
+function gardenGenMelody(){
+  const pat = GARDEN_PATTERNS[Math.floor(Math.random() * GARDEN_PATTERNS.length)];
+  const maxSemi = Math.max(...pat.notes.map(n => GARDEN_SCALE[n[0]]));
+  const lo = 53, hi = Math.max(lo, 79 - maxSemi); /* 歌いやすい高さに収まるよう、パターンごとに主音を選ぶ */
+  const tonic = lo + Math.floor(Math.random() * (hi - lo + 1));
+  let t = 0;
+  const notes = pat.notes.map(n => { const m = { deg: n[0], midi: tonic + GARDEN_SCALE[n[0]], start: t, dur: n[1] }; t += n[1]; return m; });
+  return { pat, tonic, notes, totalBeats: t };
+}
+function gardenBuildChips(mel){
+  const chips = $('gardenNotes'); chips.innerHTML = '';
+  mel.notes.forEach(n => { const sp = document.createElement('span'); sp.textContent = GARDEN_SOL[n.deg]; sp.style.cssText = 'display:inline-block; min-width:34px; padding:5px 4px; margin:2px; border-radius:8px; background:#efe7d3; font-size:14px; font-weight:700; color:#6b6151; text-align:center;'; chips.appendChild(sp); });
+}
+function gardenSetChip(idx, bg){ [...$('gardenNotes').children].forEach((c, ix) => { if (ix === idx) c.style.background = bg; }); }
+function gardenClearChips(){ [...$('gardenNotes').children].forEach(c => c.style.background = '#efe7d3'); }
+let gardenCountRunSeq = 0;
+function gardenCountRun(at, later, beats, pulseFrom){
+  const run = ++gardenCountRunSeq;
+  for (let b = 0; b < beats; b++){
+    const n = b % 4 + 1;
+    later(at(b), () => { if (run !== gardenCountRunSeq) return; const el = $('gardenCount'); el.textContent = String(n); if (pulseFrom !== null && pulseFrom !== undefined && b >= pulseFrom && el.animate) el.animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 160 }); });
+  }
+  later(at(beats), () => { if (run === gardenCountRunSeq) $('gardenCount').textContent = ''; });
+}
+function gardenApplySong(area, pts, feat){
+  const before = area.areaSec, after = before + pts;
+  /* 2本目はエリア累積100P、3本目は160Pで出現し、出現時点からの累積で育つ */
   while (area.stocks.length < 3){
     const need = area.stocks.length === 1 ? 100 : 160;
     if (after < need) break;
@@ -5830,92 +5976,132 @@ function gardenApplySong(area, sec, feat){
     if (eff > 0) gardenAccAdd(stk.acc, feat, eff);
   }
 }
-async function startGardenSing(){
+/* デモ再生（回数は消費しない） */
+async function gardenStart(){
   if (gardenSinging) return;
   const st = await gardenLoad();
   const today = gardenTodayStr();
-  if (!st.day || st.day.d !== today) st.day = { d: today, n: 0 };
-  if (st.day.n >= 10){ $('gardenMsg').textContent = '今日の鼻歌は10回までです。また明日うたってください。'; return; }
+  const n = (st.day && st.day.d === today) ? st.day.n : 0;
+  if (n >= 5){ $('gardenMsg').textContent = '今日のトレーニングは5回までです。また明日うたってください。'; return; }
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') await AC.resume(); } catch (e) { return; }
+  gardenSession = { mel: gardenGenMelody() }; /* ボタンを押すたびに、パターンとキーをランダムに新しく出題する（先生の指定） */
+  const mel = gardenSession.mel;
+  gardenSinging = true;
+  $('btn-garden-sing').disabled = true;
+  gardenBuildChips(mel);
+  const { at, waitUntil, later } = labGrid();
+  $('gardenMsg').textContent = '🎧 デモを聴く（' + mel.pat.name + '）';
+  for (let b = 0; b < 4; b++) labClick(at(b), b === 0);
+  gardenCountRun(at, later, Math.ceil(4 + mel.totalBeats), null);
+  mel.notes.forEach((nn, ix) => { labTone(midiHz(nn.midi), at(4 + nn.start), nn.dur * LAB_BEAT * 0.92, 0.22); later(at(4 + nn.start), () => gardenSetChip(ix, '#f7d774')); });
+  for (let b = 0; b < Math.ceil(mel.totalBeats); b++) labClick(at(4 + b), b === 0, 0.5);
+  await waitUntil(at(4 + mel.totalBeats));
+  gardenClearChips();
+  gardenSinging = false;
+  $('btn-garden-sing').disabled = false;
+  $('gardenMsg').textContent = '🎧 デモが終わったよ。カウントに合わせてうたってね';
+  await gardenChallenge(); /* ボタン1つ: デモのあと、そのまま歌う。消費は歌い始め（開発室と同じ） */
+}
+/* 挑戦（歌い始めた時点で1回消費。途中でやめても戻らない） */
+async function gardenChallenge(){
+  if (gardenSinging || !gardenSession) return;
+  const mel = gardenSession.mel;
   let gstream;
   try {
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    if (AC.state === 'suspended') await AC.resume();
+    if (AC && AC.state === 'suspended') await AC.resume();
     gstream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
-  } catch (e) { $('gardenMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; return; }
-  st.day.n += 1; /* 歌い始めた時点で1回消費（先生の確定仕様）。途中でやめても戻らない */
-  st.lastSungAt = Date.now(); /* v74: 世話時刻も歌い始めで更新（途中で落ちても、その日来たことになる） */
-  await gardenSave(st);
-  $('gardenDayInfo').textContent = gardenDayInfo(st);
-  gardenSinging = true;
+  } catch (e) { $('gardenMsg').textContent = 'マイクを使えませんでした。ブラウザのマイク許可を確認してください。'; gardenSession = null; return; }
+  const st0 = await gardenLoad();
+  const today = gardenTodayStr();
+  if (!st0.day || st0.day.d !== today) st0.day = { d: today, n: 0 };
+  if (st0.day.n >= 5){ $('gardenMsg').textContent = '今日のトレーニングは5回までです。また明日うたってください。'; gardenSession = null; gstream.getTracks().forEach(tr => tr.stop()); return; }
+  st0.day.n += 1;
+  st0.lastSungAt = Date.now();
+  await gardenSave(st0);
+  $('gardenDayInfo').textContent = gardenDayInfo(st0);
+  gardenSinging = true; gardenStopFlag = false;
   gardenSingStream = gstream;
   $('btn-garden-sing').style.display = 'none';
   $('btn-garden-stop').style.display = '';
+  gardenBuildChips(mel);
+  const { at, waitUntil, later } = labGrid();
+  $('gardenMsg').textContent = '🎤 トレーニング！「' + mel.pat.name + '」カウントとルート音を聴いてね';
+  labTone(midiHz(mel.tonic), at(0), 4 * LAB_BEAT * 0.95, 0.20);
+  for (let b = 0; b < 4; b++) labClick(at(b), b === 0);
+  gardenCountRun(at, later, Math.ceil(4 + mel.totalBeats), 4);
+  later(at(4), () => { $('gardenMsg').textContent = '🎤 拍の数字に合わせて歌ってね！'; });
+  await waitUntil(at(4));
   const src = AC.createMediaStreamSource(gstream);
   const an2 = AC.createAnalyser(); an2.fftSize = 2048; src.connect(an2);
   const buf = new Float32Array(an2.fftSize), fbuf = new Float32Array(an2.frequencyBinCount);
   const gframes = [];
   gardenSingFrames = gframes;
-  const t0 = performance.now();
-  const tick = () => {
-    if (!gardenSinging) return;
-    const t = (performance.now() - t0) / 1000;
-    an2.getFloatTimeDomainData(buf);
-    const { f, rms } = autoPitch(buf, AC.sampleRate);
-    an2.getFloatFrequencyData(fbuf);
-    let num = 0, den = 0;
-    for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / an2.fftSize) * m; den += m; }
-    let rich = 0;
-    if (f > 0){
-      const binHz = AC.sampleRate / an2.fftSize;
-      const magAt = hz => { const b = Math.round(hz / binHz); let m = 0; for (let j = Math.max(2, b - 1); j <= Math.min(fbuf.length - 1, b + 1); j++) m = Math.max(m, Math.pow(10, fbuf[j] / 20)); return m; };
-      const F0 = magAt(f); let Hh = 0; for (let k = 2; k <= 5; k++) Hh += magAt(f * k);
-      if (F0 + Hh > 0) rich = Hh / (F0 + Hh);
-    }
-    gframes.push({ t, f, rms, cent: den > 0 ? num / den : 0, rich });
-    $('gardenMsg').textContent = '🌸 うたっています… あと ' + Math.max(0, 10 - Math.floor(t)) + ' 秒';
-    if (t >= 10){ finishGardenSing(); return; }
-    gardenSingTimer = setTimeout(tick, 50);
-  };
-  tick();
-}
-async function finishGardenSing(){
-  if (!gardenSinging) return;
-  gardenSinging = false;
+  const recT0 = performance.now();
+  let beatShown = -1;
+  await new Promise(done => {
+    const tick = () => {
+      if (!gardenSinging || gardenStopFlag) return done();
+      const t = (performance.now() - recT0) / 1000;
+      an2.getFloatTimeDomainData(buf);
+      const { f, rms } = autoPitch(buf, AC.sampleRate);
+      an2.getFloatFrequencyData(fbuf);
+      let num = 0, den = 0;
+      for (let i = 2; i < fbuf.length; i++){ const m = Math.pow(10, fbuf[i] / 20); num += i * (AC.sampleRate / an2.fftSize) * m; den += m; }
+      let rich = 0;
+      if (f > 0){
+        const binHz = AC.sampleRate / an2.fftSize;
+        const magAt = hz => { const b = Math.round(hz / binHz); let m = 0; for (let j = Math.max(2, b - 1); j <= Math.min(fbuf.length - 1, b + 1); j++) m = Math.max(m, Math.pow(10, fbuf[j] / 20)); return m; };
+        const F0 = magAt(f); let Hh = 0; for (let k = 2; k <= 5; k++) Hh += magAt(f * k);
+        if (F0 + Hh > 0) rich = Hh / (F0 + Hh);
+      }
+      gframes.push({ t, f, rms, cent: den > 0 ? num / den : 0, rich });
+      const pos = t / LAB_BEAT;
+      const idx = pos < mel.totalBeats ? mel.notes.findIndex(nn => pos >= nn.start && pos < nn.start + nn.dur) : -1;
+      if (idx !== beatShown){ beatShown = idx; gardenClearChips(); if (idx >= 0) gardenSetChip(idx, '#bfe3a8'); }
+      if (t >= mel.totalBeats * LAB_BEAT) return done();
+      gardenSingTimer = setTimeout(tick, 50);
+    };
+    tick();
+  });
   clearTimeout(gardenSingTimer);
   if (gardenSingStream) gardenSingStream.getTracks().forEach(tr => tr.stop());
   gardenSingStream = null;
+  gardenSinging = false;
   $('btn-garden-sing').style.display = '';
   $('btn-garden-stop').style.display = 'none';
-  const gframes = gardenSingFrames || [];
+  gardenClearChips();
+  gardenSession = null;
   gardenSingFrames = null;
-  /* 実際に歌った秒数（フレーズの合計）だけを加算する。途中でやめた場合はその分だけ */
-  let sungSec = 0, feat = null;
-  try {
-    const an = analyzeFrames(gframes);
-    if (an && an.phrases && an.phrases.length){
-      sungSec = Math.min(10, an.phrases.reduce((s, p) => s + (p.durSec || 0), 0));
-      feat = an.feat;
-    }
-  } catch (e) { /* 解析できなくてもアプリは止めない */ }
+  /* 採点（開発室と同じ物差し）と成長 */
+  const acc = labScore(gframes, mel);
+  let feat = null, hasPhrase = false;
+  try { const an = analyzeFrames(gframes); if (an && an.phrases && an.phrases.length){ hasPhrase = true; feat = an.feat; } } catch (e) {}
   const st = await gardenLoad();
-  st.lastSungAt = Date.now();
-  /* v61 天気ボーナス（先生の決定）: 表示中の天気の bonus を成長秒数に加える（下限0）。
-     色の蓄積（acc）も同じ秒数で重み付けする */
+  const prevSig = gardenSceneSig(st); /* 歌う前の顔ぶれの控え（成長しなければ描き直さない） */
+  if (!hasPhrase){
+    $('gardenMsg').textContent = '声が聞き取れませんでした。もう少し大きな声で、はっきりうたってみてください。';
+    await renderGardenPage(st, { prevSig });
+    return;
+  }
+  const pts = Math.floor(acc * 10); /* 正解率の10等分: 100%で10P、90%以上で9P */
   const wBonus = (gardenWeather && GARDEN_WEATHERS[gardenWeather]) ? (GARDEN_WEATHERS[gardenWeather].bonus || 0) : 0;
-  const growSec = sungSec > 0 ? Math.max(0, sungSec + wBonus) : 0;
-  if (growSec > 0){
+  const total = Math.max(0, pts + wBonus);
+  st.lastSungAt = Date.now();
+  if (total > 0){
     for (const k of ['left', 'center', 'right']){
       const area = st.areas[k];
-      if (area) gardenApplySong(area, growSec, feat);
+      if (area) gardenApplySong(area, total, feat);
     }
   }
   await gardenSave(st);
-  if (sungSec > 0) calMark('g').catch(() => {}); /* v86: カレンダーの活動記録 */
-  $('gardenMsg').textContent = sungSec > 0 ? '歌を聴かせました（' + growSec.toFixed(1) + '秒ぶん育ちました' + (wBonus !== 0 ? '・ボーナス' + (wBonus > 0 ? '+' : '') + wBonus + '秒' : '') + '）' : '声が聞き取れませんでした。もう少し大きな声でうたってみてください。';
-  await renderGardenPage(st);
+  calMark('g').catch(() => {}); /* カレンダーの活動記録 */
+  $('gardenMsg').textContent = total > 0
+    ? '🎉 ' + total + 'ポイント獲得！（正解率 ' + Math.round(acc * 100) + '％' + (wBonus !== 0 ? '・天気ボーナス' + (wBonus > 0 ? '+' : '') + wBonus + 'P' : '') + '）'
+    : '正解率 ' + Math.round(acc * 100) + '％・ポイントはつきませんでした。デモをよく聴いて、もう一度どうぞ。';
+  await renderGardenPage(st, { prevSig });
 }
-$('btn-garden-sing').onclick = startGardenSing;
-$('btn-garden-stop').onclick = finishGardenSing;
+$('btn-garden-sing').onclick = gardenStart;
+$('btn-garden-stop').onclick = () => { gardenStopFlag = true; };
 /* ヒント: 咲かせた花種の数で段階解放。過去のヒントも残して読み返せる（先生の設計） */
 const HINTS = [
   { at: 5, sub: '同じ花ばかり咲く？', items: ['同じ高さや速さで歌ってない？', '音符やフレーズの長さも大事！', '同じ花が咲いても良い事あるかも!?'] },
@@ -6392,7 +6578,7 @@ ${APP_URL}
   }
 };
 
-const LAB_ROOT = {"granrose":{"bud":{"cx":0.49,"top":0.018,"bottom":0.449,"rootx":0.502,"ar":0.433},"half":{"cx":0.503,"top":0.015,"bottom":0.631,"rootx":0.515,"ar":0.52},"full":{"cx":0.5,"top":0.029,"bottom":0.751,"rootx":0.504,"ar":0.779}},"pomponrose":{"bud":{"cx":0.498,"top":0.022,"bottom":0.384,"rootx":0.474,"ar":0.41},"half":{"cx":0.503,"top":0.025,"bottom":0.775,"rootx":0.5,"ar":0.697},"full":{"cx":0.5,"top":0.022,"bottom":0.813,"rootx":0.503,"ar":0.819}},"roselily":{"bud":{"cx":0.498,"top":0.047,"bottom":0.665,"rootx":0.508,"ar":0.247},"half":{"cx":0.507,"top":0.072,"bottom":0.691,"rootx":0.513,"ar":0.553},"full":{"cx":0.502,"top":0.052,"bottom":0.698,"rootx":0.507,"ar":0.714}},"bellrose":{"bud":{"cx":0.488,"top":0.062,"bottom":0.621,"rootx":0.488,"ar":0.671},"half":{"cx":0.5,"top":0.033,"bottom":0.668,"rootx":0.511,"ar":0.702},"full":{"cx":0.496,"top":0.028,"bottom":0.677,"rootx":0.503,"ar":0.735}},"featherrose":{"bud":{"cx":0.498,"top":0.02,"bottom":0.544,"rootx":0.521,"ar":0.31},"half":{"cx":0.502,"top":0.019,"bottom":0.677,"rootx":0.507,"ar":0.614},"full":{"cx":0.501,"top":0.044,"bottom":0.773,"rootx":0.507,"ar":0.797}},"millefeuille":{"bud":{"cx":0.509,"top":0.011,"bottom":0.445,"rootx":0.518,"ar":0.481},"half":{"cx":0.501,"top":0.018,"bottom":0.652,"rootx":0.5,"ar":0.672},"full":{"cx":0.501,"top":0.02,"bottom":0.788,"rootx":0.506,"ar":0.797}},"dahlialily":{"bud":{"cx":0.513,"top":0.023,"bottom":0.649,"rootx":0.539,"ar":0.329},"half":{"cx":0.498,"top":0.032,"bottom":0.625,"rootx":0.513,"ar":0.397},"full":{"cx":0.505,"top":0.036,"bottom":0.789,"rootx":0.51,"ar":0.773}},"stardahlia":{"bud":{"cx":0.356,"top":0.061,"bottom":0.443,"rootx":0.334,"ar":0.608},"half":{"cx":0.504,"top":0.053,"bottom":0.709,"rootx":0.495,"ar":0.747},"full":{"cx":0.507,"top":0.045,"bottom":0.752,"rootx":0.505,"ar":0.784}},"clouddahlia":{"bud":{"cx":0.507,"top":0.048,"bottom":0.508,"rootx":0.512,"ar":0.449},"half":{"cx":0.501,"top":0.024,"bottom":0.728,"rootx":0.5,"ar":0.789},"full":{"cx":0.503,"top":0.032,"bottom":0.813,"rootx":0.503,"ar":0.799}},"ranunlily":{"bud":{"cx":0.497,"top":0.009,"bottom":0.488,"rootx":0.499,"ar":0.522},"half":{"cx":0.498,"top":0.012,"bottom":0.687,"rootx":0.503,"ar":0.78},"full":{"cx":0.5,"top":0.018,"bottom":0.774,"rootx":0.502,"ar":0.831}},"moonbell":{"bud":{"cx":0.478,"top":0.088,"bottom":0.81,"rootx":0.481,"ar":0.71},"half":{"cx":0.492,"top":0.089,"bottom":0.826,"rootx":0.491,"ar":0.722},"full":{"cx":0.499,"top":0.088,"bottom":0.846,"rootx":0.492,"ar":0.777}},"featheranemone":{"bud":{"cx":0.51,"top":0.029,"bottom":0.638,"rootx":0.498,"ar":0.337},"half":{"cx":0.507,"top":0.022,"bottom":0.661,"rootx":0.502,"ar":0.78},"full":{"cx":0.507,"top":0.028,"bottom":0.818,"rootx":0.506,"ar":0.809}},"belllily":{"bud":{"cx":0.509,"top":0.032,"bottom":0.784,"rootx":0.516,"ar":0.729},"half":{"cx":0.511,"top":0.033,"bottom":0.776,"rootx":0.512,"ar":0.735},"full":{"cx":0.488,"top":0.035,"bottom":0.808,"rootx":0.487,"ar":0.799}},"angellily":{"bud":{"cx":0.482,"top":0.029,"bottom":0.673,"rootx":0.446,"ar":0.272},"half":{"cx":0.511,"top":0.024,"bottom":0.712,"rootx":0.505,"ar":0.735},"full":{"cx":0.503,"top":0.067,"bottom":0.801,"rootx":0.495,"ar":0.813}},"featherbell":{"bud":{"cx":0.516,"top":0.041,"bottom":0.759,"rootx":0.508,"ar":0.721},"half":{"cx":0.51,"top":0.04,"bottom":0.775,"rootx":0.495,"ar":0.752},"full":{"cx":0.5,"top":0.043,"bottom":0.806,"rootx":0.488,"ar":0.804}},"queenrose":{"bud":{"cx":0.508,"top":0.03,"bottom":0.63,"rootx":0.501,"ar":0.522},"half":{"cx":0.477,"top":0.022,"bottom":0.722,"rootx":0.459,"ar":0.58},"full":{"cx":0.479,"top":0.042,"bottom":0.748,"rootx":0.481,"ar":0.812}},"granddahlia":{"bud":{"cx":0.505,"top":0.04,"bottom":0.404,"rootx":0.475,"ar":0.372},"half":{"cx":0.528,"top":0.047,"bottom":0.672,"rootx":0.519,"ar":0.755},"full":{"cx":0.496,"top":0.036,"bottom":0.801,"rootx":0.492,"ar":0.806}},"princessranun":{"bud":{"cx":0.489,"top":0.013,"bottom":0.511,"rootx":0.474,"ar":0.508},"half":{"cx":0.501,"top":0.019,"bottom":0.776,"rootx":0.499,"ar":0.755},"full":{"cx":0.497,"top":0.013,"bottom":0.783,"rootx":0.495,"ar":0.807}},"madonnalily":{"bud":{"cx":0.503,"top":0.014,"bottom":0.564,"rootx":0.51,"ar":0.229},"half":{"cx":0.489,"top":0.049,"bottom":0.706,"rootx":0.479,"ar":0.675},"full":{"cx":0.498,"top":0.046,"bottom":0.734,"rootx":0.492,"ar":0.801}},"grandbell":{"bud":{"cx":0.502,"top":0.113,"bottom":0.714,"rootx":0.486,"ar":0.589},"half":{"cx":0.502,"top":0.041,"bottom":0.805,"rootx":0.499,"ar":0.707},"full":{"cx":0.497,"top":0.024,"bottom":0.814,"rootx":0.493,"ar":0.796}},"plumeflower":{"bud":{"cx":0.694,"top":0.059,"bottom":0.589,"rootx":0.673,"ar":0.604},"half":{"cx":0.496,"top":0.026,"bottom":0.68,"rootx":0.496,"ar":0.787},"full":{"cx":0.49,"top":0.069,"bottom":0.794,"rootx":0.494,"ar":0.829}}};
+const LAB_ROOT = {"christmasrose":{"bud":{"cx":0.535,"top":0.03,"bottom":0.351,"rootx":0.523,"ar":0.987},"half":{"cx":0.486,"top":0.028,"bottom":0.576,"rootx":0.475,"ar":0.734},"full":{"cx":0.509,"top":0.028,"bottom":0.623,"rootx":0.506,"ar":0.753}},"granrose":{"bud":{"cx":0.49,"top":0.018,"bottom":0.449,"rootx":0.502,"ar":0.433},"half":{"cx":0.503,"top":0.015,"bottom":0.631,"rootx":0.515,"ar":0.52},"full":{"cx":0.5,"top":0.029,"bottom":0.751,"rootx":0.504,"ar":0.779}},"pomponrose":{"bud":{"cx":0.498,"top":0.022,"bottom":0.384,"rootx":0.474,"ar":0.41},"half":{"cx":0.503,"top":0.025,"bottom":0.775,"rootx":0.5,"ar":0.697},"full":{"cx":0.5,"top":0.022,"bottom":0.813,"rootx":0.503,"ar":0.819}},"roselily":{"bud":{"cx":0.498,"top":0.047,"bottom":0.665,"rootx":0.508,"ar":0.247},"half":{"cx":0.507,"top":0.072,"bottom":0.691,"rootx":0.513,"ar":0.553},"full":{"cx":0.502,"top":0.052,"bottom":0.698,"rootx":0.507,"ar":0.714}},"bellrose":{"bud":{"cx":0.488,"top":0.062,"bottom":0.621,"rootx":0.488,"ar":0.671},"half":{"cx":0.5,"top":0.033,"bottom":0.668,"rootx":0.511,"ar":0.702},"full":{"cx":0.496,"top":0.028,"bottom":0.677,"rootx":0.503,"ar":0.735}},"featherrose":{"bud":{"cx":0.498,"top":0.02,"bottom":0.544,"rootx":0.521,"ar":0.31},"half":{"cx":0.502,"top":0.019,"bottom":0.677,"rootx":0.507,"ar":0.614},"full":{"cx":0.501,"top":0.044,"bottom":0.773,"rootx":0.507,"ar":0.797}},"millefeuille":{"bud":{"cx":0.509,"top":0.011,"bottom":0.445,"rootx":0.518,"ar":0.481},"half":{"cx":0.501,"top":0.018,"bottom":0.652,"rootx":0.5,"ar":0.672},"full":{"cx":0.501,"top":0.02,"bottom":0.788,"rootx":0.506,"ar":0.797}},"dahlialily":{"bud":{"cx":0.513,"top":0.023,"bottom":0.649,"rootx":0.539,"ar":0.329},"half":{"cx":0.498,"top":0.032,"bottom":0.625,"rootx":0.513,"ar":0.397},"full":{"cx":0.505,"top":0.036,"bottom":0.789,"rootx":0.51,"ar":0.773}},"stardahlia":{"bud":{"cx":0.356,"top":0.061,"bottom":0.443,"rootx":0.334,"ar":0.608},"half":{"cx":0.504,"top":0.053,"bottom":0.709,"rootx":0.495,"ar":0.747},"full":{"cx":0.507,"top":0.045,"bottom":0.752,"rootx":0.505,"ar":0.784}},"clouddahlia":{"bud":{"cx":0.507,"top":0.048,"bottom":0.508,"rootx":0.512,"ar":0.449},"half":{"cx":0.501,"top":0.024,"bottom":0.728,"rootx":0.5,"ar":0.789},"full":{"cx":0.503,"top":0.032,"bottom":0.813,"rootx":0.503,"ar":0.799}},"ranunlily":{"bud":{"cx":0.497,"top":0.009,"bottom":0.488,"rootx":0.499,"ar":0.522},"half":{"cx":0.498,"top":0.012,"bottom":0.687,"rootx":0.503,"ar":0.78},"full":{"cx":0.5,"top":0.018,"bottom":0.774,"rootx":0.502,"ar":0.831}},"moonbell":{"bud":{"cx":0.478,"top":0.088,"bottom":0.81,"rootx":0.481,"ar":0.71},"half":{"cx":0.492,"top":0.089,"bottom":0.826,"rootx":0.491,"ar":0.722},"full":{"cx":0.499,"top":0.088,"bottom":0.846,"rootx":0.492,"ar":0.777}},"featheranemone":{"bud":{"cx":0.51,"top":0.029,"bottom":0.638,"rootx":0.498,"ar":0.337},"half":{"cx":0.507,"top":0.022,"bottom":0.661,"rootx":0.502,"ar":0.78},"full":{"cx":0.507,"top":0.028,"bottom":0.818,"rootx":0.506,"ar":0.809}},"belllily":{"bud":{"cx":0.509,"top":0.032,"bottom":0.784,"rootx":0.516,"ar":0.729},"half":{"cx":0.511,"top":0.033,"bottom":0.776,"rootx":0.512,"ar":0.735},"full":{"cx":0.488,"top":0.035,"bottom":0.808,"rootx":0.487,"ar":0.799}},"angellily":{"bud":{"cx":0.482,"top":0.029,"bottom":0.673,"rootx":0.446,"ar":0.272},"half":{"cx":0.511,"top":0.024,"bottom":0.712,"rootx":0.505,"ar":0.735},"full":{"cx":0.503,"top":0.067,"bottom":0.801,"rootx":0.495,"ar":0.813}},"featherbell":{"bud":{"cx":0.516,"top":0.041,"bottom":0.759,"rootx":0.508,"ar":0.721},"half":{"cx":0.51,"top":0.04,"bottom":0.775,"rootx":0.495,"ar":0.752},"full":{"cx":0.5,"top":0.043,"bottom":0.806,"rootx":0.488,"ar":0.804}},"queenrose":{"bud":{"cx":0.508,"top":0.03,"bottom":0.63,"rootx":0.501,"ar":0.522},"half":{"cx":0.477,"top":0.022,"bottom":0.722,"rootx":0.459,"ar":0.58},"full":{"cx":0.479,"top":0.042,"bottom":0.748,"rootx":0.481,"ar":0.812}},"granddahlia":{"bud":{"cx":0.505,"top":0.04,"bottom":0.404,"rootx":0.475,"ar":0.372},"half":{"cx":0.528,"top":0.047,"bottom":0.672,"rootx":0.519,"ar":0.755},"full":{"cx":0.496,"top":0.036,"bottom":0.801,"rootx":0.492,"ar":0.806}},"princessranun":{"bud":{"cx":0.489,"top":0.013,"bottom":0.511,"rootx":0.474,"ar":0.508},"half":{"cx":0.501,"top":0.019,"bottom":0.776,"rootx":0.499,"ar":0.755},"full":{"cx":0.497,"top":0.013,"bottom":0.783,"rootx":0.495,"ar":0.807}},"madonnalily":{"bud":{"cx":0.503,"top":0.014,"bottom":0.564,"rootx":0.51,"ar":0.229},"half":{"cx":0.489,"top":0.049,"bottom":0.706,"rootx":0.479,"ar":0.675},"full":{"cx":0.498,"top":0.046,"bottom":0.734,"rootx":0.492,"ar":0.801}},"grandbell":{"bud":{"cx":0.502,"top":0.113,"bottom":0.714,"rootx":0.486,"ar":0.589},"half":{"cx":0.502,"top":0.041,"bottom":0.805,"rootx":0.499,"ar":0.707},"full":{"cx":0.497,"top":0.024,"bottom":0.814,"rootx":0.493,"ar":0.796}},"plumeflower":{"bud":{"cx":0.694,"top":0.059,"bottom":0.589,"rootx":0.673,"ar":0.604},"half":{"cx":0.496,"top":0.026,"bottom":0.68,"rootx":0.496,"ar":0.787},"full":{"cx":0.49,"top":0.069,"bottom":0.794,"rootx":0.494,"ar":0.829}}};
 
 /* ========= v64 交配・開発室（第3の柱「生み出す」） =========
    設計: 交配表-v1.md v3（先生の分類・対角線ルール）＋ 2026-11-16 の決定群。
@@ -6413,6 +6599,8 @@ const LAB_CROSS = { 'bara|kiku':'granrose', 'bara|kinpouge':'pomponrose', 'bara|
 function labChildId(aId, bId){
   const fa = LAB_FAM[aId], fb = LAB_FAM[bId];
   if (!fa || !fb) return null;
+  /* v100 冬イベント: 12月だけ、キンポウゲ科同士の交配結果がクリスマスローズに替わる */
+  if (fa === fb && fa === 'kinpouge' && new Date().getMonth() === 11) return 'christmasrose';
   if (fa === fb) return LAB_CROSS[fa] || null;
   return LAB_CROSS[[fa, fb].sort().join('|')] || null;
 }
@@ -6441,6 +6629,7 @@ const HYBRIDS = [
  { id:'madonnalily', jp:'マドンナリリー', genus:'マドンナ', stem:'slender', leaf:'slender', adj:['純白の','凛とした','聖なる'], words:['清らかな','無垢で'], pose:'純白で凛と立つ、ユリの聖花が開く', trait:'純白で凛と立つユリの聖花', mood:'清らか', one:['あっ、マドンナリリーだ！純白で凛と立つ姿に、思わず背筋が伸びるよ。','あっ、ユリの血が純粋に極まった花だね。清らかさって、こういうことだね。'], cheer:['清らかさは、守り続けた人にだけ残るもの。その凛とした姿、大切にね。','凛と立つ姿は、誰かの目印になるよ。あなたらしく、まっすぐ咲いてね。'] },
  { id:'grandbell', jp:'グランベル', genus:'カンパヌラ', stem:'branch', leaf:'pointed', adj:['大聖堂の','壮大な','連なる'], words:['清らかな','堂々とした'], pose:'鈴の房を極めた、大聖堂の鐘のような花房が垂れる', trait:'大聖堂の鐘のような鈴の花房', mood:'華やか', one:['あっ、大聖堂の鐘みたいな花房だ！鈴の血が極まると、こんなに壮大になるんだね。','あっ、大きな鈴が幾つも連なってる。鳴ったら、町中に響きそうだね。'], cheer:['大きな鐘の音は、遠くまで届く。あなたの声も、きっと誰かに届いてるよ。','壮大さは、小さな鈴の積み重ね。一つひとつを大切にね。'] },
  { id:'plumeflower', jp:'プルームフラワー', genus:'プルマージ', stem:'slender', leaf:'round', adj:['羽根飾りの','軽やかな','大きな'], words:['柔らかで','個性が強く'], pose:'羽根の軽さを極めた、大きな羽根飾りの花が開く', trait:'羽根の軽さを極めた羽根飾りの花', mood:'元気', one:['あっ、花全体が羽根飾りみたい！羽の血が極まって、こんなに軽やかな花になったね。','あっ、大きな羽根の花だ！風に乗って飛んでいきそうな軽さだね。'], cheer:['軽さは、自由に動ける力だよ。その羽根で、行きたい場所へ行こう。','個性が極まると、芸術になる。あなたの個性、大切にしてね。'] },
+ { id:'christmasrose', jp:'クリスマスローズ', genus:'ヘレボルス', stem:'standard', leaf:'round', adj:['聖夜の','赤と緑の'], words:['静かに','凛として'], pose:'赤と緑の花びらが交互に開く', trait:'赤と緑の花びらが交互に咲く冬の花', mood:'聖らか', one:['赤と緑の花弁の不思議なクリスマスローズが咲いたよ。でもこの花はバラ科ではなく“キンポウゲ科”の花だよ。'], cheer:['寒い季節に咲く花は強いんだ。あなたの歌も、凛として届くはずだよ。','寄り添う二色みたいに、強さと優しさは一緒に育つんだね。'] },
 ];
 const HYBRID_BY_ID = {}; for (const h of HYBRIDS) HYBRID_BY_ID[h.id] = h;
 Object.assign(FMSG.species, Object.fromEntries(HYBRIDS.map(h => [h.id, { trait: h.trait, mood: h.mood, one: h.one, cheer: h.cheer }])));
@@ -6951,7 +7140,7 @@ const LAB_PLANT = {
   dahlialily: ['dahlia', 'sprig-rose'], stardahlia: ['dahlia', 'sprig-rose'], clouddahlia: ['dahlia', 'sprig-rose'],
   ranunlily: ['anemone', 'sprig-rose'], moonbell: ['lily', 'sprig-tulilily'], featheranemone: ['anemone', 'sprig-rose'],
   belllily: ['lily', 'sprig-tulilily'], angellily: ['lily', 'sprig-tulilily'], featherbell: ['cherry', 'sprig-rose'],
-  queenrose: ['rose', 'sprig-rose'], granddahlia: ['dahlia', 'sprig-rose'], princessranun: ['anemone', 'sprig-rose'],
+  queenrose: ['rose', 'sprig-rose'], granddahlia: ['dahlia', 'sprig-rose'], princessranun: ['anemone', 'sprig-rose'], christmasrose: ['anemone', 'sprig-rose'],
   madonnalily: ['lily', 'sprig-tulilily'], grandbell: ['lily', 'sprig-tulilily'], plumeflower: ['cherry', 'sprig-rose'],
 };
 for (const h of HYBRIDS){
@@ -6960,6 +7149,8 @@ for (const h of HYBRIDS){
     P5[h.id + '-' + stg] = { a: (rt.rootx !== undefined ? rt.rootx : rt.cx), b: rt.bottom, ar: rt.ar, clipF: Math.min(0.995, rt.bottom + 0.02) }; /* clipF: 交配種の頭の絵は「茎付きの切り花」で、花の付け根から下に絵の茎が続いている。株の茎・枝と二重になり枝先で浮いて見えるため、描画時に付け根で切り取る（drawHeadAt） */
   }
 }
+/* v100: クリスマスローズの満開は、絵の中の茎が少し見えてしまうので、花を少し下げて付け根で切る（先生の指摘） */
+if (P5['christmasrose-full']){ P5['christmasrose-full'].b = 0.60; P5['christmasrose-full'].clipF = 0.618; }
 /* 鈴系の満開（A案・先生の決定 2026-11-16）: 満開を1.5倍にしても天井に届かないよう、
    満開の留め位置を上げて、てっぺんを半開のてっぺんに揃える。大きくした分は房が下へ伸びて吸収する */
 const LAB_BELLS = ['bellrose', 'moonbell', 'belllily', 'grandbell', 'featherbell', 'stardahlia'];
@@ -6970,7 +7161,7 @@ for (const id of LAB_BELLS){
 function labProxySp(st, def){
   const pl = LAB_PLANT[def.id] || ['rose', 'sprig-rose'];
   const spA = SPECIES.find(s => s.id === st.cur.a);
-  return { id: def.id, jp: def.jp, base: def.id, stemFam: pl[0], sprig: pl[1], sprout: (spA && spA.sprout) || 'sprout-round', dye: true };
+  return { id: def.id, jp: def.jp, base: def.id, stemFam: pl[0], sprig: pl[1], sprout: (spA && spA.sprout) || 'sprout-round', dye: def.id !== 'christmasrose' }; /* v100: クリスマスローズは赤と緑の専用の絵なので染めない */
 }
 let labStockCache = null;
 async function labGetStock(st, color, stage){
@@ -6990,7 +7181,7 @@ async function labGetStock(st, color, stage){
   /* 色は hue/sat/light のみ渡す（fam を渡すと dyeSat が彩度の下限を掛けてベタ塗りになる） */
   const stock = buildStock([phrase], sp, { hue: color.hue, sat: color.sat, light: color.light }, 0, 990, 'lab' + def.id + st.cur.born, 1, { stabCents: 18 }, 430);
   stemR = saveR;
-  stock.layerScale = LAB_BELLS.includes(def.id) ? { bud: 3, half: 1.5, full: 1.5 } : { bud: 3, half: 1.5, full: 1.2 }; /* 開発種の頭の大きさ（先生の決定 2026-11-16）: 蕾3倍・半開1.5倍・満開1.2倍（鈴系の満開は1.5倍＋留め位置調整で天井回避）。drawComposite が段階レイヤーごとに適用 */
+  stock.layerScale = def.id === 'christmasrose' ? { bud: 3.3, half: 1.65, full: 1.58 } : LAB_BELLS.includes(def.id) ? { bud: 3, half: 1.5, full: 1.5 } : { bud: 3, half: 1.5, full: 1.2 }; /* v100: クリスマスローズは先生の指示でもう1割大きく */ /* 開発種の頭の大きさ（先生の決定 2026-11-16）: 蕾3倍・半開1.5倍・満開1.2倍（鈴系の満開は1.5倍＋留め位置調整で天井回避）。drawComposite が段階レイヤーごとに適用 */
   stock.rootX = LAB_SOIL.x; stock.groundY = LAB_SOIL.y;
   stock.imgs = await loadSpeciesImages(sp);
   labStockCache = { key, stock };
@@ -7072,6 +7263,7 @@ async function renderLabStage(){
   await drawLabPlant(e, st, {});
 }
 async function renderLabPage(){
+  initLabEventBanner(); /* v100: 12月のイベントお知らせ */
   const st = await labLoad();
   const has = !!st.cur;
   $('labNoCur').style.display = has ? 'none' : '';
@@ -7349,6 +7541,13 @@ async function labChallenge(){
   }
   await renderLabPage();
 }
+/* v100: 開発室のイベントお知らせ（12月のクリスマスローズ。期間中だけ自動で出す） */
+function initLabEventBanner(){
+  const el = $('labEventBanner'); if (!el) return;
+  if (new Date().getMonth() !== 11){ el.style.display = 'none'; return; }
+  fillNewsBanner(el, '🎄12月限定イベント🎄 ある同系種の交配で「クリスマスローズ」が生まれます（12月31日まで）');
+  el.style.display = '';
+}
 $('btn-lab-bonus').onclick = () => labPlayDemo('bonus');
 $('btn-lab-t1').onclick = () => labPlayDemo(1);
 $('btn-lab-t2').onclick = () => labPlayDemo(2);
@@ -7510,7 +7709,7 @@ function labMaybeAward(st, distinct){
 }
 async function labCheckHonors(st){
   const all = await collDB.getAll();
-  const distinct = new Set(all.filter(r => HYBRID_BY_ID[r.id]).map(r => r.id)).size;
+  const distinct = new Set(all.filter(r => HYBRID_BY_ID[r.id] && r.id !== 'christmasrose').map(r => r.id)).size; /* v100: クリスマスローズは数えない（全21種は通常の交配種） */
   const kind = labMaybeAward(st, distinct);
   if (!kind) return;
   await labSave(st);
@@ -7625,16 +7824,39 @@ const BQ_BASES = [
   { img: 'bq-base4.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 355 },
   { img: 'bq-base5.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 208 },
   { img: 'bq-base6.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: 32 },
+  { img: 'bq-base7.webp',  W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: null, season: 'sakura' },
+  { img: 'bq-base8.webp',  W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: null, season: 'summer' },
+  { img: 'bq-base9.webp',  W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: null, season: 'autumn' },
+  { img: 'bq-base10.webp', W: 1210, H: 1300, hScale: 1, slots: BQ_SLOTS1, lip: { y: 598, h: 215 }, rib: { x0: 240, x1: 940, top: 795 }, org: { cx: 605, cy: 395, rx: 445, ry: 305 }, hue: null, season: 'winter' },
 ];
 /* 歌の色から土台を選ぶ: 淡い歌は白、鮮やかな歌は色相に一番近いラッピング */
 function bqPickBase(color){
   if (!color || color.fam === 'white' || (color.sat || 0) < 0.30) return 0;
   let best = 1, bd = 999;
   for (let i = 1; i < BQ_BASES.length; i++){
+    if (!BQ_BASES[i].hue) continue; /* v100: 季節土台は色相では選ばない */
     const dd = Math.abs(color.hue - BQ_BASES[i].hue) % 360, d = dd > 180 ? 360 - dd : dd;
     if (d < bd){ bd = d; best = i; }
   }
   return best;
+}
+/* v100: 季節のブーケ土台（期間中に対象の花を選ぶと、その季節のラッピングになる） */
+const BQ_SEASONS = [
+  { key: 'sakura', base: 5, from: [3, 15], to: [4, 14], flowers: ['sakura', 'sakura2'], msg: '🌸期間限定イベント🌸 ある花を選ぶと、春限定ラッピングになります（4月14日まで）' },
+  { key: 'summer', base: 6, from: [7, 15], to: [8, 14], flowers: ['sunflower'], msg: '🌻期間限定イベント🌻 ある花を選ぶと、夏限定ラッピングになります（8月14日まで）' },
+  { key: 'autumn', base: 7, from: [9, 15], to: [10, 14], flowers: ['dahlia'], msg: '🍁期間限定イベント🍁 ある花を選ぶと、秋限定ラッピングになります（10月14日まで）' },
+  { key: 'winter', base: 8, from: [1, 15], to: [2, 14], flowers: ['rose'], msg: '❄期間限定イベント❄ある花を選ぶと、冬限定ラッピングになります（2月14日まで）' },
+];
+function bqSeasonOf(d){
+  d = d || new Date();
+  const md = (d.getMonth() + 1) * 100 + d.getDate();
+  for (const sn of BQ_SEASONS){ const f = sn.from[0] * 100 + sn.from[1], t = sn.to[0] * 100 + sn.to[1]; if (md >= f && md <= t) return sn; }
+  return null;
+}
+function bqSeasonalBaseIdx(){
+  const sn = bqSeasonOf(new Date()); if (!sn) return -1;
+  const ids = Object.values(bqPicks).filter(Boolean);
+  return sn.flowers.some(f => ids.includes(f)) ? sn.base : -1;
 }
 let bqMsg = '';
 function bqDrawMsgCard(x, msg){
@@ -7687,14 +7909,22 @@ async function bqSpendPicks(){
   } catch (e) {}
 }
 function bqDef(id){ const sp = SPECIES.find(s => s.id === id); if (sp) return { id, jp: sp.jp, sp }; const h = HYBRID_BY_ID[id]; if (h) return { id, jp: h.jp, hybrid: h }; return null; }
-function bqPickable(id, map){ const d = bqDef(id); if (!d || !map[id]) return false; if (d.sp && d.sp.seasonalScene) return false; return true; }
+function bqPickable(id, map){ const d = bqDef(id); if (!d || !map[id]) return false; if (d.hybrid) return false; /* 開発室で交配した花はブーケには使えない（先生のルール） */ if (d.sp && d.sp.seasonalScene) return false; return true; }
 async function bqLoadPicks(){ try { const r = await collDB.getBq(); if (r && r.picks){ const map = await bqCollectedMap(); const used = {}; for (let n = 1; n <= 9; n++){ const id = r.picks[n]; if (id && bqPickable(id, map) && (used[id] || 0) < bqStock(map[id])){ bqPicks[n] = id; used[id] = (used[id] || 0) + 1; } else bqPicks[n] = null; } } } catch (e) {} }
 async function bqSavePicks(){ try { await collDB.putBq({ picks: bqPicks }); } catch (e) {} }
 async function refreshShopEntrance(){ const el = $('shopEntrance'); if (!el) return; try { const map = await bqCollectedMap(); const n = bqKindCount(map);
   if (n >= BQ_UNLOCK){ el.innerHTML = ''; const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = '💐 お店に入る'; b.onclick = openShop; el.appendChild(b); }
   else el.innerHTML = '<span class="bq-lock">🔒 フラワーショップ<br>あと ' + (BQ_UNLOCK - n) + ' 種で開きます</span>';
 } catch (e) {} }
-async function openShop(){ $('shopPage').style.display = 'block'; $('bqShopBg').src = A3 + 'shop-bg.webp?av=' + AV3; await bqLoadPicks(); bqShowSelect(); renderBqGrid(); }
+/* v100: ショップのイベントお知らせ（季節のブーケ土台。期間中だけ自動で出す） */
+function initShopEventBanner(){
+  const el = $('shopEventBanner'); if (!el) return;
+  const sn = bqSeasonOf(new Date());
+  if (!sn){ el.style.display = 'none'; return; }
+  fillNewsBanner(el, sn.msg);
+  el.style.display = '';
+}
+async function openShop(){ $('shopPage').style.display = 'block'; initShopEventBanner(); $('bqShopBg').src = A3 + 'shop-bg.webp?av=' + AV3; await bqLoadPicks(); bqShowSelect(); renderBqGrid(); }
 function bqShowSelect(){ $('bqViewSelect').style.display = ''; $('bqViewSing').style.display = 'none'; }
 function bqHybridHue(def){ for (const k in LAB_CROSS){ if (LAB_CROSS[k] === def.id){ const fams = k.split('|'); const reps = fams.map(f => Object.keys(LAB_FAM).find(id => LAB_FAM[id] === f)); if (reps.length === 1) return LAB_HOME[reps[0]] || 330; return labHueOf(reps[0], reps[1]); } } return 330; }
 async function bqHeadImg(id){
@@ -7710,7 +7940,7 @@ async function bqHeadImg(id){
     let img = raw;
     const cr = BQ_CROP[id] || (d.hybrid ? [0, 0, 1, 0.98] : null);
     if (cr){ const c = document.createElement('canvas'); c.width = Math.round(raw.width * (cr[2] - cr[0])); c.height = Math.round(raw.height * (cr[3] - cr[1])); c.getContext('2d').drawImage(raw, -Math.round(raw.width * cr[0]), -Math.round(raw.height * cr[1])); img = c; }
-    const needsDye = d.hybrid ? true : !!d.sp.dye;
+    const needsDye = id === 'christmasrose' ? false : (d.hybrid ? true : !!d.sp.dye); /* v100: クリスマスローズは専用の絵のまま */
     if (needsDye){
       let hue, sat, light;
       if (BQ_BASIC[id]){ [hue, sat, light] = BQ_BASIC[id]; }
@@ -7935,6 +8165,7 @@ async function bqFinishSing(frames2){
   if (!an || !an.feat){ $('bqSingMsg').textContent = '声がうまく拾えませんでした。もう少し近くで、はっきりうたってみてください。'; $('btn-bq-sing').style.display = ''; bqShowScaled(34, true); return; }
   const color = pickColor(an.feat, SPECIES.find(s => s.id === 'rose'), hashStr('bq' + Date.now()));
   bqBaseIdx = bqPickBase(color);
+  const sIdx = bqSeasonalBaseIdx(); if (sIdx >= 0) bqBaseIdx = sIdx; /* v100: 季節の土台が優先 */
   $('bqSingMsg').textContent = '';
   const dark = $('bqDark'); dark.style.opacity = 1;
   await new Promise(r => setTimeout(r, 750));
@@ -7983,7 +8214,7 @@ function tabSync(){
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === cur));
 }
 function tabCloseAll(){
-  if ($('gardenPage').style.display !== 'none'){ if (gardenSinging) finishGardenSing(); gardenAnimStop(); $('gardenPage').style.display = 'none'; }
+  if ($('gardenPage').style.display !== 'none'){ if (gardenSinging) gardenStopFlag = true; /* v100: 閉じたら録音だけ止める（結果は裏で記録される） */ gardenAnimStop(); $('gardenPage').style.display = 'none'; }
   if ($('labPage').style.display !== 'none') $('labPage').style.display = 'none';
   if ($('collectionPage').style.display !== 'none') $('collectionPage').style.display = 'none';
   if ($('shopPage').style.display !== 'none'){ if (bqSinging) $('btn-bq-abort').onclick(); $('shopPage').style.display = 'none'; }
