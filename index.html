@@ -622,7 +622,7 @@ const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 const imgCache = {};
-const ASSET_V = 'v102'; /* プログラムの版（更新チェック用） */
+const ASSET_V = 'v103'; /* プログラムの版（更新チェック用） */
 /* v85: 画像の印はフォルダ別にし、そのフォルダの画像を変えた時だけ上げる。
    プログラムだけの更新では印が変わらないので、端末に保存済みの画像が
    使い回され、更新直後でもガーデンなどがすぐ開く（待ち時間対策） */
@@ -1391,7 +1391,7 @@ const TIER2_SET = new Set(['lantern','goldbell','firefly','moonring','candy','co
 function skillA(f){ return (f.keyCov || 0) >= 0.78 || ((f.keyCov || 0) >= 0.70 && (f.keyVoteShare || 0) >= 0.65); }
 function skillB(f){ return (f.noteCount || 0) >= 8 && !!f.tempoStable; }
 /* ビブラート要件（秒）。銀河は T8 のロングトーン予算では 1.5 に届かないため 1.2（DESIGN.md §7） */
-const VIB_NEED = { galaxy: 1.2, crystal: 4.0, noirrose: 2.5, rainbow: 6.0 };
+const VIB_NEED = { galaxy: 2.0, crystal: 4.0, noirrose: 2.5, rainbow: 5.0 }; /* 2026-11-25: 銀河 1.2→2.0秒・虹 6.0→5.0秒（先生の決定） */
 /* v48 元気さの閾値（T4 のヒマワリの肯定経路に使う）。較正: 通常の歌唱（誤差モデルの標準水準）は
    vigor 0.52〜0.58、穏やかな歌唱は 0.24 以下、元気な歌唱（明るい声・倍音豊か・押しが持続）は
    0.93 以上と、模擬データで完全に分離した。0.68 は通常水準の上限に余裕を持たせた位置 */
@@ -1406,7 +1406,7 @@ const FIREFLY_VIGOR_MAX = 0.45;
 /* v54 キャンディーボタンの「長調」条件（先生の決定）: T3 の分岐に、短調判定（v52）と対称の
    長調マージン（最良の長調相関 − 最良の短調相関）≥0.05 を追加する。短調・曖昧な T3 到達は
    アネモネに流れる（キャンディーの「甘さ」の文言と短調の食い違いを解くため） */
-const MAJOR_MARGIN_MIN = 0.05;
+const MAJOR_MARGIN_MIN = 0.10; /* 2026-11-25: 0.05→0.10（キャンディーの拾いすぎ対策、先生の決定） */
 /* v54 ワタアメローズに「中〜高の声域」条件（先生の決定、ライン設定はシロ指定）: T5 でスキルAに加え
    声域（tessitura）≥60 を要求する。声域は音高ベースで実機でも安定して測れ、ノワールの
    「低い（≤62）」との区別の軸になる（ワタアメ＝中〜高で軽やか／ノワール＝低く太い）。
@@ -1872,10 +1872,10 @@ function pickSpeciesInType(type, f, x){
     case 'T7': return (A && vib >= VIB_NEED.crystal) ? 'crystal' : 'lily';
     case 'T8': return (A && vib >= VIB_NEED.galaxy) ? 'galaxy' : (x.turnAmp >= 3.40 ? 'mobius' : 'swirl');
     case 'T9':
-      if (A && tess >= 63 && thick <= 0.50) return 'bubble';
+      if (A && tess >= 63 && thick <= 0.50 && vib >= 3.0) return 'bubble'; /* 2026-11-25: 主張と同条件に */
       if (x.maxDur >= UNIQUE_LONG_SEC) return 'carnation'; /* 唯一の条件: 全音符級の長い音が1つでもある（ランタン帯・月輪草帯より優先） */
       if (x.ltRel15 >= CARNATION_BAND_MIN && x.ltRel15 < 0.30) return 'carnation'; /* v55: 正の帯 [0.10, 0.30) = 「短い音と長い音の組合せ」がカーネーションの固有条件（先生の設計イメージ。従来は消去法の受け皿だった） */
-      if (x.ltRel15 >= 0.40) return 'lantern'; /* v77: lantern = long tones >= 40% overall */ /* v44: 相対ロングトーン（自分の音長中央値の1.5倍以上の音の時間割合）。絶対LTはテンポで崩れるため置き換え（クリーン判定は不変） */
+      if (x.ltRel15 >= 0.40 && vib < 1.2) return 'lantern'; /* 2026-11-25: 同上 */ /* v77: lantern = long tones >= 40% overall */ /* v44: 相対ロングトーン（自分の音長中央値の1.5倍以上の音の時間割合）。絶対LTはテンポで崩れるため置き換え（クリーン判定は不変） */
       if (tess <= 58) return 'moonring';
       return 'carnation'; /* 帯の下の残余: 基本種として静かに受ける（帯の明示と併存させる） */
     case 'T10': return noirGate(f, x) ? 'noirrose' : 'featherflower'; /* v49: 専用ゲートに統一（上の注記参照）。旧 B＋太さ＋ビブラート経路は廃止 */
@@ -1900,7 +1900,7 @@ function srClaimsOf(f, x){
     crystal: A && B && vib >= VIB_NEED.crystal, /* v77: crystal needs key AND tempo */
     tulilily: A && B && x.gridDev !== null && x.gridDev !== undefined && x.gridDev <= GRID_DEV_MAX,
     galaxy: A && vib >= VIB_NEED.galaxy,
-    bubble: A && (f.tessitura || 60) >= 63 && (f.thickness || 0) <= 0.50,
+    bubble: A && (f.tessitura || 60) >= 63 && (f.thickness || 0) <= 0.50 && vib >= 3.0, /* 2026-11-25: ビブラート3.0秒以上を追加（先生の決定） */
     noir: noirGate(f, x)
   };
 }
@@ -1964,7 +1964,7 @@ function selectSpeciesNew(an, ov){
   else if (type === 'T7') id = 'featherflower';
   else if (type === 'T6') id = ((x.thirdShare || 0) >= 0.20 && (f.leaps || 0) >= 2 && (x.maxGap || 0) >= GOLDBELL_GAP_MIN) ? 'goldbell' : 'sakura';
   else if ((f.tessitura || 60) <= 58 && (x.ltRel15 || 0) < 0.10) id = 'moonring';
-  else if (rob < 12 && (x.ltRel15 || 0) >= 0.40) id = 'lantern';
+  else if (rob < 12 && (x.ltRel15 || 0) >= 0.40 && (f.vibSec || 0) < 1.2) id = 'lantern'; /* 2026-11-25: ビブラート1.2秒未満を追加（先生の決定） */
   else if (type === 'T1'){ id = pickSpeciesInType('T1', f, x); if (id === 'ranunculus') exempt = true; }
   else if (type === 'T11' && cl.rainbow) id = 'rainbow';
   else if (type === 'T11') id = 'dahlia';
@@ -6734,7 +6734,7 @@ const CAL_THEMES = [
   { id:'dahlia', sp:'dahlia', text:'音を大きく動かして、クライマックスのある歌を歌ってみて', check:c => c.type === 'T11' },
   { id:'mobius', sp:'mobius', text:'大きく行ったり来たり、波打つように歌ってみて', check:c => (c.x.turnAmp || 0) >= 3.40 },
   { id:'swirl', sp:'swirl', text:'細かく何度も折り返すようなメロディーを歌ってみて', check:c => (c.x.turns || 0) >= SWIRL_TURNS_MIN && (c.x.turnAmp || 0) < 3.40 },
-  { id:'lantern', sp:'lantern', text:'フレーズの終わりに、長い音を置いて歌ってみて', check:c => c.rob < 12 && (c.x.ltRel15 || 0) >= 0.40 },
+  { id:'lantern', sp:'lantern', text:'フレーズの終わりに、長い音を置いて歌ってみて', check:c => c.rob < 12 && (c.x.ltRel15 || 0) >= 0.40 && (c.f.vibSec || 0) < 1.2 },
   { id:'lily', sp:'lily', text:'どのフレーズも、終わりの音を長めに伸ばして歌ってみて', check:c => c.rob < 12 && (c.x.ltRel15 || 0) < 0.40 && (c.x.phraseEndRaw || 0) >= 3 },
   { id:'moonring', sp:'moonring', text:'低い声で、短い音だけの歌を歌ってみて', check:c => (c.f.tessitura || 60) <= 58 && (c.x.ltRel15 || 0) < 0.10 },
   { id:'carnation', sp:'carnation', text:'テンポを気にせず、自由な気分で歌ってみて', check:c => !c.B },
@@ -7433,7 +7433,9 @@ function labScore(frames, mel){
     if (voiced.length / win.length < 0.35) continue;
     const midis = voiced.map(fr => 69 + 12 * Math.log2(fr.f / 440)).sort((a, b) => a - b);
     const med = midis[Math.floor(midis.length / 2)];
-    if (Math.abs(med - n.midi) * 100 <= 50) correct++;
+    /* v103: オクターブ違いは正解にする（ドレミの位置が合っていればよい）。差を±6半音の範囲に畳んでから比べるので、半音のずれは今まで通り不正解 */
+    let octD = (med - n.midi) % 12; if (octD > 6) octD -= 12; if (octD < -6) octD += 12;
+    if (Math.abs(octD) * 100 <= 50) correct++;
   }
   return mel.notes.length ? correct / mel.notes.length : 0;
 }
